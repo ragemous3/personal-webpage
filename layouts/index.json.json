@@ -1,0 +1,11 @@
+[{{- range $i, $p := .Site.RegularPages -}}
+  {{- if $p.Content -}}
+  {
+    "title": {{ $p.Title | jsonify }},
+    "date": {{ $p.Date | jsonify }},
+    "params": {{ $p.Params | jsonify }},
+    "content": {{ $p.Content | plainify | jsonify }}
+  }{{ if lt (add $i 1) (len .Site.RegularPages) }},{{ end }}
+  {{- end -}}
+  {{- end -}}
+]

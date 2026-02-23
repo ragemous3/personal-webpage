@@ -1,0 +1,41 @@
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'content'
+target = 'content'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'data'
+target = 'data'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'layouts'
+target = 'layouts'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'i18n'
+target = 'i18n'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'archetypes'
+target = 'archetypes'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'assets'
+target = 'assets'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'static'
+target = 'static'
+[[mounts]]
+disableWatch = false
+lang = ''
+source = 'node_modules/@wllama/wllama/esm/'
+target = 'static/esm/'
+
