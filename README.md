@@ -7,6 +7,9 @@
 - [Folder structure](#folder-structure)
 <!--toc:end-->
 
+> [!WARNING]
+> Note that information IS outdated and is not to be trusted as of now.
+
 ## About
 
 ## Casing naming convention
