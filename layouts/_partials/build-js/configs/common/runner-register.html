@@ -1,0 +1,49 @@
+{{/* partial: build-js/configs/common/runner-register.html
+
+  purpose:
+  initialize a group runner. The group runner is a javascript file that is instanciating javascript before it being
+  output to the final build that is loaded by the browser at runtime.
+
+  inputs (.):
+  dict with keys:
+  - batchid (string) required  batch identifier (default: "js/batch")
+  e.g. "js/app"
+  - groupid (string) required  group identifier (default: "main")
+  e.g. "components"
+  - runner  (string) optional  runner resource path under /assets
+  e.g. "js/runners/wc-runner.ts"
+
+  behavior:
+  - ensures the batch exists via js.Batch batchid
+  - ensures the group exists via .Group groupid
+  - if runner is set:
+  - loads the resource via resources.Get
+  - registers it on the group via .Runner "runner"
+  - applies it via .SetOptions
+
+  notes:
+  - this partial does not register scripts/instances.
+  - this partial does not render output tags.
+*/}}
+{{ $batchId := .batchId | default "js/batch" }}
+{{ $groupId := .groupId | default "main" }}
+
+{{ if or (eq $batchId "") (eq $groupId "") }}
+  {{ errorf "[build-js/configs/common/runner-register] missing required input(s). got: %#v" . }}
+{{ end }}
+
+{{ $runnerPath := .runner | default "config/common/runner.js" }}
+
+{{ with js.Batch $batchId }}
+  {{ with .Group $groupId }}
+    {{ if ne $runnerPath "" }}
+      {{ $runnerRes := resources.Get $runnerPath }}
+      {{ if not $runnerRes }}
+        {{ errorf "js/common/runner-register: runner resources.get failed for %q" $runnerPath }}
+      {{ end }}
+      {{ with .Runner "runner-main" }}
+        {{ .SetOptions (dict "resource" $runnerRes) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}

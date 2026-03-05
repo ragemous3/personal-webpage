@@ -15,23 +15,20 @@ export class RAGService extends ChatbotService {
     console.log(`Init started`);
 
     this.chunks = await this.loadJSON('/content-data/chunks.json');
-    const hub = new SharedWorker(
-      new URL('../workers/hub.shared-worker.js', import.meta.url),
-      { type: 'module' },
-    );
-
+    // This actually downloads a file but it does not recognize it as a worker. DO ----> chrome://inspect/#workers
+    const hub = new SharedWorker(new URL('/js/batch/hub.shared-worker.ts.js', import.meta.url), {
+      type: 'module',
+    });
     hub.port.addEventListener('message', (e: Event): void => {
-      console.info(e);
+      console.log(e);
     });
     hub.port.onmessageerror = (e): void => console.error(e);
     hub.onerror = (e: ErrorEvent): void => {
       console.error('hub: messageerror', e);
     };
-
     hub.port.start();
     hub.port.postMessage({ task: 'init', id: this.currentId });
     console.log(`Init finished`);
-    return;
   };
 
   /* 

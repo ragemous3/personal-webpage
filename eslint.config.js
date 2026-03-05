@@ -43,7 +43,7 @@ export default defineConfig([
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json', // <-- ESLint reads TS settings from here tsconfigRootDir: __dirname, sourceType: "module",
+        project: './tsconfig.json',
       },
       globals: {
         ...globals.browser,
@@ -90,7 +90,6 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
-
   // Disable formatting rules that conflict with Prettier
   prettier,
 ]);

@@ -1,4 +1,6 @@
-const sysPrompt = {
+import { ChatMessage } from '../models/models';
+
+const sysPrompt: ChatMessage = {
   role: 'system',
   content: `You are answering questions about Rasmus resumé / CV.
 RULES:

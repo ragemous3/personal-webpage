@@ -1,0 +1,51 @@
+{{/* Partial: build-js/configs/common/script.html
+
+  Purpose:
+  Register a script inside an existing js.Batch group.
+
+  Inputs (.):
+  dict with keys:
+  - batchId      (string)  required  e.g. "js/batch"
+  - groupId      (string)  required  e.g. "components"
+  - scriptId     (string)  required  unique identifier within the group
+  e.g. "chatbot"
+  - resource     (string)  required  path under /assets
+  e.g. "js/features/chatbot/chatbot.component.ts"
+  - export       (string)  optional  named export to bind, default "default"
+  - scriptParams (dict)    optional  parameters available via @params
+  at script level
+
+  Behavior:
+  - Resolves the script resource via resources.Get
+  - Registers the script using .Script scriptId
+  - Applies:
+  - resource
+  - export (if provided)
+  - scriptParams (if provided)
+
+  Notes:
+  - Requires that batch/group has already been initialized
+  (typically via js/batch-config.html).
+  - This partial registers scripts only.
+*/}}
+{{ $batchId := .batchId | default "js/batch" }}
+{{ $groupId := .groupId | default "main" }}
+{{ $scriptId := .scriptId }}
+{{ $export := .export | default "*" }}
+{{ $resourcePath := .resource | default "" }}
+{{ $scriptParams := .scriptParams | default (dict) }}
+{{ $res := .resource }}
+
+{{ if or (not .resource) (not .scriptId) }}
+  {{ errorf "[build-js/configs/common/script.html] Missing required param 'resource' or 'scriptId'" }}
+{{ end }}
+
+{{ with (js.Batch $batchId).Group $groupId }}
+  {{ with .Script ($scriptId | anchorize) }}
+    {{ $opt := dict "resource" $res "export" $export }}
+    {{ if gt (len $scriptParams) 0 }}
+      {{ $opt = merge $opt (dict "params" $scriptParams) }}
+    {{ end }}
+    {{ .SetOptions $opt }}
+  {{ end }}
+{{ end }}

@@ -1,0 +1,49 @@
+{{/* Partial: build-js/configs/common/instance.html
+
+  Purpose:
+  Register an instance of a previously registered script
+  inside a js.Batch group. I.e. You can re-init a script here with different variables.
+
+  Inputs (.):
+  dict with keys:
+  - batchId    (string)  required  e.g. "js/app"
+  - groupId    (string)  required  e.g. "components"
+  - scriptId   (string)  required  must match a registered scriptId
+  - instanceId (string)  required  unique per instance
+  e.g. "page-123"
+  - params     (dict)    optional  instance-specific parameters
+
+  Behavior:
+  - Looks up the existing batch and group
+  - Resolves the script by scriptId
+  - Registers a new instance via .Instance instanceId
+  - Passes params to the instance
+
+  Notes:
+  - The script must already be registered in the group.
+  - Multiple instances may reference the same script.
+  - This partial registers instances only.
+*/}}
+{{ $batchId := .batchId | default "js/batch" }}
+{{ $groupId := .groupId | default "main" }}
+{{ $scriptId := .scriptId | default "main" }}
+{{ $instanceId := .instanceId | default "main" }}
+{{ $params := .params | default slice }}
+
+{{ if or (not $batchId) (not $scriptId) (not $instanceId) (not $groupId) }}
+  {{ errorf "[build-js/common/instance.html] Missing required param" }}
+{{ end }}
+
+{{ with js.Batch $batchId }}
+  {{ with .Group $groupId }}
+    {{ if ne $instanceId "" }}
+      {{ with .Instance ($scriptId | anchorize) $instanceId }}
+        {{ if gt (len $params) 0 }}
+          {{ .SetOptions (dict "params" $params) }}
+        {{ else }}
+          {{ .SetOptions (dict) }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}

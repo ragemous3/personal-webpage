@@ -21,16 +21,9 @@ import { RAGService } from './services/rag.service';
 
 @customElement('chat-container')
 export class ChatContainer extends LitElement {
-  // Services
   ragService: RAGService = new RAGService();
-
-  // Styles
   static styles = chatBubbleStyles;
-
-  // Elements
   @query('#query-input-name') queryInputBox!: HTMLInputElement;
-
-  // Variables
   @property({ type: Array }) messages: Chat = [];
 
   connectedCallback(): void {

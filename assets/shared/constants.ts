@@ -1,7 +1,8 @@
 enum SeverityLevelCodes {
-  FATAL = '[FATAL]',
-  ERROR = '[ERROR]',
-  WARNING = '[WARNING]',
+  FATAL = 'FATAL',
+  CRITICAL = 'CRITICAL',
+  ERROR = 'ERROR',
+  WARNING = 'WARNING',
 }
 
 export { SeverityLevelCodes };

@@ -1,0 +1,30 @@
+{{/* Partial: build-js/configs/common/config.html
+
+  Purpose:
+  Initialize and configure a js.Batch group and sets the configuraton that should be used for the js when bundling.
+
+  Inputs (.):
+  dict with keys:
+  - batchId   (string)  required (default js/batch)  e.g. "js/app"
+
+  Behavior:
+  - Creates (or retrieves) the js.Batch using batchId
+  - Uses hugos build in "Bridge" between esbuild and hugo.
+
+  Good to know:
+  - as of now it does not support plugins for esbuild!
+*/}}
+{{ $batchId := .batchId | default "js/batch" }}
+{{- if not $batchId }}
+  {{- errorf "[build-js/common/config.html] - Expected batchId to be defined " }}
+{{- end }}
+{{- with js.Batch $batchId }}
+  {{- with .Config }}
+    {{- .SetOptions (dict
+      "target" "es2024"
+      "format" "esm"
+      "minify" true
+      )
+    }}
+  {{- end }}
+{{- end }}

@@ -15,9 +15,7 @@ self.onmessage = async (options: MessageEvent<LLMWorkerData>) => {
   if (chatMessages && task === 'query') {
     const chatWithSys: Chat = [sysMessage, ...chatMessages];
     try {
-      await localLLM.chatWithBot(chatWithSys, async (txt: string) =>
-        postMessage(txt),
-      );
+      await localLLM.chatWithBot(chatWithSys, async (txt: string) => postMessage(txt));
     } catch (err: unknown) {
       postMessage({
         error: err instanceof Error ? err.message : String(err),

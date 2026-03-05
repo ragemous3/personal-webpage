@@ -1,0 +1,69 @@
+{{/* partial: build-js/configs/common/build-workers
+
+  purpose:
+  Build and output manifests for workers based on js.Batch group.
+
+  inputs (.):
+  dict with keys:
+  - batchId (string) optional  batch identifier (default: "js/batch")
+  - groupId (string) optional  group identifier (default: "main")
+
+  behavior:
+  - defers execution via templates.Defer using groupId as the key
+  (ensures all scripts/instances have been registered before build)
+  - resolves the batch via js.Batch batchId
+  - calls .Build to compile the batch
+  - looks up the compiled assets for the specified group via index .Groups groupId
+  - renders:
+  - <link> tags for CSS outputs
+  - <script type="module"> tags for all other outputs
+  - in production, fingerprints and emits SRI + crossorigin
+
+  output:
+  manifest
+
+  notes:
+  Assumes scripts/instances were previously registered into this batch/group.
+*/}}
+
+{{- $batchId := .batchId | default "js/batch" -}}
+{{- $groupId := .groupId -}}
+
+{{- if or (not $batchId) (not $groupId) -}}
+  {{- errorf "[build-js/configs/common/build.html] Missing required param(s): batchId=%v groupId=%v" $batchId $groupId -}}
+{{- end -}}
+
+{{- $payload := dict "batchId" $batchId "groupId" $groupId -}}
+
+{{- with (templates.Defer (dict "key" $groupId "data" $payload)) -}}
+  {{- $batchId := .batchId -}}
+  {{- $groupId := .groupId -}}
+
+  {{- with (js.Batch $batchId) -}}
+    {{- with .Build -}}
+      {{- with (index .Groups $groupId) -}}
+        {{- warnf $groupId -}}
+        {{ $workerSlice := slice }}
+        {{- range . -}}
+          {{ if or
+            (strings.HasSuffix $groupId ".worker.ts")
+            (strings.HasSuffix $groupId ".shared-worker.ts")
+          }}
+            {{- $res := . -}}
+            {{- with ($res | fingerprint) -}}
+              {{- warnf "%v" .RelPermalink }}
+              {{- $workerSlice = $workerSlice | append (dict "file" $groupId "link" .RelPermalink) }}
+            {{- end -}}
+            {{- continue -}}
+          {{- end -}}
+        {{ end }}
+	<script
+            id="worker-manifest"
+            type="module"
+            >
+            export const workers = JSON.Parse({{ $workerSlice | jsonify -}});
+	  </script>
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

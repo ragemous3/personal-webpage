@@ -1,0 +1,25 @@
+{{ $components := resources.Match "**/*.component.ts" }}
+{{ $workers := resources.Match "**/*.worker.ts" }}
+{{ $sharedWorkers := resources.Match "**/*.shared-worker.ts" }}
+
+{{ $mergedWorkers := slice | append $sharedWorkers | append $workers }}
+
+{{ if eq (len $mergedWorkers) 0 }}
+  {{ errorf "Expected to find components or workers" }}
+{{ end }}
+
+{{- partial "build-js/configs/common/config" }}
+{{ warnf "need to change scriptId to scriptPath and then add the actual path - I also need to change template defer to be the permalinks (the codesplits of te groups)" }}
+
+{{- range $mergedWorkers }}
+  {{- partial "build-js/configs/common/script" (dict "groupId" (path.Base .) "resource" . "scriptId" . ) }}
+  {{- partial "build-js/configs/common/instance" (dict  "groupId" (path.Base .) "scriptId" . ) }}
+  {{- partial "build-js/configs/common/build-workers" (dict  "groupId" (path.Base .)) }}
+{{- end }}
+
+{{- range $components }}
+  {{ partial "build-js/configs/common/script" (dict "resource" . "scriptId" (.RelPermalink) ) }}
+{{- end }}
+{{- partial "build-js/configs/common/runner-register" }}
+{{- partial "build-js/configs/common/instance" }}
+{{- partial "build-js/configs/common/build" }}

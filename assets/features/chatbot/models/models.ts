@@ -1,4 +1,5 @@
 import { Chat, TextGenerationConfig } from '@huggingface/transformers';
+import { Nullable } from '../../../shared/models';
 
 type GenerationConfig = TextGenerationConfig;
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
@@ -15,20 +16,25 @@ interface HNSWDBEntry {
   contents: Uint8Array;
 }
 
-interface WorkerData {
-  readonly task: 'init' | 'query';
-  readonly query: string;
+interface WorkerError {
+  name: string;
+  message: string;
+  stack: Nullable<string>;
 }
 
-interface LLMWorkerData extends WorkerData {
+interface WorkerData<T> {
+  readonly task: 'init' | 'query';
+  readonly query: string;
+  readonly error?: WorkerError;
+  readonly payload?: T;
+}
+
+interface LLMWorkerData extends WorkerData<{
   readonly chatMessages: Chat;
   readonly sysMessage: SysMessage;
-}
+}> {}
 
-interface VectorDBWorkerData extends WorkerData {
-  readonly task: 'init' | 'query';
-  readonly query: string;
-}
+interface VectorDBWorkerData extends WorkerData<undefined> {}
 
 type RAGStatus = {
   status: RagStates;

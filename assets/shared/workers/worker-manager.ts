@@ -14,12 +14,9 @@ export class WorkerManager {
     this.workerName = workerName;
   }
 
-  isWorker = (worker: Worker | undefined): worker is Worker =>
-    worker ? true : false;
+  isWorker = (worker: Worker | undefined): worker is Worker => (worker ? true : false);
 
-  isWorkerScript = (
-    workerScript: string | undefined,
-  ): workerScript is string =>
+  isWorkerScript = (workerScript: string | undefined): workerScript is string =>
     typeof workerScript === 'string' ? true : false;
 
   async initialize(wm: WorkerMessageTo): Promise<unknown> {
@@ -32,9 +29,7 @@ export class WorkerManager {
         type: 'module',
       });
     } catch (e) {
-      throw new Error(
-        `[${SeverityLevelCodes.FATAL}][${wm.task}] - Failed to init worker: ${e}`,
-      );
+      throw new Error(`[${SeverityLevelCodes.FATAL}][${wm.task}] - Failed to init worker: ${e}`);
     }
     this.setupEventListeners();
 
@@ -48,33 +43,27 @@ export class WorkerManager {
     this.worker.onerror = this.handleError.bind(this);
   }
 
-  async sendMessage(
-    message: WorkerMessageTo,
-  ): Promise<WorkerMessageFrom | undefined> {
-    return new Promise(
-      (resolve, reject): Promise<WorkerMessageFrom> | undefined => {
-        if (!this.isWorker(this.worker)) return;
-        const timeout = setTimeout((): void => {
-          reject(new Error('Worker message timeout'));
-        }, 120000);
-        const messageHandler = (
-          event: MessageEvent<WorkerMessageFrom>,
-        ): void | undefined => {
-          if (event.data.id === message.id) {
-            clearTimeout(timeout);
-            if (!this.isWorker(this.worker)) {
-              reject(`Worker not init`);
-              return;
-            }
-            this.worker.removeEventListener('message', messageHandler);
-            resolve(event.data);
+  async sendMessage(message: WorkerMessageTo): Promise<WorkerMessageFrom | undefined> {
+    return new Promise((resolve, reject): Promise<WorkerMessageFrom> | undefined => {
+      if (!this.isWorker(this.worker)) return;
+      const timeout = setTimeout((): void => {
+        reject(new Error('Worker message timeout'));
+      }, 120000);
+      const messageHandler = (event: MessageEvent<WorkerMessageFrom>): void | undefined => {
+        if (event.data.id === message.id) {
+          clearTimeout(timeout);
+          if (!this.isWorker(this.worker)) {
+            reject(`Worker not init`);
+            return;
           }
-        };
+          this.worker.removeEventListener('message', messageHandler);
+          resolve(event.data);
+        }
+      };
 
-        this.worker.addEventListener('message', messageHandler);
-        this.worker.postMessage(message);
-      },
-    );
+      this.worker.addEventListener('message', messageHandler);
+      this.worker.postMessage(message);
+    });
   }
 
   handleMessage(event: { data: WorkerMessageFrom }): void {

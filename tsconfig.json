@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "lib": ["es2024", "dom", "webworker"],
-    "target": "es2024",
+    "lib": ["es2022", "dom", "webworker"],
+    "target": "es2022",
     "module": "esnext",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
