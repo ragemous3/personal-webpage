@@ -1,21 +1,27 @@
-import { Chat } from '@huggingface/transformers';
-
-import { LLMWorkerData } from '../models/models';
+import { ProgressInfo } from '@huggingface/transformers';
 import { LocalLLMService } from '../services/llm.service';
+import { LlmDTO } from './models';
 
 const localLLM = new LocalLLMService();
 
-self.onmessage = async (options: MessageEvent<LLMWorkerData>) => {
+const progressTracker = (progress: ProgressInfo) => {
+  postMessage({ task: 'bus:progress', payload: progress });
+};
+
+onmessage = async (options: MessageEvent<LlmDTO>) => {
   console.info('Worker: Message received from main script');
-  const { task, chatMessages, sysMessage }: LLMWorkerData = options.data;
-  if (task === 'init') {
-    await localLLM.init();
+  const { task, payload }: LlmDTO = options.data;
+
+  const chatMessages = payload;
+
+  if (task === 'llm:init') {
+    await localLLM.init(progressTracker);
+    postMessage('llm:ready');
   }
 
-  if (chatMessages && task === 'query') {
-    const chatWithSys: Chat = [sysMessage, ...chatMessages];
+  if (chatMessages && task === 'llm:query') {
     try {
-      await localLLM.chatWithBot(chatWithSys, async (txt: string) => postMessage(txt));
+      await localLLM.chatWithBot(chatMessages, async (txt: string) => postMessage(txt));
     } catch (err: unknown) {
       postMessage({
         error: err instanceof Error ? err.message : String(err),

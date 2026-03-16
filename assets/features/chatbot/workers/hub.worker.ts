@@ -1,28 +1,64 @@
-import { Task, WorkerMessageTo } from '../../../shared/workers/models';
 import { WorkerManager } from '../../../shared/workers/worker-manager';
-import { LLMWorkerData } from '../models/models';
 import { SeverityLevelCodes } from '../../../shared/constants';
+import { ChatbotWorkers } from '../infra/models';
+import { WorkerFileNames } from '../infra/constants';
+import { LlmDTO, VectorDbDto, WorkerMessageHub } from './models';
 
 const llmName = 'llm';
 const vectorDbName = 'vectorDB';
+let llmWorker: WorkerManager<LlmDTO, string> | undefined;
+let vectorDbWorker: WorkerManager<VectorDbDto, string> | undefined;
 
-const init = async (): Promise<void> => {
-  const llmWorker = new WorkerManager('/js/batch/llm.worker.ts.js', llmName);
-  const vectorDbWorker = new WorkerManager('/js/batch/vectordb.worker.ts.js', vectorDbName);
-  await llmWorker.initialize(getWorkerMessage(`${llmName}:init`));
-  await vectorDbWorker.initialize(getWorkerMessage(`${vectorDbName}:init`));
+const init = async (hubConf: WorkerMessageHub<ChatbotWorkers>): Promise<void> => {
+  console.log(`Running ${hubConf.task} - stand by`);
+  llmWorker = new WorkerManager(hubConf.config[WorkerFileNames.llm], llmName);
+  vectorDbWorker = new WorkerManager(hubConf.config[WorkerFileNames.vectordb], vectorDbName);
+
+  vectorDbWorker.listen((data) => postMessage(data));
+  vectorDbWorker.initialize({
+    id: crypto.randomUUID(),
+    task: 'vectordb:init',
+    payload: null,
+  });
+
+  llmWorker.listen((data) => postMessage(data));
+  llmWorker.initialize({
+    id: crypto.randomUUID(),
+    task: 'llm:init',
+    payload: null,
+  });
 };
+//
+// const sendMessage = async (payload: WorkerMessageHub<unknown>) => {
+//   if (!payload) {
+//     throw new Error('Expected payload to be defined, not empty or non existant');
+//   }
+//
+//   if (!payload.llm) {
+//     throw new Error('Expected LLM payload to be defined, not empty or non existant');
+//   }
+//
+//   if (!payload.llm || !payload.vector) {
+//     throw new Error('Expected LLM payload to be defined, not empty or non existant');
+//   }
+//
+//   if (!vectorDbWorker || !llmWorker) {
+//     throw new Error('Expected initiated workers!');
+//   }
+//
+//   vectorDbWorker.sendMessage(payload.vector);
+// };
 
-self.onmessage = async (e: MessageEvent<LLMWorkerData>): Promise<void> => {
-  const { task, chatMessages, query }: Partial<LLMWorkerData> = e.data;
+onmessage = async (e: MessageEvent<WorkerMessageHub<ChatbotWorkers>>): Promise<void> => {
+  const { task }: Partial<WorkerMessageHub<ChatbotWorkers>> = e.data;
+  console.log('recieved message');
   try {
     console.log(`Hub message recieved`);
-    if (task === 'init') await init();
+    if (task === 'hub:init') await init(e.data);
   } catch (err: unknown) {
     if (err instanceof Error) {
       postMessage({
-        task,
-        query,
+        ...e.data,
         error: {
           name: `[${SeverityLevelCodes.ERROR}]${err.name}`,
           message: err.message,
@@ -33,8 +69,7 @@ self.onmessage = async (e: MessageEvent<LLMWorkerData>): Promise<void> => {
     }
 
     postMessage({
-      task,
-      query,
+      ...e.data,
       error: {
         name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
         message: String(err),
@@ -44,4 +79,4 @@ self.onmessage = async (e: MessageEvent<LLMWorkerData>): Promise<void> => {
   }
 };
 
-self.onmessageerror = (err: unknown) => postMessage('error');
+onmessageerror = (err: unknown) => postMessage('error');

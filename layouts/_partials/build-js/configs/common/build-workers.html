@@ -28,22 +28,20 @@
 
 {{- $batchId := .batchId | default "js/batch" -}}
 {{- $groupId := .groupId -}}
-
 {{- if or (not $batchId) (not $groupId) -}}
   {{- errorf "[build-js/configs/common/build.html] Missing required param(s): batchId=%v groupId=%v" $batchId $groupId -}}
 {{- end -}}
 
-{{- $payload := dict "batchId" $batchId "groupId" $groupId -}}
+{{- $payload := dict "batchId" $batchId "groupId" $groupId "worker_key" "worker_map" -}}
 
 {{- with (templates.Defer (dict "key" $groupId "data" $payload)) -}}
   {{- $batchId := .batchId -}}
   {{- $groupId := .groupId -}}
+  {{- $worker_key := .worker_key -}}
 
   {{- with (js.Batch $batchId) -}}
     {{- with .Build -}}
       {{- with (index .Groups $groupId) -}}
-        {{- warnf $groupId -}}
-        {{ $workerSlice := slice }}
         {{- range . -}}
           {{ if or
             (strings.HasSuffix $groupId ".worker.ts")
@@ -51,18 +49,11 @@
           }}
             {{- $res := . -}}
             {{- with ($res | fingerprint) -}}
-              {{- warnf "%v" .RelPermalink }}
-              {{- $workerSlice = $workerSlice | append (dict "file" $groupId "link" .RelPermalink) }}
+              {{- hugo.Store.SetInMap $worker_key $groupId .RelPermalink -}}
             {{- end -}}
             {{- continue -}}
           {{- end -}}
-        {{ end }}
-	<script
-            id="worker-manifest"
-            type="module"
-            >
-            export const workers = JSON.Parse({{ $workerSlice | jsonify -}});
-	  </script>
+        {{- end }}
       {{- end -}}
     {{- end -}}
   {{- end -}}

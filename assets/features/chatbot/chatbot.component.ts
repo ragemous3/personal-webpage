@@ -4,7 +4,7 @@ import { customElement, property, query } from 'lit/decorators.js';
 
 import { chatBubbleStyles } from './chatbot.styles';
 import { chatBubble } from './components/chat-bubble.template';
-import { RAGService } from './services/rag.service';
+import { ChatbotService } from './services/chatbot.service';
 /*
  * 1. chatbot is doing init
  * 2. chatbot awaits recievedMessage (Some info text that it finished its init)
@@ -21,14 +21,19 @@ import { RAGService } from './services/rag.service';
 
 @customElement('chat-container')
 export class ChatContainer extends LitElement {
-  ragService: RAGService = new RAGService();
+  service: ChatbotService;
   static styles = chatBubbleStyles;
   @query('#query-input-name') queryInputBox!: HTMLInputElement;
   @property({ type: Array }) messages: Chat = [];
+  @property({ attribute: false }) hej: string = 'test';
 
+  constructor(service: ChatbotService = new ChatbotService()) {
+    super();
+    this.service = service;
+  }
   connectedCallback(): void {
     super.connectedCallback();
-    this.ragService.init();
+    this.service.init();
   }
 
   render = (): TemplateResult =>

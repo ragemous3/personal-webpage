@@ -1,3 +1,11 @@
-import { ApiBase } from '../../../shared/services/api-base.service';
+import { ChatbotInfra } from '../infra/data.infra';
 
-export class ChatbotService extends ApiBase {}
+export class ChatbotService {
+  infra: ChatbotInfra;
+
+  constructor(infra: ChatbotInfra = new ChatbotInfra()) {
+    this.infra = infra;
+  }
+
+  init = async () => this.infra.init();
+}

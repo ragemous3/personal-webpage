@@ -1,26 +1,24 @@
-export type Action = 'init' | 'query' | 'cleanup';
+import { Nullable } from '../models';
+import { EntityStatusTypes } from './constants';
+
+export type Action = 'init' | 'chat' | 'progress' | 'query' | 'cleanup';
 export type Task = `${string}:${Action}`;
 
-interface WorkerMessageBase {
-  task: Task;
+export interface WorkerMessageBase<T, Y = Task> {
+  id: ReturnType<typeof crypto.randomUUID>;
+  task: Y;
+  error?: string;
+  payload: T;
 }
-
-export interface WorkerMessageTo extends WorkerMessageBase {
-  id: string;
-}
-
-export interface WorkerMessageFrom extends WorkerMessageBase {
-  id: string;
-  paytload: unknown;
-  error: string;
-}
-
-export type PendingEntry<T> = {
-  resolve: (value: T | PromiseLike<T>) => void;
-  reject: (error: Error) => void;
-  timeout: number;
+export type EntityTask = 'check' | 'set' | 'transfer';
+export type EntityStatus = keyof typeof EntityStatusTypes;
+export type EntityName = string;
+export type EntityProtocol = `${EntityName}:${EntityTask}`;
+// announcement would be the global broadcast one.
+export type EntityStatusLog = {
+  initiator: ReturnType<typeof crypto.randomUUID> | 'announcement';
+  entity: EntityName;
+  status: EntityStatus;
 };
 
-export type WorkerRequest = {
-  [key: string]: unknown;
-};
+export type SharedWorkerMessage = WorkerMessageBase<Nullable<unknown>, EntityProtocol>;

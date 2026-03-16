@@ -1,0 +1,3 @@
+# session_file_keys is a map that explains which key to use when bridging files from build to runtime when they are fingerprinted. i.e. it's when JS needs to import a file dynamically (outside of bundle - through http) and that file has been fingerprinted so it's impossible to find
+[session_file_keys]
+ workers = "workers"

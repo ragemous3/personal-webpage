@@ -16,36 +16,7 @@ interface HNSWDBEntry {
   contents: Uint8Array;
 }
 
-interface WorkerError {
-  name: string;
-  message: string;
-  stack: Nullable<string>;
-}
-
-interface WorkerData<T> {
-  readonly task: 'init' | 'query';
-  readonly query: string;
-  readonly error?: WorkerError;
-  readonly payload?: T;
-}
-
-interface LLMWorkerData extends WorkerData<{
-  readonly chatMessages: Chat;
-  readonly sysMessage: SysMessage;
-}> {}
-
-interface VectorDBWorkerData extends WorkerData<undefined> {}
-
 type RAGStatus = {
   status: RagStates;
 };
-
-export type {
-  ChatMessage,
-  Chunk,
-  GenerationConfig,
-  HNSWDBEntry,
-  LLMWorkerData,
-  RAGStatus,
-  VectorDBWorkerData,
-};
+export type { ChatMessage, SysMessage, Chunk, GenerationConfig, HNSWDBEntry, RAGStatus };

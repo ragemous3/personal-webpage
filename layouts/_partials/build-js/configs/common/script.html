@@ -12,7 +12,7 @@
   - resource     (string)  required  path under /assets
   e.g. "js/features/chatbot/chatbot.component.ts"
   - export       (string)  optional  named export to bind, default "default"
-  - scriptParams (dict)    optional  parameters available via @params
+  - params (dict)    optional  parameters available via @params
   at script level
 
   Behavior:
@@ -21,20 +21,20 @@
   - Applies:
   - resource
   - export (if provided)
-  - scriptParams (if provided)
+  - params (if provided)
 
   Notes:
   - Requires that batch/group has already been initialized
   (typically via js/batch-config.html).
   - This partial registers scripts only.
 */}}
-{{ $batchId := .batchId | default "js/batch" }}
-{{ $groupId := .groupId | default "main" }}
-{{ $scriptId := .scriptId }}
-{{ $export := .export | default "*" }}
-{{ $resourcePath := .resource | default "" }}
-{{ $scriptParams := .scriptParams | default (dict) }}
-{{ $res := .resource }}
+{{- $batchId := .batchId | default "js/batch" }}
+{{- $groupId := .groupId | default "main" }}
+{{- $scriptId := .scriptId }}
+{{- $export := .export | default "*" }}
+{{- $resourcePath := .resource | default "" }}
+{{- $params := .params | default (dict) }}
+{{- $res := .resource }}
 
 {{ if or (not .resource) (not .scriptId) }}
   {{ errorf "[build-js/configs/common/script.html] Missing required param 'resource' or 'scriptId'" }}
@@ -43,8 +43,8 @@
 {{ with (js.Batch $batchId).Group $groupId }}
   {{ with .Script ($scriptId | anchorize) }}
     {{ $opt := dict "resource" $res "export" $export }}
-    {{ if gt (len $scriptParams) 0 }}
-      {{ $opt = merge $opt (dict "params" $scriptParams) }}
+    {{ if gt (len $params) 0 }}
+      {{ $opt = merge $opt (dict "params" $params) }}
     {{ end }}
     {{ .SetOptions $opt }}
   {{ end }}

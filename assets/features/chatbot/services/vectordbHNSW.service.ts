@@ -1,19 +1,10 @@
-import {
-  FeatureExtractionPipeline,
-  pipeline,
-  Tensor,
-} from '@huggingface/transformers';
-import {
-  HierarchicalNSW,
-  HnswlibModule,
-  loadHnswlib,
-  syncFileSystem,
-} from 'hnswlib-wasm';
+import { FeatureExtractionPipeline, pipeline, Tensor } from '@huggingface/transformers';
+import { HierarchicalNSW, HnswlibModule, loadHnswlib, syncFileSystem } from 'hnswlib-wasm';
 import { SearchResult, SpaceName } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
 import { SeverityLevelCodes } from '../../../shared/constants';
 import { Nullable } from '../../../shared/models';
-import { ApiBase } from '../../../shared/services/api-base.service';
+import { ApiBase } from '../../../shared/infra/base.infra';
 import { IndexDBBase } from '../../../shared/services/idb.service';
 import { HNSWDBEntry } from '../models/models';
 
@@ -43,23 +34,13 @@ export class VectorDBHNSW {
     try {
       this.lib = await loadHnswlib();
 
-      this.index = new this.lib.HierarchicalNSW(
-        this.spaceName,
-        this.dim,
-        this.indexEntry,
-      );
+      this.index = new this.lib.HierarchicalNSW(this.spaceName, this.dim, this.indexEntry);
 
-      this.index.initIndex(
-        this.maxEls,
-        this.nodeConnections,
-        this.efConstructor,
-        this.seedGen,
-      );
+      this.index.initIndex(this.maxEls, this.nodeConnections, this.efConstructor, this.seedGen);
 
       await this.readInExternalFile();
 
-      const exists =
-        this.lib.EmscriptenFileSystemManager.checkFileExists('data.dat');
+      const exists = this.lib.EmscriptenFileSystemManager.checkFileExists('data.dat');
 
       if (exists && this.lib.EmscriptenFileSystemManager.isSynced()) {
         await this.index.readIndex('data.dat', this.dim);
@@ -79,35 +60,31 @@ export class VectorDBHNSW {
       dtype: 'uint8',
     });
 
-  query = async (
-    query: string,
-    topK: number = 5,
-  ): Promise<SearchResult | undefined> => {
+  query = async (query: string, topK: number = 5): Promise<SearchResult> => {
     if (!this.index || !this.embedder) {
-      console.error('Must call init before query!');
-      return undefined;
+      throw new Error('Expected Index and embedder to be defined!');
     }
     const queryEmbedding = await this.embedder([query], {
       pooling: 'mean',
       normalize: true,
     });
 
-    this.index.searchKnn(<Float32Array>queryEmbedding.data, topK, undefined);
+    if (!queryEmbedding) {
+      throw new Error('Expected queryEmbeddings to be defined!');
+    }
+
+    return this.index.searchKnn(<Float32Array>queryEmbedding.data, topK, undefined);
   };
 
   private fetchAndStore = async (): Promise<void> => {
     const db: IDBDatabase = await this.indexDb.openDB();
     if (!db) throw new Error('Failed to init DB');
 
-    const metadata: Omit<HNSWDBEntry, 'contents'> =
-      await this.apiBase.loadJSON();
-    const contents: Uint8Array<ArrayBufferLike> | undefined =
-      await this.apiBase.loadUint8Array();
+    const metadata: Omit<HNSWDBEntry, 'contents'> = await this.apiBase.loadJSON();
+    const contents: Uint8Array<ArrayBufferLike> | undefined = await this.apiBase.loadUint8Array();
 
     if (!contents) {
-      console.error(
-        `[${SeverityLevelCodes.FATAL}] - expected contents to be defined`,
-      );
+      console.error(`[${SeverityLevelCodes.FATAL}] - expected contents to be defined`);
       return undefined;
     }
 

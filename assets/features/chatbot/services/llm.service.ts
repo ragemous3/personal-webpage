@@ -1,6 +1,7 @@
 import {
   Chat,
   pipeline,
+  ProgressInfo,
   TextGenerationOutput,
   TextGenerationPipeline,
   TextGenerationSingle,
@@ -20,18 +21,20 @@ export class LocalLLMService {
 
   loadModel = async (
     modelName: string = this.llmModelName,
+    progressTracker: (progress: ProgressInfo) => void,
   ): Promise<TextGenerationPipeline> =>
     (this.generator = await pipeline('text-generation', modelName, {
       device: 'webgpu',
       dtype: 'q4',
-    }));
+      progress_callback: progressTracker,
+    })) as TextGenerationPipeline;
 
-  init = async () => {
+  init = async (progressTracker: (progress: ProgressInfo) => void) => {
     const tokenizerUtil = new TokenizerUtil(this.llmModelName);
     await tokenizerUtil.initTokenizer();
     this.modelMaxTokens = tokenizerUtil.getMaxLength();
 
-    await this.loadModel();
+    await this.loadModel(this.llmModelName, progressTracker);
   };
 
   promptModel = async (
@@ -42,14 +45,9 @@ export class LocalLLMService {
       do_sample: false,
       return_full_text: false,
     },
-  ): Promise<TextGenerationOutput | TextGenerationOutput[]> =>
-    await generator(prompt, options);
+  ): Promise<TextGenerationOutput | TextGenerationOutput[]> => await generator(prompt, options);
 
-  reScore = async (
-    context: Chunk[],
-    query: string,
-    generator: TextGenerationPipeline,
-  ) => {
+  reScore = async (context: Chunk[], query: string, generator: TextGenerationPipeline) => {
     const score = [];
 
     for (const ctx of context) {
@@ -63,9 +61,7 @@ export class LocalLLMService {
   `;
       if (!this.tokenizerUtil) return;
       if (this.tokenizerUtil.countTokens(prompt) > this.modelMaxTokens) {
-        console.error(
-          'removed matched data because it exceeded MODEL_MAX_TOKENS',
-        );
+        console.error('removed matched data because it exceeded MODEL_MAX_TOKENS');
         continue;
       } else {
         const output = await this.promptModel(prompt, generator);
@@ -104,18 +100,14 @@ ${query}
       return;
     }
 
-    const txt: unknown = this.tokenizerUtil.tokenizer.apply_chat_template(
-      chatMessages,
-      { tokenize: false },
-    );
+    const txt: unknown = this.tokenizerUtil.tokenizer.apply_chat_template(chatMessages, {
+      tokenize: false,
+    });
     if (typeof txt === 'string') return txt;
     console.error('Expected value to be string');
   };
 
-  getTextStreamer = (
-    generator: TextGenerationPipeline,
-    cb: (txt: string) => void,
-  ) =>
+  getTextStreamer = (generator: TextGenerationPipeline, cb: (txt: string) => void) =>
     new TextStreamer(generator.tokenizer, {
       skip_special_tokens: true,
       callback_function: cb,
@@ -124,11 +116,7 @@ ${query}
   guardResponse = (
     output: TextGenerationOutput | TextGenerationOutput[],
   ): TextGenerationSingle | undefined => {
-    if (
-      !(Array.isArray(output) && !output.length) ||
-      !Array.isArray(output) ||
-      !output[0]
-    ) {
+    if (!(Array.isArray(output) && !output.length) || !Array.isArray(output) || !output[0]) {
       console.error('Expected output to be an array!');
       return;
     }
@@ -169,8 +157,7 @@ ${query}
       temperature: 0.75,
     });
 
-    const botResp: TextGenerationSingle | undefined =
-      this.guardResponse(output);
+    const botResp: TextGenerationSingle | undefined = this.guardResponse(output);
 
     if (botResp) {
       return botResp;

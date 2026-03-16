@@ -1,11 +1,10 @@
-{{ $components := resources.Match "**/*.component.ts" }}
-{{ $workers := resources.Match "**/*.worker.ts" }}
-{{ $sharedWorkers := resources.Match "**/*.shared-worker.ts" }}
-
-{{ $mergedWorkers := slice | append $sharedWorkers | append $workers }}
-
-{{ if eq (len $mergedWorkers) 0 }}
-  {{ errorf "Expected to find components or workers" }}
+{{- $session_file_keys := .Site.Params.session_file_keys -}}
+{{- $components := resources.Match "**/*.component.ts" }}
+{{- $workers := resources.Match "**/*.worker.ts" }}
+{{- $sharedWorkers := resources.Match "**/*.shared-worker.ts" }}
+{{- $mergedWorkers := slice | append $sharedWorkers | append $workers }}
+{{- if eq (len $mergedWorkers) 0 }}
+  {{- errorf "Expected to find components or workers" }}
 {{ end }}
 
 {{- partial "build-js/configs/common/config" }}
@@ -13,13 +12,14 @@
 
 {{- range $mergedWorkers }}
   {{- partial "build-js/configs/common/script" (dict "groupId" (path.Base .) "resource" . "scriptId" . ) }}
-  {{- partial "build-js/configs/common/instance" (dict  "groupId" (path.Base .) "scriptId" . ) }}
-  {{- partial "build-js/configs/common/build-workers" (dict  "groupId" (path.Base .)) }}
+  {{- partial "build-js/configs/common/build-workers" (dict  "groupId" (path.Base .) "config" $session_file_keys) }}
 {{- end }}
 
 {{- range $components }}
-  {{ partial "build-js/configs/common/script" (dict "resource" . "scriptId" (.RelPermalink) ) }}
+  {{ partial "build-js/configs/common/script" (dict "resource" . "scriptId" (.RelPermalink)  "params" (dict "hej" "hej") ) }}
+  {{- partial "build-js/configs/common/instance" (dict "scriptId" (.RelPermalink)) }}
 {{- end }}
 {{- partial "build-js/configs/common/runner-register" }}
 {{- partial "build-js/configs/common/instance" }}
 {{- partial "build-js/configs/common/build" }}
+{{- partial "build-js/configs/common/build-meta-data" (dict "pageParams" .Params "siteParams" .Site.Params) }}

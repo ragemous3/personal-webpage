@@ -42,6 +42,7 @@ If need be - certain features will have interceptors and adapters (map data mode
 | Content filenames  | kebab-case                                |
 | Layouts/partials   | kebab-case                                |
 | Front matter keys  | snake_case                                |
+| TOML keys          | snake_case                                |
 | Template variables | camelCase                                 |
 | CSS classes        | kebab-case                                |
 | CSS id             | kebab-case                                |
@@ -55,8 +56,9 @@ kebab-case name + dot-separated responsibility. I.e. `api-base.service.ts`.
 
 **Valid types:**
 
-- service
 - component
+- service
+- infra
 - test
 - worker
 - shared-worker
