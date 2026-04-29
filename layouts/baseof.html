@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en">
-  {{ partial "page-base/head" . }}
+  <head>
+    {{ partial "page-base/head" . }}
+    {{- partial "build-js/batches/component-registration" . -}}
+    <!--  Cannot put template defers in any other file since might produce unpredictable results -->
+  </head>
   <body>
     <main>{{- block "main" . }}{{- end }}</main>
   </body>

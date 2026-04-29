@@ -1,47 +1,21 @@
 {{/* partial: build-js/configs/common/build.html
-
   purpose:
   Build and render the compiled assets for a specific js.Batch group, after templates have rendered and output link or script tag depending on asset being css or javascript.
 
-  inputs (.):
-  dict with keys:
-  - batchId (string) optional  batch identifier (default: "js/batch")
-  - groupId (string) optional  group identifier (default: "main")
-
-  behavior:
-  - defers execution via templates.Defer using groupId as the key
-  (ensures all scripts/instances have been registered before build)
-  - resolves the batch via js.Batch batchId
-  - calls .Build to compile the batch
-  - looks up the compiled assets for the specified group via index .Groups groupId
-  - renders:
-  - <link> tags for CSS outputs
-  - <script type="module"> tags for all other outputs
-  - in production, fingerprints and emits SRI + crossorigin
-
   output:
   Emits the final HTML tags required to load the group’s compiled assets.
-
+  global js configuraton (global variables from Hugo to JS scrips see: https://gohugo.io/functions/js/batch/#config)
   notes:
   Assumes scripts/instances were previously registered into this batch/group.
 */}}
-
 {{- $batchId := .batchId | default "js/batch" -}}
 {{- $groupId := .groupId | default "main" -}}
 
-{{- if or (not $batchId) (not $groupId) -}}
-  {{- errorf "[build-js/configs/common/build.html] Missing required param(s): batchId=%v groupId=%v" $batchId $groupId -}}
-{{- end -}}
-
-{{- $payload := dict "batchId" $batchId "groupId" $groupId -}}
-
-{{- with (templates.Defer (dict "key" $groupId "data" $payload)) -}}
-  {{- $batchId := .batchId -}}
-  {{- $groupId := .groupId -}}
-
-  {{- with (js.Batch $batchId) -}}
+{{ $payload := dict "batchId" $batchId "groupId" $groupId -}}
+{{- with (templates.Defer (dict "key" $groupId "data" $payload )) -}}
+  {{- with (js.Batch .batchId) -}}
     {{- with .Build -}}
-      {{- with (index .Groups $groupId) -}}
+      {{- with (index .Groups $.groupId) -}}
         {{- range . -}}
           {{- $res := . -}}
           {{- if eq $res.MediaType.SubType "css" -}}

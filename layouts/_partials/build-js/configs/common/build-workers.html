@@ -1,60 +1,26 @@
 {{/* partial: build-js/configs/common/build-workers
 
   purpose:
-  Build and output manifests for workers based on js.Batch group.
-
-  inputs (.):
-  dict with keys:
-  - batchId (string) optional  batch identifier (default: "js/batch")
-  - groupId (string) optional  group identifier (default: "main")
-
-  behavior:
-  - defers execution via templates.Defer using groupId as the key
-  (ensures all scripts/instances have been registered before build)
-  - resolves the batch via js.Batch batchId
-  - calls .Build to compile the batch
-  - looks up the compiled assets for the specified group via index .Groups groupId
-  - renders:
-  - <link> tags for CSS outputs
-  - <script type="module"> tags for all other outputs
-  - in production, fingerprints and emits SRI + crossorigin
+  Build a resource and then store its name under "workers" in hugo store
 
   output:
-  manifest
-
-  notes:
-  Assumes scripts/instances were previously registered into this batch/group.
+  void
 */}}
 
-{{- $batchId := .batchId | default "js/batch" -}}
-{{- $groupId := .groupId -}}
-{{- if or (not $batchId) (not $groupId) -}}
-  {{- errorf "[build-js/configs/common/build.html] Missing required param(s): batchId=%v groupId=%v" $batchId $groupId -}}
-{{- end -}}
+{{- $workerKey := "workers" -}}
 
-{{- $payload := dict "batchId" $batchId "groupId" $groupId "worker_key" "worker_map" -}}
+{{- $workers := resources.Match "**/*.worker.ts" | default (slice) -}}
+{{- $sharedWorkers := resources.Match "**/*.shared-worker.ts" | default (slice) -}}
+{{- $allWorkers := slice | append $sharedWorkers | append $workers }}
 
-{{- with (templates.Defer (dict "key" $groupId "data" $payload)) -}}
-  {{- $batchId := .batchId -}}
-  {{- $groupId := .groupId -}}
-  {{- $worker_key := .worker_key -}}
-
-  {{- with (js.Batch $batchId) -}}
-    {{- with .Build -}}
-      {{- with (index .Groups $groupId) -}}
-        {{- range . -}}
-          {{ if or
-            (strings.HasSuffix $groupId ".worker.ts")
-            (strings.HasSuffix $groupId ".shared-worker.ts")
-          }}
-            {{- $res := . -}}
-            {{- with ($res | fingerprint) -}}
-              {{- hugo.Store.SetInMap $worker_key $groupId .RelPermalink -}}
-            {{- end -}}
-            {{- continue -}}
-          {{- end -}}
-        {{- end }}
-      {{- end -}}
+{{- range $res := $allWorkers -}}
+  {{- $built := $res | js.Build (dict "format" "esm") -}}
+  {{- $fileName := path.Base $res.Name -}}
+  {{- if hugo.IsDevelopment -}}
+    {{- hugo.Store.SetInMap $workerKey $fileName $built.RelPermalink -}}
+  {{- else -}}
+    {{- with ($built | fingerprint) -}}
+      {{- hugo.Store.SetInMap $workerKey $fileName .RelPermalink -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}

@@ -13,8 +13,13 @@
 
   Good to know:
   - as of now it does not support plugins for esbuild!
+
+  DOCS:
+  https://gohugo.io/functions/js/batch/#config
+  https://github.com/bep/hugojsbatchdemo/blob/main/layouts/baseof.html
 */}}
 {{ $batchId := .batchId | default "js/batch" }}
+{{- $params := .params | default dict }}
 {{- if not $batchId }}
   {{- errorf "[build-js/common/config.html] - Expected batchId to be defined " }}
 {{- end }}
@@ -23,7 +28,10 @@
     {{- .SetOptions (dict
       "target" "es2022"
       "format" "esm"
-      "minify" true
+      "minify" (cond hugo.IsDevelopment false true)
+      "params" $params
+      "loaders" (dict ".css" "css" )
+      "sourceMap" (cond hugo.IsDevelopment "inline" "")
       )
     }}
   {{- end }}

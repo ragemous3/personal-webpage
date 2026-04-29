@@ -1,0 +1,25 @@
+.progress-block {
+  display: grid;
+  gap: --var(--spacing-xxs);
+}
+
+.progress-copy {
+  display: grid;
+  gap: --var(--spacing-xxs);
+}
+
+.progress-title {
+  font-size: --var(--font-size-xxs)
+}
+
+.progress-description {
+  margin: 0;
+  font-size: --var(--font-size-xxxs)
+  opacity: 0.8;
+}
+
+progress {
+  color: red;
+background-color: #4caf50;
+transition: width 0.4s ease;
+}

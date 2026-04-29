@@ -1,25 +1,15 @@
-{{- $session_file_keys := .Site.Params.session_file_keys -}}
+{{- $siteParams := dict "baseURL" .Site.BaseURL "title" .Site.Title "params" .Site.Params }}
+{{- $params := dict "SITE_PARAMS" $siteParams "PAGE_PARAMS" .Params -}}
+
+{{- partial "build-js/configs/common/build-workers" . }}
+{{- partial "build-js/configs/common/build-metadata" (dict "params" $params) }}
+
+{{- $providers := resources.Match "**/*.provider.ts" }}
 {{- $components := resources.Match "**/*.component.ts" }}
-{{- $workers := resources.Match "**/*.worker.ts" }}
-{{- $sharedWorkers := resources.Match "**/*.shared-worker.ts" }}
-{{- $mergedWorkers := slice | append $sharedWorkers | append $workers }}
-{{- if eq (len $mergedWorkers) 0 }}
-  {{- errorf "Expected to find components or workers" }}
-{{ end }}
+{{- $modules := slice | append $providers | append $components }}
 
-{{- partial "build-js/configs/common/config" }}
-{{ warnf "need to change scriptId to scriptPath and then add the actual path - I also need to change template defer to be the permalinks (the codesplits of te groups)" }}
-
-{{- range $mergedWorkers }}
-  {{- partial "build-js/configs/common/script" (dict "groupId" (path.Base .) "resource" . "scriptId" . ) }}
-  {{- partial "build-js/configs/common/build-workers" (dict  "groupId" (path.Base .) "config" $session_file_keys) }}
-{{- end }}
-
-{{- range $components }}
-  {{ partial "build-js/configs/common/script" (dict "resource" . "scriptId" (.RelPermalink)  "params" (dict "hej" "hej") ) }}
+{{- range $modules }}
+  {{ partial "build-js/configs/common/script" (dict "resource" . "scriptId" (.RelPermalink)) }}
   {{- partial "build-js/configs/common/instance" (dict "scriptId" (.RelPermalink)) }}
 {{- end }}
-{{- partial "build-js/configs/common/runner-register" }}
-{{- partial "build-js/configs/common/instance" }}
-{{- partial "build-js/configs/common/build" }}
-{{- partial "build-js/configs/common/build-meta-data" (dict "pageParams" .Params "siteParams" .Site.Params) }}
+{{ partial "build-js/configs/common/build" -}}

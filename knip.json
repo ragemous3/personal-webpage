@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["assets/**/*.ts", "scripts/create-index/src/**/*.ts"],
+  "project": [
+    "assets/**/*.ts",
+    "scripts/create-index/src/**/*.ts",
+    "!scripts/create-index/dist/**",
+    "!public/**",
+    "!resources/**",
+    "!node_modules/**"
+  ]
+}

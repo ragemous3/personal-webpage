@@ -1,0 +1,38 @@
+{{/* purpose:
+  Create a resource of variables to be fetched by runtime.
+
+  Should ALWAYS be run last.
+
+  inputs (.):
+  - .pageParams (a .md files frontmatter params field)
+  - .siteParams (values of config.tomls [params] or params.toml file)
+  - worker_map (from Store)
+
+  behavior:
+  - (NEW) Adds worker file names to global context.
+  - (OLD) Creates a file of config to be consumed by runtime.
+  - (OLD) Access store to fetch a map of fingerprinted workers
+  output:
+  file.json
+*/}}
+
+{{- if not .params.PAGE_PARAMS -}}
+  {{- errorf "Expected page params" -}}
+{{- end -}}
+
+{{- if not .params.SITE_PARAMS -}}
+  {{- errorf "Expected site params" -}}
+{{- end -}}
+
+{{- $workerMap := hugo.Store.Get "workers" | default (dict) }}
+{{- $config := (dict
+  "WORKER_NAMES" $workerMap
+  "SITE_PARAMS" .params.SITE_PARAMS
+  "PAGE_PARAMS" .params.PAGE_PARAMS
+  )
+}}
+
+{{- partial "build-js/configs/common/config" (dict "params" $config ) }}
+
+{{/* $file := resources.FromString "data/runtime-config.json" $json */}}
+{{/* $file.Publish */}}
