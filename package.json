@@ -11,37 +11,26 @@
     "knip": "knip"
   },
   "dependencies": {
-    "@emnapi/runtime": "^1.7.1",
     "@huggingface/transformers": "^3.8.1",
-    "@langchain/community": "^1.0.6",
     "@langchain/core": "^1.1.1",
     "@langchain/textsplitters": "^1.0.1",
     "@lit/context": "^1.1.6",
-    "@sqlite.org/sqlite-wasm": "^3.51.1-build2",
-    "@xenova/transformers": "^2.17.2",
-    "closevector-web": "^0.1.6",
-    "hnswlib-node": "^3.0.0",
     "hnswlib-wasm": "^0.8.2",
-    "lit": "^3.3.2",
-    "postcss-cli": "^11.0.1",
-    "sql.js": "^1.13.0"
+    "lit": "^3.3.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@types/sharedworker": "^0.0.220",
     "autoprefixer": "^10.4.24",
-    "emnapi": "^1.7.1",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^17.4.0",
-    "knip": "^5.88.1",
+    "knip": "^6.9.0",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "prettier-plugin-go-template": "^0.0.15",
     "puppeteer": "^24.33.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.59.1",
     "vite": "^7.2.7"
   }
 }

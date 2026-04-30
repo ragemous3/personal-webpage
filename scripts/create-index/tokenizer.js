@@ -1,4 +1,4 @@
-import { AutoTokenizer } from '@xenova/transformers';
+import { AutoTokenizer } from '@huggingface/transformers';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 export class ChunkTextByToken {
   tokenizer;
@@ -46,11 +46,7 @@ export class ChunkTextByToken {
 
         // If this is not the first chunk and it's too small,
         // only allow it if it's the final chunk (completeness).
-        if (
-          chunkIds.length < minTokens &&
-          end !== tokenIds.length &&
-          start !== 0
-        ) {
+        if (chunkIds.length < minTokens && end !== tokenIds.length && start !== 0) {
           break;
         }
 
