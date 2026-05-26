@@ -1,23 +1,28 @@
-import { StandardCommunicationBaseContract } from '../../shared/contracts/base-port.contract';
-import { StateMachineConnectionContract } from '../../shared/contracts/message-connection.contract';
-import { MessageBase, StateMachineStatusLog } from '../workers/models';
+import { type MessageBase, type StateMachineStatusLog } from '@/layers/data/workers/models';
+import { type StandardCommunicationBaseContract } from '@/layers/shared/contracts/base-port.contract';
+import { type StateMachineConnectionContract } from '@/layers/shared/contracts/message-connection.contract';
 
 export abstract class StandardCommunicationBaseAbstract implements StandardCommunicationBaseContract {
   channelId = crypto.randomUUID();
-  protected connections: (() => void)[] = [];
+  protected connections: Array<() => void> = [];
 
   constructor(
-    protected stateMachine: StateMachineConnectionContract<MessageBase<unknown>, unknown>,
-    public entityName: string,
+    protected stateMachine: StateMachineConnectionContract<MessageBase<unknown>>,
+    public name: string,
   ) {}
 
-  checkAvailability = (entityName: string = this.entityName) =>
+  checkAvailability = (entityName: string = this.name): void => {
     this.stateMachine.send({
       id: this.channelId,
-      name: this.entityName,
+      name: this.name,
       task: `${entityName}:check`,
       payload: null,
     });
+  };
+
+  dispose(): void {
+    for (const unsub of this.connections) unsub();
+  }
 
   protected isStateMachineStatusLog = (payload: unknown): payload is StateMachineStatusLog =>
     payload &&
@@ -32,7 +37,4 @@ export abstract class StandardCommunicationBaseAbstract implements StandardCommu
   abstract initialize(payload: MessageBase<unknown>): void;
   abstract send(payload: MessageBase<unknown>): void;
   abstract onData(listener: (data: unknown) => void): void;
-  dispose(): void {
-    this.connections.forEach((unsub) => unsub());
-  }
 }

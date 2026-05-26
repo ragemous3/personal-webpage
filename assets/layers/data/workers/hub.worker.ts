@@ -1,23 +1,30 @@
-import { SeverityLevelCodes } from '../../shared/constants';
-import { isMessageBase, isNullPayload } from '../guards/is-message-base';
-import { MessageBase, WorkerMessageHub } from './models';
+import { isInitConfigBase } from '@/layers/data/guards/is-init-config-base.guard';
+import { isMessageBase } from '@/layers/data/guards/is-message-base.guard';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { isRecord } from '@/layers/shared/guards/guards';
+
+import { type MessageBase, type WorkerMessageHub } from './models';
 import { WebWorkerManager } from './web-worker-manager';
 
 const workers = new Map<string, WebWorkerManager<MessageBase<unknown>, unknown>>();
 
-const throwOnMissingData = () => {
-  throw new Error(`$[${SeverityLevelCodes.ERROR}] - Missing necessary data to perform task`);
-};
-
-const init = async (pkg: MessageBase<unknown>): Promise<void> => {
-  if (!pkg || !isMessageBase(pkg, isNullPayload) || !pkg?.source || !pkg?.name) {
-    throw throwOnMissingData();
+const init = (package_: unknown, payload: unknown): void => {
+  if (
+    !package_ ||
+    !isMessageBase(package_, isRecord) ||
+    !package_.name ||
+    !payload ||
+    !isInitConfigBase(payload)
+  ) {
+    throw new Error(`$[${SeverityLevelCodes.ERROR}] - Missing necessary data to perform task`);
   }
 
-  const ww = new WebWorkerManager(pkg.source, pkg.name);
-  ww.listen((data) => postMessage(data)); // this is where data gets sent BACK to any listener of the hub :).
-  ww.initialize(pkg);
-  workers.set(pkg.name, ww);
+  const ww = new WebWorkerManager(payload.source, package_.name);
+  ww.listen((data) => {
+    postMessage(data);
+  }); // this is where data gets sent BACK to any listener of the hub :).
+  ww.initialize(package_);
+  workers.set(package_.name, ww);
 };
 
 export const isWebWorkerManager = <
@@ -29,7 +36,7 @@ export const isWebWorkerManager = <
   return value instanceof WebWorkerManager;
 };
 
-const postToWorker = (payload: MessageBase<unknown>): false | void => {
+const postToWorker = (payload: MessageBase<unknown>): undefined => {
   const worker = workers.get(payload.name);
   if (!isWebWorkerManager(worker))
     throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a defined worker!`);
@@ -39,37 +46,39 @@ const postToWorker = (payload: MessageBase<unknown>): false | void => {
   worker.send(payload);
 };
 
-const post = (payload: MessageBase<unknown>): void => postMessage(payload);
+const post = (payload: MessageBase<unknown>): void => {
+  postMessage(payload);
+};
 
-onmessage = async (msgEvent: MessageEvent<WorkerMessageHub>): Promise<void> => {
-  const { task, payload }: Partial<WorkerMessageHub> = msgEvent.data;
+onmessage = (messageEvent: MessageEvent<WorkerMessageHub>): void => {
+  const { task, payload }: Partial<WorkerMessageHub> = messageEvent.data;
 
   try {
     // TODO - Switch to response return task
     // Check if alive (pings back same msg)
-    if (task === 'hub:ping') post(msgEvent.data);
+    if (task === 'hub:ping') post(messageEvent.data);
     // host a data entity -> pings back task on success
-    if (task === 'hub:host') await init(payload);
+    if (task === 'hub:host') init(payload, payload.payload);
     // query the data entity
     if (task === 'hub:query') postToWorker(payload);
-  } catch (err: unknown) {
-    if (err instanceof Error) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
       postMessage({
-        ...msgEvent.data,
+        ...messageEvent.data,
         error: {
-          name: `[${SeverityLevelCodes.ERROR}]${err.name}`,
-          message: err.message,
-          stack: err.stack,
+          name: `[${SeverityLevelCodes.ERROR}]${error.name}`,
+          message: error.message,
+          stack: error.stack,
         },
       });
       return;
     }
 
     postMessage({
-      ...msgEvent.data,
+      ...messageEvent.data,
       error: {
         name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
-        message: String(err),
+        message: String(error),
         stack: null,
       },
     });
@@ -77,4 +86,6 @@ onmessage = async (msgEvent: MessageEvent<WorkerMessageHub>): Promise<void> => {
 };
 
 // TODO:// Attach ID to the error
-onmessageerror = (err: unknown) => postMessage(err);
+onmessageerror = (error: unknown) => {
+  postMessage(error);
+};

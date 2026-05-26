@@ -7,8 +7,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "knip": "knip"
+    "dev": "hugo serve --disableFastRender --ignoreCache --noHTTPCache --gc",
+    "build": "eslint-project-specifc.config.js",
+    "knip": "npx knip"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
@@ -19,18 +20,25 @@
     "lit": "^3.3.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "autoprefixer": "^10.4.24",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^6.15.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-boundaries": "^6.0.2",
+    "eslint-plugin-import-x": "^4.16.2",
+    "eslint-plugin-no-relative-import-paths": "^1.6.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^17.4.0",
-    "knip": "^6.9.0",
+    "knip": "^5.88.1",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "prettier-plugin-go-template": "^0.0.15",
     "puppeteer": "^24.33.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.59.4",
     "vite": "^7.2.7"
   }
 }

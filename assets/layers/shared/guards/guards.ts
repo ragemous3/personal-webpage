@@ -1,5 +1,5 @@
 import { SeverityLevelCodes } from '../constants';
-import { Nullable } from '../models';
+import { type Nullable } from '../models';
 
 const guardIsError = (txt: string): Nullable<SeverityLevelCodes> => {
   for (const value of Object.values(SeverityLevelCodes)) {
@@ -25,13 +25,28 @@ const isUndefined = (v: unknown): v is undefined => v === undefined;
 
 const isNull = (v: unknown): v is null => v === null;
 
+const hasStringProperties = <K extends string>(
+  value: Record<string, unknown>,
+  keys: readonly K[],
+): value is Record<K, string> => {
+  return keys.every((key) => typeof value[key] === 'string');
+};
+
+const hasNumberProperties = <K extends string>(
+  value: Record<string, unknown>,
+  keys: readonly K[],
+): value is Record<K, number> => {
+  return keys.every((key) => typeof value[key] === 'number');
+};
 export {
-  isRecord,
   guardIsError,
+  hasNumberProperties,
+  hasStringProperties,
   isBigInt,
   isBoolean,
   isNull,
   isNumber,
+  isRecord,
   isString,
   isSymbol,
   isUndefined,

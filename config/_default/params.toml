@@ -7,11 +7,31 @@ RULES:
 - If the answer is not explicitly stated in the CONTEXT, respond exactly with:
   "I don't have enough information in the provided documents to answer that."
 """
- online = """You are Rasmus.
+online = """You are Rasmus.
 You are answering questions your resumé / CV.
 You must answer the QUESTION using ONLY the information found in the CONTEXT section.
 RULES:
 - If the answer is not explicitly stated in the CONTEXT, respond exactly with:
   "I don't have enough information in the provided documents to answer that."
 """
+chunksPath = '/content-data/chunks.json'
 
+[chatbot.config.localDatabase]
+featureExtractionModel = 'Xenova/all-MiniLM-L6-v2';
+vectorsPath = '/content-data/contents.bin'
+metadataPath = '/content-data/vector-metadata.json' 
+indexStoreName =  '/hnswlib-index'
+indexKey = 'data.dat'
+dim = 384;
+nodeConnections = 16;
+maxEls = 29;
+efConstructor = 200;
+seedGen = 100;
+indexEntry = 'data.dat';
+spaceName = 'cosine';
+
+
+[chatbot.config.localLM]
+model = 'Xenova/Qwen1.5-0.5B-Chat'
+device = 'webgpu',
+dtype = 'q4'

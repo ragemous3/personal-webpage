@@ -1,28 +1,28 @@
+/* eslint-disable unicorn/prefer-add-event-listener */
 export class IndexDBBase {
-  indexName: string = '/hnswlib-index';
   indexDBVersion = 21;
-  constructor(indexName: string) {
-    this.indexName = indexName;
-  }
+  constructor(private readonly indexName: string) {}
 
-  openDB = (storeName: string = 'FILE_DATA'): Promise<IDBDatabase> =>
+  openDB = (storeName = 'FILE_DATA'): Promise<IDBDatabase> =>
     new Promise((resolve, reject) => {
       const request = indexedDB.open(this.indexName, this.indexDBVersion);
 
       request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(storeName)) {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(storeName)) {
           reject(new Error('Store should`ve been loaded earlier.'));
         }
       };
 
       request.onsuccess = () => {
-        const db = request.result;
-        resolve(db);
+        const database = request.result;
+        resolve(database);
       };
       request.onerror = () => {
         console.error(request.error);
-        reject(request.error);
+        if (request.error instanceof Error) {
+          reject(request.error);
+        }
       };
     });
 }

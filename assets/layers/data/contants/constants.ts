@@ -9,8 +9,8 @@ export enum WorkerKeys {
   VECTORDB = 'vectordb',
 }
 export enum BroadcastKeys {
-  LLM = WorkerKeys.LLM,
-  VECTORDB = WorkerKeys.VECTORDB,
+  LLM = 'llm',
+  VECTORDB = 'vectordb',
 }
 export const WorkerFileNames = {
   stateMachine: 'state-machine.shared-worker.ts',

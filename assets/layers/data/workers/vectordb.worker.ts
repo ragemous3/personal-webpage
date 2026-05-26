@@ -1,43 +1,43 @@
-import { SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
-import { SeverityLevelCodes } from '../../shared/constants';
-import { Task, TaskResponse, VectorDbDto } from './models';
-import { VectorDBHNSWData } from '../vectordbHNSW.data';
-import { ProgressInfo } from '../../shared/models/progress.model';
+import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
+
+import { VectorDBHNSWData } from '@/layers/data/vectordbHNSW.data';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type ProgressInfo } from '@/layers/shared/models/progress.model';
+
+import { type TaskResponse, type VectorDatabaseDTO as VectorDatabaseDto } from './models';
 // Impossible to inject as a dependency to
-const db = new VectorDBHNSWData();
+const database = new VectorDBHNSWData();
 let ID = ''; //defined from outside
 let NAME: string | undefined = ''; //defined from outside
 //TODO: // progressTracker is a dupe from llm and also the vectordb:progress is hardcoded
 //
-const progressTracker = (progress: ProgressInfo) => send('vectordb:progress:response', progress);
+const progressTracker = (progress: ProgressInfo): void => {
+  send('vectordb:progress:response', progress);
+};
 
-const send = <T>(task: TaskResponse, payload: T) => {
+const send = <T>(task: TaskResponse, payload: T): void => {
   postMessage({ id: ID, name: NAME, task, payload });
 };
 
-const handleQueries = async (
-  query: string | undefined,
-  topK: number = 5,
-): Promise<SearchResult> => {
+const handleQueries = async (query: string | undefined, topK = 5): Promise<SearchResult> => {
   if (!query) {
     throw new Error('Expected defined query');
   }
-  return await db.query(query, topK);
+  return await database.query(query, topK);
 };
 
-onmessage = async (msgEvent: MessageEvent<VectorDbDto>): Promise<void> => {
-  const { id, task, payload, name }: VectorDbDto = msgEvent.data;
+onmessage = async (messageEvent: MessageEvent<VectorDatabaseDto>): Promise<void> => {
+  const { id, task, payload, name }: VectorDatabaseDto = messageEvent.data;
   ID = id;
   NAME = name;
   try {
-    if (task == 'vectordb:init') {
-      await db.init(progressTracker);
+    if (task === 'vectordb:init') {
+      await database.init(progressTracker);
       return;
     }
 
-    if (task == 'vectordb:query' && payload) {
+    if (task === 'vectordb:query' && payload) {
       const resp = await handleQueries(payload.query);
-      if (!resp) throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected defined value'`);
       send('vectordb:query:response', {
         id: ID,
         name: NAME,
@@ -49,28 +49,30 @@ onmessage = async (msgEvent: MessageEvent<VectorDbDto>): Promise<void> => {
       });
       return;
     }
-  } catch (err) {
-    if (err instanceof Error) {
+  } catch (error) {
+    if (error instanceof Error) {
       postMessage({
-        ...msgEvent.data,
+        ...messageEvent.data,
         error: {
-          name: `${err.name}`,
-          message: err.message,
-          stack: err.stack,
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
         },
       });
 
       return;
     }
     postMessage({
-      ...msgEvent.data,
+      ...messageEvent.data,
       error: {
         name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
-        message: String(err),
+        message: String(error),
         stack: null,
       },
     });
   }
 };
 // TODO:// Attach ID to the error
-onmessageerror = (err: unknown) => postMessage(err);
+onmessageerror = (error: unknown): void => {
+  postMessage(error);
+};

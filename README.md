@@ -32,7 +32,7 @@ The infrastructure is aiming to follow SOLID principles and is built on OO (Obje
 The composition root is essentially the app - it's responsible for constructing concrete dependencies and providing them to the component tree.
 The web components providing the components with dependencies.
 
-In this project, Lit provider components and factories act as the composition root.
+In this project, Lit components + lit context acts as composition root. The composition-root is then provisioned by factory pattern.
 
 The composition root may depend on all layers because its job is wiring, not application logic.
 
@@ -61,7 +61,7 @@ This includes workers, SharedWorkers, BroadcastChannel, IndexedDB, fetch, runtim
 The data layer hides low-level implementation details behind simple methods that the service layer can call.
 
 **Layer dependency direction**
-The direction of the dependencies is always only one direction.
+The direction of the dependencies is always only one direction. Between layers in the below-mentioned direction, it's allowed to anything that concerns data transfers is allowed as to keep code DRY - for example contracts and guards.
 
 ```text
 view->service->data
@@ -256,11 +256,14 @@ api-base.service.ts
 hugo serve --disableFastRender --ignoreCache --noHTTPCache --gc
 ```
 
-### See unused dependencies
-
-> [!NOTE]
-> Unclear why but latest knip does not work on my machine - runs out of memory.
+## Linting
 
 ```bash
-npm run knip
+npx eslint . --fix
+```
+
+## Removed unused dependencies
+
+```bash
+npx knip
 ```

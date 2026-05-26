@@ -1,5 +1,5 @@
-import { WorkerFileNames } from './contants/constants';
-import { Task, MessageBase } from './workers/models';
+import { type WorkerFileNames } from './contants/constants';
+import { MessageBase,Task } from './workers/models';
 
 export type WorkerFileName = (typeof WorkerFileNames)[keyof typeof WorkerFileNames];
 export type ChatbotWorkers = Record<WorkerFileName, string>;

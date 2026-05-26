@@ -1,12 +1,8 @@
-import { MessageBase } from '../workers/models';
+import { type MessageBase } from '@/layers/data/workers/models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type BroadcastBaseContract } from '@/layers/shared/contracts/broadcast.contract';
+
 import { MessagingBase } from './message-base.abstract';
-import { SeverityLevelCodes } from '../../shared/constants';
-import { BroadcastBaseContract } from '../../shared/contracts/broadcast.contract';
-import {
-  createStatefulSubscribable,
-  WritableStatefulConnections,
-} from '../../shared/utils/subscribable';
-// https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
 export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
   extends MessagingBase<BroadcastChannel, To, From>
@@ -16,12 +12,8 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
     super(name);
   }
 
-  //TODO:// not used?
-  subscribable: WritableStatefulConnections<From> = createStatefulSubscribable();
-
   terminate = (): void => {
     if (this.isTerminating || !this.carrier) return;
-    console.log('GOT terminated');
     this.isTerminating = true;
     this.carrier.close();
     this.carrier = undefined;
@@ -31,7 +23,7 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
   setupEventListeners(): void | null {
     if (!this.carrier) return null;
     this.carrier.onmessage = this.handleMessage.bind(this);
-    this.carrier.onmessageerror = this.handleError.bind(this);
+    this.carrier.addEventListener('messageerror', this.handleError.bind(this));
   }
 
   send(message: To): void {
@@ -51,8 +43,8 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
 
     try {
       this.carrier = new BroadcastChannel(this.name);
-    } catch (e) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init broadcast: ${e}`);
+    } catch (error) {
+      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init broadcast: ${error}`);
     }
 
     this.setupEventListeners();

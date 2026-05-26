@@ -1,6 +1,6 @@
-import { ContentRepositoryContract } from '../shared/contracts/content-repository.contract';
+import { type ContentRepositoryContract } from '../shared/contracts/content-repository.contract';
 import { ApiBase } from './abstracts/base.infra';
-import { Chunk } from './models/models';
+import { type Chunk } from './models/models';
 
 export class ContentRepository extends ApiBase implements ContentRepositoryContract {
   #chunks: Chunk[] = []; //TODO: maybe remove?

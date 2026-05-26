@@ -1,7 +1,8 @@
-import { MessageBase } from '../../data/workers/models';
-import { StateMachineContract } from './state-machine.contract';
+import { type MessageBase } from '@/layers/data/workers/models';
 
-export interface StateMachineConnectionContract<
+import { type StateMachineContract } from './state-machine.contract';
+
+export type StateMachineConnectionContract<
   To extends MessageBase<unknown>,
   From = unknown,
-> extends StateMachineContract<unknown, To, From> {}
+> = {} & StateMachineContract<unknown, To, From>;

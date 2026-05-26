@@ -1,10 +1,9 @@
-import { SysMessageConfig } from '../models/models';
+import { type SysMessageConfig } from '@/composition/models/models';
 
 export const isSysMessageConfig = (
   sysMessageConfig: unknown,
 ): sysMessageConfig is SysMessageConfig =>
   sysMessageConfig &&
-  sysMessageConfig !== null &&
   typeof sysMessageConfig === 'object' &&
   'online' in sysMessageConfig &&
   'offline' in sysMessageConfig

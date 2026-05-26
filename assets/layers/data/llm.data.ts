@@ -1,85 +1,81 @@
 import {
-  Chat,
-  Message,
+  type Chat,
+  type DataType,
+  type DeviceType,
+  type Message,
   pipeline,
-  ProgressInfo,
-  TextGenerationOutput,
-  TextGenerationPipeline,
-  TextGenerationSingle,
+  type ProgressInfo,
+  type TextGenerationConfig,
+  type TextGenerationOutput,
+  type TextGenerationPipeline,
+  type TextGenerationSingle,
   TextStreamer,
 } from '@huggingface/transformers';
 
-import { GenerationConfig } from './models/models';
-import { SeverityLevelCodes } from '../shared/constants';
-import { TokenizerUtil } from '../shared/utils/tokenizer';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { TokenizerUtility as TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
 export class LocalLLMData {
-  modelMaxTokens: number = 0;
-  llmModelName: string = 'Xenova/Qwen1.5-0.5B-Chat';
-  tokenizerUtil: TokenizerUtil | undefined;
+  modelMaxTokens = 0;
+  tokenizerUtil: TokenizerUtility | undefined;
   generator: TextGenerationPipeline | undefined;
 
+  constructor(
+    private readonly defaultLmModelName: string,
+    private readonly defaultDevice: DeviceType,
+    private readonly defaultDataType: DataType,
+    private readonly options: Partial<TextGenerationConfig>,
+  ) {}
+
   loadModel = async (
-    modelName: string = this.llmModelName,
+    modelName: string = this.defaultLmModelName,
     progressTracker: (progress: ProgressInfo) => void,
-  ): Promise<TextGenerationPipeline> =>
-    (this.generator = await pipeline('text-generation', modelName, {
-      device: 'webgpu',
-      dtype: 'q4',
+  ): Promise<TextGenerationPipeline> => {
+    return (this.generator = await pipeline('text-generation', modelName, {
+      device: this.defaultDevice,
+      dtype: this.defaultDataType,
       progress_callback: progressTracker,
-    })) as unknown as TextGenerationPipeline;
+    }));
+  };
 
-  init = async (progressTracker: (progress: ProgressInfo) => void) => {
-    this.tokenizerUtil = new TokenizerUtil(this.llmModelName);
+  init = async (progressTracker: (progress: ProgressInfo) => void): Promise<void> => {
+    this.tokenizerUtil = new TokenizerUtility(this.defaultLmModelName);
     await this.tokenizerUtil.initTokenizer();
-    this.modelMaxTokens = this.tokenizerUtil.getMaxLength();
 
-    await this.loadModel(this.llmModelName, progressTracker);
+    this.modelMaxTokens = this.tokenizerUtil.getMaxLength();
+    await this.loadModel(this.defaultLmModelName, progressTracker);
   };
 
   chatWithModel = async (
     prompt: Chat,
     generator: TextGenerationPipeline,
-    options: Partial<GenerationConfig> = {
-      max_new_tokens: 128,
-      do_sample: false,
-      return_full_text: false,
-    },
+    options: Partial<TextGenerationConfig>,
   ): Promise<TextGenerationOutput | TextGenerationOutput[]> => await generator(prompt, options);
 
-  getChatPrompt = (chatMessages: Chat): undefined | string => {
-    if (!this.tokenizerUtil) {
-      console.error('TokenizerUtil is undefined, perhaps you forgot to init?');
-      return;
-    }
-
-    const txt: unknown = this.tokenizerUtil.tokenizer.apply_chat_template(chatMessages, {
-      tokenize: false,
-    });
-    if (typeof txt === 'string') return txt;
-    console.error('Expected value to be string');
-  };
-
-  getTextStreamer = (generator: TextGenerationPipeline, cb: (txt: string) => void) =>
+  getTextStreamer = (
+    generator: TextGenerationPipeline,
+    callback: (txt: string) => void,
+  ): TextStreamer =>
     new TextStreamer(generator.tokenizer, {
       skip_prompt: true,
       skip_special_tokens: true,
-      callback_function: cb,
+      callback_function: callback,
     });
 
-  isChatMessage = (msg: Message | unknown): msg is Message =>
-    msg && typeof msg === 'object' && 'content' in msg && 'role' in msg ? true : false;
+  isChatMessage = (message: unknown): message is Message =>
+    message && typeof message === 'object' && 'content' in message && 'role' in message
+      ? true
+      : false;
 
   chatMessageHandler = async (
     chatMessages: Chat,
-    cb: (txt: string) => void,
+    callback: (txt: string) => void,
   ): Promise<TextGenerationSingle | undefined> => {
     if (
       !this.generator ||
-      !chatMessages ||
       !Array.isArray(chatMessages) ||
       chatMessages.length <= 1 ||
-      !chatMessages[chatMessages.length - 1]
+      !chatMessages.at(-1)
     ) {
       return;
     }
@@ -88,28 +84,31 @@ export class LocalLLMData {
       console.error('TokenizerUtil is undefined, perhaps you forgot to init?');
       return;
     }
-    const lastMsg = chatMessages[chatMessages.length - 1];
+    const lastMessage = chatMessages.at(-1);
 
-    if (!this.isChatMessage(lastMsg) || lastMsg.role === 'system' || lastMsg.role === 'assistant') {
+    if (
+      !this.isChatMessage(lastMessage) ||
+      lastMessage.role === 'system' ||
+      lastMessage.role === 'assistant'
+    ) {
       console.error(`[${SeverityLevelCodes.ERROR}] - Expected a chatMessages`);
       return;
     }
 
-    const tokenTotal = this.tokenizerUtil.countTokens(lastMsg.content);
+    const tokenTotal = this.tokenizerUtil.countTokens(lastMessage.content);
 
     if (tokenTotal > this.modelMaxTokens) {
       console.error(
-        `[${SeverityLevelCodes}] - TO many tokens in query! Total amount of tokens: ${tokenTotal}`,
+        `[${SeverityLevelCodes.ERROR}] - TO many tokens in query! Total amount of tokens: ${tokenTotal}`,
       );
     }
 
     const output = await this.chatWithModel(chatMessages, this.generator, {
-      streamer: this.getTextStreamer(this.generator, cb),
-      max_new_tokens: 100,
-      temperature: 0.75,
+      ...this.options,
+      streamer: this.getTextStreamer(this.generator, callback),
     });
 
-    if (!output || !output[0] || !('generated_text' in output[0])) {
+    if (!output[0] || !('generated_text' in output[0])) {
       return;
     }
     return output[0];

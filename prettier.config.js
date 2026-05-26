@@ -1,5 +1,6 @@
 // https://www.npmjs.com/package/prettier-plugin-go-template
 export default {
+  semi: true,
   tabWidth: 2,
   printWidth: 100,
   singleQuote: true,

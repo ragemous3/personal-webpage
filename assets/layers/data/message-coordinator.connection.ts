@@ -1,6 +1,6 @@
-import { StateMachineConnectionContract } from '../shared/contracts/message-connection.contract';
-import { MessageBase } from './workers/models';
+import { type StateMachineConnectionContract } from '../shared/contracts/message-connection.contract';
 import { SharedWorkerManager } from './abstracts/state-machine-manager.abstract';
+import { type MessageBase } from './workers/models';
 
 export class MessageCoordinatorConnection<To extends MessageBase<unknown>, From>
   extends SharedWorkerManager<To, From>

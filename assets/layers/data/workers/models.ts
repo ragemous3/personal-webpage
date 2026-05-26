@@ -1,7 +1,8 @@
-import { SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
-import { Nullable } from '../../shared/models';
-import { StateMachineStatesEnum } from '../contants/constants';
-import { ChatMessage } from '../models/models';
+import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
+
+import { type StateMachineStatesEnum } from '@/layers/data/contants/constants';
+import { type ChatMessage } from '@/layers/data/models/models';
+import { type Nullable } from '@/layers/shared/models';
 
 export type Action =
   | 'host'
@@ -22,21 +23,19 @@ export interface MessageBase<T, Y = Task | TaskResponse> {
   task: Y;
   payload: T;
   error?: string;
-  source?: string;
 }
 
-//TODO:// Shared Worker types have bad names...
 export type StateMachineTask = 'check' | 'set' | 'transfer';
 export type StateMachineStates = keyof typeof StateMachineStatesEnum;
 export type StateMachineName = string;
 export type StateMachineProtocol = `${StateMachineName}:${StateMachineTask}`;
 
-// announcement would be the global broadcast one.
-export type StateMachineStatusLog = {
+// announcement is be the global broadcast one.
+export interface StateMachineStatusLog {
   initiator: ReturnType<typeof crypto.randomUUID> | 'announcement';
   entity: StateMachineName;
   status: StateMachineStatesEnum;
-};
+}
 
 export type SharedWorkerMessage = MessageBase<Nullable<unknown>, StateMachineProtocol>;
 export type WorkerMessageHub = MessageBase<MessageBase<unknown>>;
@@ -45,14 +44,14 @@ export interface LlmDTO {
   message: ChatMessage[];
 }
 
-export interface VectorDbDto extends MessageBase<
+export type VectorDatabaseDTO = MessageBase<
   Nullable<{
     topK?: number;
     query: string;
   }>
-> {}
+>;
 
-export type VectorDbResponse = {
+export interface VectorDatabaseResponse {
   query: string;
   response: SearchResult;
-};
+}

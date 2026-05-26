@@ -1,6 +1,5 @@
-import { TextGenerationConfig } from '@huggingface/transformers';
+import { type TextGenerationConfig } from '@huggingface/transformers';
 
-export type GenerationConfig = TextGenerationConfig;
 export type RoleTypes = 'system' | 'user' | 'assistant';
 export type ChatMessage = { role: RoleTypes; content: string };
 export type SysMessage = { role: 'system'; content: string };
@@ -11,11 +10,14 @@ export interface Chunk {
   readonly index: number;
 }
 
-export interface HNSWDBEntry {
-  timestamp: string | Date;
-  mode: number;
+export type HNSWDBEntry = {
   contents: Uint8Array;
-}
+} & HNSWDBEntryMetadata;
+
+export type HNSWDBEntryMetadata = {
+  mode: number;
+  timestamp: string | Date;
+};
 
 export type RAGStatus = {
   status: RagStates;

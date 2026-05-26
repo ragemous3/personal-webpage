@@ -1,13 +1,13 @@
 import {
-  InitiateProgressInfo,
-  DownloadProgressInfo,
-  ProgressStatusInfo,
-  DoneProgressInfo,
-  ReadyProgressInfo,
-  ProgressInfo,
-  FileProgressBase,
+  type DoneProgressInfo,
+  type DownloadProgressInfo,
+  type FileProgressBase,
+  type InitiateProgressInfo,
+  type ProgressInfo,
+  type ProgressStatusInfo,
+  type ReadyProgressInfo,
 } from '../models/progress.model';
-import { isRecord, isString, isNumber } from './guards';
+import { isNumber,isRecord, isString } from './guards';
 
 export const hasFileProgressBase = (
   value: Record<string, unknown>,

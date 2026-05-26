@@ -1,10 +1,10 @@
-import { MessageBase } from '../../data/workers/models';
+import { type MessageBase } from '@/layers/data/workers/models';
 
-export interface MessagingBaseContract<Carrier, To extends MessageBase<unknown>, From> {
+export type MessagingBaseContract<Carrier, To extends MessageBase<unknown>, From> = {
   carrier: Carrier | undefined;
   isTerminating: boolean | undefined;
-  listen(func: (data: MessageBase<From>) => void): Set<(data: MessageBase<From>) => void>;
+  listen(function_: (data: MessageBase<From>) => void): () => boolean;
   initialize(wm?: To): void;
   send(message: To): void;
   terminate(): void;
-}
+};

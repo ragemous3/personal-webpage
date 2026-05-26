@@ -1,8 +1,8 @@
-import { MessageBase } from '../workers/models';
-import { SeverityLevelCodes } from '../../shared/constants';
-import { StateMachineContract } from '../../shared/contracts/state-machine.contract';
+import { type MessageBase } from '@/layers/data/workers/models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type StateMachineContract } from '@/layers/shared/contracts/state-machine.contract';
+
 import { WorkerBase } from './worker-base.abstract';
-// https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
 export abstract class SharedWorkerManager<To extends MessageBase<unknown>, From>
   extends WorkerBase<MessagePort, To, From>
@@ -13,20 +13,6 @@ export abstract class SharedWorkerManager<To extends MessageBase<unknown>, From>
     protected carrierName: string,
   ) {
     super(scriptPath, carrierName);
-  }
-
-  terminate = (): void => {
-    if (this.isTerminating || !this.carrier) return;
-    this.isTerminating = true;
-    this.carrier.close();
-    this.carrier = undefined;
-    this.isTerminating = false;
-  };
-
-  protected setupEventListeners(): void | null {
-    if (!this.carrier) return null;
-    this.carrier.onmessage = this.handleMessage.bind(this);
-    this.carrier.onmessageerror = this.handleError.bind(this);
   }
 
   send(message: To): void {
@@ -48,10 +34,25 @@ export abstract class SharedWorkerManager<To extends MessageBase<unknown>, From>
       });
       this.carrier = carrier.port;
       this.carrier.start();
-    } catch (e) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${e}`);
+    } catch (error) {
+      if (error instanceof Error)
+        console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${error}`);
     }
 
     this.setupEventListeners();
+  }
+
+  terminate = (): void => {
+    if (this.isTerminating || !this.carrier) return;
+    this.isTerminating = true;
+    this.carrier.close();
+    this.carrier = undefined;
+    this.isTerminating = false;
+  };
+
+  protected setupEventListeners(): undefined {
+    if (!this.carrier) return;
+    this.carrier.addEventListener('message', this.handleMessage.bind(this));
+    this.carrier.addEventListener('messageerror', this.handleError.bind(this));
   }
 }

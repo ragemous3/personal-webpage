@@ -1,5 +1,5 @@
-import { ChatMessageModelContract } from '../contracts/chat-model.contract';
-import { ChatMessage, Chunk, SysMessage, UserMessage } from './models';
+import { type ChatMessageModelContract } from '../contracts/chat-model.contract';
+import { type ChatMessage, type Chunk, type SysMessage, type UserMessage } from './models';
 
 export class ChatMessageModel implements ChatMessageModelContract {
   #chatMessages: ChatMessage[] = [];
@@ -23,5 +23,5 @@ export class ChatMessageModel implements ChatMessageModelContract {
     return question;
   };
 
-  populate = (msg: ChatMessage) => this.#chatMessages.push(msg);
+  populate = (message: ChatMessage) => this.#chatMessages.push(message);
 }

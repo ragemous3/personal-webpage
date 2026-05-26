@@ -1,7 +1,8 @@
-import { loadHnswlib } from 'hnswlib-wasm';
-import { ChunkTextByToken } from './tokenizer';
 import { pipeline } from '@huggingface/transformers';
+import { loadHnswlib } from 'hnswlib-wasm';
+
 import rawData from '../../static/content-data/index.json?url';
+import { ChunkTextByToken } from './tokenizer';
 
 const featureExtractionModel = 'Xenova/all-MiniLM-L6-v2';
 const extractor = await pipeline('feature-extraction', featureExtractionModel, {

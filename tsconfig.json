@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["assets/*"]
+    },
     "lib": ["es2022", "dom", "webworker"],
     "types": [],
     "target": "es2022",
     "module": "esnext",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "useDefineForClassFields": true,
     "moduleResolution": "Bundler",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,

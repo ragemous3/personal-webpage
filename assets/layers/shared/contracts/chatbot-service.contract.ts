@@ -1,5 +1,5 @@
-import { ChatMessage } from '../../data/models/models';
-import { WritableStatefulConnections } from '../utils/subscribable';
+import { type ChatMessage } from '@/layers/data/models/models';
+import { type WritableStatefulConnections } from '@/layers/shared/utils/subscribable';
 
 export interface ChatbotServiceContract {
   chatMessagesSubscription: WritableStatefulConnections<ChatMessage[]>;

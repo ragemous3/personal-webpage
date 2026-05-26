@@ -1,5 +1,5 @@
-import { MessagingBaseContract } from '../../shared/contracts/message-base.contract';
-import { MessageBase } from '../workers/models';
+import { type MessagingBaseContract } from '../../shared/contracts/message-base.contract';
+import { type MessageBase } from '../workers/models';
 // https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
 export abstract class WorkerBase<
@@ -18,9 +18,9 @@ export abstract class WorkerBase<
     protected carrierName: string,
   ) {}
 
-  listen = (func: (data: MessageBase<From>) => void): Set<(data: MessageBase<From>) => void> => {
-    this.listeners.add(func);
-    return this.listeners;
+  listen = (function_: (data: MessageBase<From>) => void): (() => boolean) => {
+    this.listeners.add(function_);
+    return (): boolean => this.listeners.delete(function_);
   };
   //TODO:// fix this check - should check if actual Path to a script
   isScriptPath = (scriptPath: string | undefined): scriptPath is string =>
@@ -29,14 +29,14 @@ export abstract class WorkerBase<
   abstract initialize(wm: To): void;
   abstract send(message: To): void;
   abstract terminate(): void;
-  protected emit = (data: MessageBase<From>) => {
+  protected emit = (data: MessageBase<From>): void => {
     for (const listener of this.listeners) {
       listener(data);
     }
   };
   protected abstract setupEventListeners(): void | null;
 
-  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => this.emit(event.data);
+  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => { this.emit(event.data); };
 
   protected handleError = (error: ErrorEvent | MessageEvent<unknown>): void => {
     console.error(`${this.carrierName}: error:`, error);

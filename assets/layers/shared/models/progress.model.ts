@@ -1,9 +1,9 @@
 // @huggingface/transformers/src/utils/core.js
 // Same type as in this one aboveabove  - copied over since i like it.
-export type FileProgressBase = {
+export interface FileProgressBase {
   name: string;
   file: string;
-};
+}
 
 export type InitiateProgressInfo = FileProgressBase & {
   status: 'initiate';
@@ -24,11 +24,11 @@ export type DoneProgressInfo = FileProgressBase & {
   status: 'done';
 };
 
-export type ReadyProgressInfo = {
+export interface ReadyProgressInfo {
   status: 'ready';
   task: string;
   model: string;
-};
+}
 
 export type ProgressInfo =
   | InitiateProgressInfo

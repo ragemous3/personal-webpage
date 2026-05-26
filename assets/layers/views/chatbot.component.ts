@@ -1,11 +1,10 @@
-import { Chat } from '@huggingface/transformers';
-import { html, LitElement, TemplateResult } from 'lit';
-import { customElement, eventOptions, property, state } from 'lit/decorators.js';
-
-import { chatBubbleStyles } from './styles/chatbot.style';
+import { type Chat } from '@huggingface/transformers';
 import { consume } from '@lit/context';
-import { chatbotContext } from '../../composition/contexts/chatbot.context';
-import { ChatbotServiceContract } from '../shared/contracts/chatbot-service.contract';
+import { html, LitElement, type TemplateResult } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+
+import { type ChatbotServiceContract } from '@/layers/shared/contracts/chatbot-service.contract';
+import { chatbotContext } from '@/layers/views/context/chatbot.context';
 
 @customElement('chat-container')
 export class ChatContainer extends LitElement {
@@ -15,29 +14,29 @@ export class ChatContainer extends LitElement {
   @consume({ context: chatbotContext, subscribe: true })
   chatbotService!: ChatbotServiceContract;
 
-  @state() value: string = '';
+  @state() value = '';
 
   connectedCallback(): void {
     super.connectedCallback();
     this.chatbotService.init();
   }
-
-  onSubmit(e: SubmitEvent): void {
-    e.preventDefault();
-    this.chatbotService.send(this.value);
-  }
-
   render(): TemplateResult {
-    return html`<div class="chat-container">
-      <form @submit=${this.onSubmit}>
-        <input
-          .value=${this.value}
-          @input=${(e: Event) => {
-            this.value = (e.target as HTMLInputElement).value;
-          }}
-        />
-        <button type="submit">send away a question</button>
-      </form>
-    </div>`;
+    return html`
+      <div class="chat-container">
+        <form @submit=${() => this.onSubmit}>
+          <input
+            .value=${this.value}
+            @input=${(event: Event): void => {
+              this.value = (event.target as HTMLInputElement).value;
+            }}
+          /
+          <button type="submit">send away a question</button>
+        </form>
+      </div>
+    `;
   }
+  private readonly onSubmit = (submitEvent: SubmitEvent): void => {
+    submitEvent.preventDefault();
+    this.chatbotService.send(this.value);
+  };
 }

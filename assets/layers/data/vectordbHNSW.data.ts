@@ -1,34 +1,36 @@
-import { FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
-import { HierarchicalNSW, HnswlibModule, loadHnswlib, syncFileSystem } from 'hnswlib-wasm';
-import { SearchResult, SpaceName } from 'hnswlib-wasm/dist/hnswlib-wasm';
-import { HNSWDBEntry } from './models/models';
+import { type FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
+import {
+  type HierarchicalNSW,
+  type HnswlibModule,
+  loadHnswlib,
+  syncFileSystem,
+} from 'hnswlib-wasm';
+import { type SearchResult, type SpaceName } from 'hnswlib-wasm/dist/hnswlib-wasm';
+
+import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
+
 import { SeverityLevelCodes } from '../shared/constants';
-import { Nullable } from '../shared/models';
+import { type Nullable } from '../shared/models';
+import { type ProgressInfo } from '../shared/models/progress.model';
 import { ApiBase } from './abstracts/base.infra';
 import { IndexDBBase } from './idb-base.data';
-import { ProgressInfo } from '../shared/models/progress.model';
+import { HNSWDBEntryMetadata, type HNSWDBEntry } from './models/models';
 
 export class VectorDBHNSWData {
-  HNSW_LIB_STORE = '/hnswlib-index';
-  key = `${this.HNSW_LIB_STORE}/data.dat`;
-  lib: Nullable<HnswlibModule> = null;
+  private readonly key: string;
 
-  dim = 384;
-  nodeConnections = 16;
-  maxEls = 29;
-  efConstructor = 200;
-  seedGen = 100;
+  private lib: Nullable<HnswlibModule> = null;
+  private index?: HierarchicalNSW;
+  private embedder: FeatureExtractionPipeline | undefined;
 
-  index?: HierarchicalNSW;
-  indexEntry: string = 'data.dat';
-  spaceName: SpaceName = 'cosine';
+  private readonly apiBase: ApiBase;
+  private readonly indexDb: IndexDBBase;
 
-  featureExtractionModel: string = 'Xenova/all-MiniLM-L6-v2';
-  embedder: FeatureExtractionPipeline | undefined;
-  apiBase = new ApiBase('');
-  indexDb = new IndexDBBase('/hnswlib-index');
-
-  constructor() {}
+  constructor(private readonly config: DatabaseConfig) {
+    this.key = `${this.config.indexStoreName}/${this.config.indexEntry}`;
+    this.apiBase = new ApiBase(this.config.baseUrl);
+    this.indexDb = new IndexDBBase(this.config.indexStoreName);
+  }
 
   init = async (emitProgress: (progress: ProgressInfo) => void): Promise<void> => {
     try {
@@ -39,9 +41,18 @@ export class VectorDBHNSWData {
       });
       this.lib = await loadHnswlib();
 
-      this.index = new this.lib.HierarchicalNSW(this.spaceName, this.dim, this.indexEntry);
+      this.index = new this.lib.HierarchicalNSW(
+        this.config.spaceName,
+        this.config.dim,
+        this.config.indexEntry,
+      );
 
-      this.index.initIndex(this.maxEls, this.nodeConnections, this.efConstructor, this.seedGen);
+      this.index.initIndex(
+        this.config.maxEls,
+        this.config.nodeConnections,
+        this.config.efConstructor,
+        this.config.seedGen,
+      );
 
       emitProgress({
         name: 'vectordb',
@@ -72,7 +83,7 @@ export class VectorDBHNSWData {
       const exists = this.lib.EmscriptenFileSystemManager.checkFileExists('data.dat');
 
       if (exists && this.lib.EmscriptenFileSystemManager.isSynced()) {
-        await this.index.readIndex('data.dat', this.dim);
+        await this.index.readIndex('data.dat', this.config.dim);
         this.index.setEfSearch(200);
       }
 
@@ -87,21 +98,28 @@ export class VectorDBHNSWData {
         task: '',
         model: 'HNSWlib',
       });
-    } catch (e) {
-      throw new Error(`[${SeverityLevelCodes.ERROR}] - Error init VectorDBHNSWData - ${e}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(
+          `[${SeverityLevelCodes.ERROR}] - Something went wrong with init - ${error.message}`,
+          {
+            cause: error,
+          },
+        );
+      }
     }
   };
 
   createEmbedder = async (
     emitProgress: (progress: ProgressInfo) => void,
   ): Promise<FeatureExtractionPipeline> =>
-    await pipeline('feature-extraction', this.featureExtractionModel, {
+    await pipeline('feature-extraction', this.config.featureExtractionModel, {
       device: 'webgpu',
       dtype: 'uint8',
       progress_callback: emitProgress,
     });
 
-  query = async (query: string, topK: number = 5): Promise<SearchResult> => {
+  query = async (query: string, topK = 5): Promise<SearchResult> => {
     if (!this.index || !this.embedder) {
       throw new Error('Expected Index and embedder to be defined!');
     }
@@ -110,44 +128,78 @@ export class VectorDBHNSWData {
       normalize: true,
     });
 
-    if (!queryEmbedding) {
-      throw new Error('Expected queryEmbeddings to be defined!');
-    }
-
-    return this.index.searchKnn(<Float32Array>queryEmbedding.data, topK, undefined);
+    return this.index.searchKnn(
+      queryEmbedding.tolist(),
+      topK,
+      () => false, //TODO: Might break since im not sure what to filter off etc.
+    );
   };
 
-  private fetchAndStore = async (): Promise<void> => {
-    const db: IDBDatabase = await this.indexDb.openDB();
-    if (!db) throw new Error('Failed to init DB');
+  private readonly guardHSNWEntryMetadata = (data: unknown): data is HNSWDBEntryMetadata =>
+    typeof data === 'object' && data !== null && 'timestamp' in data && 'mode' in data
+      ? true
+      : false;
 
-    const metadata: Omit<HNSWDBEntry, 'contents'> = await this.apiBase.loadJSON();
-    const contents: Uint8Array<ArrayBufferLike> | undefined = await this.apiBase.loadUint8Array();
+  private readonly fetchAndStore = async (): Promise<void> => {
+    try {
+      const database: IDBDatabase = await this.indexDb.openDB();
+      const metadata: HNSWDBEntryMetadata = await this.apiBase.loadJSON<HNSWDBEntryMetadata>(
+        this.config.metadataPath,
+        (data: unknown): HNSWDBEntryMetadata => {
+          if (!this.guardHSNWEntryMetadata(data))
+            throw new Error(
+              `[${SeverityLevelCodes.ERROR}] - Expected HNSWDBEntryMetadata but got something else`,
+            );
+          return data;
+        },
+      );
+      const contents: Uint8Array | undefined = await this.apiBase.loadUint8Array();
 
-    if (!contents) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - expected contents to be defined`);
-      return undefined;
+      if (!contents) {
+        throw new Error(`[${SeverityLevelCodes.FATAL}] - expected contents to be defined`);
+      }
+
+      const data: HNSWDBEntry = {
+        timestamp: new Date(metadata.timestamp),
+        mode: metadata.mode,
+        contents,
+      };
+
+      await new Promise((resolve, reject): void => {
+        const tx = database.transaction('FILE_DATA', 'readwrite');
+        const index = tx.objectStore('FILE_DATA');
+        const cleanup = (): void => {
+          tx.removeEventListener('complete', onComplete);
+          tx.removeEventListener('error', onFailure);
+          tx.removeEventListener('abort', onFailure);
+        };
+        index.put(data, this.key);
+
+        tx.oncomplete = resolve;
+
+        const handleFailure = (event): void => {
+          reject(event);
+        };
+
+        tx.addEventListener('error', handleFailure);
+        tx.addEventListener('abort', handleFailure);
+      });
+    } catch (error) {
+      throw new Error(`[${SeverityLevelCodes.FATAL}] - Failed to fetch and store HNSW database`, {
+        cause: error,
+      });
     }
-
-    const data: HNSWDBEntry = {
-      timestamp: new Date(metadata.timestamp),
-      mode: metadata.mode,
-      contents,
-    };
-
-    await new Promise((resolve, reject): void => {
-      const tx = db.transaction('FILE_DATA', 'readwrite');
-      const index = tx.objectStore('FILE_DATA');
-
-      index.put(data, this.key);
-
-      tx.oncomplete = resolve;
-      tx.onerror = tx.onabort = (): void => reject(tx.error);
-    });
   };
 
-  private readInExternalFile = async (): Promise<void> => {
-    await this.fetchAndStore();
-    await syncFileSystem('read');
+  private readonly readInExternalFile = async (): Promise<void> => {
+    try {
+      await this.fetchAndStore();
+      await syncFileSystem('read');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error);
+      }
+      console.error(`Expected caught Error to be instanceof Error!`);
+    }
   };
 }

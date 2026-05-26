@@ -1,6 +1,13 @@
-import { SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
-import { ChatMessage } from '../models/models';
-import { Action, MessageBase, Task, TaskResponse, VectorDbResponse } from '../workers/models';
+import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
+
+import { type ChatMessage } from '../models/models';
+import {
+  type Action,
+  type MessageBase,
+  type Task,
+  type TaskResponse,
+  type VectorDatabaseResponse as VectorDatabaseResponse,
+} from '../workers/models';
 const ACTIONS = new Set<Action>([
   'host',
   'ping',
@@ -26,7 +33,7 @@ export const isTask = (value: unknown): value is Task => {
   const prefix = taskResp[0];
   const action = taskResp[1];
 
-  return !!prefix && !!action;
+  return Boolean(prefix) && Boolean(action);
 };
 
 export const isTaskResponse = (value: unknown): value is TaskResponse => {
@@ -39,7 +46,7 @@ export const isTaskResponse = (value: unknown): value is TaskResponse => {
   const action = taskResp[1];
   const response = taskResp[2];
 
-  return !!prefix && !!action && response === 'response';
+  return Boolean(prefix) && Boolean(action) && response === 'response';
 };
 
 const CHAT_ROLES = new Set(['system', 'user', 'assistant']);
@@ -58,7 +65,7 @@ export const isSearchResults = (value: unknown): value is SearchResult =>
   Array.isArray(value.neighbors);
 
 //TODO: Need to move somewhere more fitting - BUSINESS
-export const isVectorDbResponse = (value: unknown): value is VectorDbResponse =>
+export const isVectorDbResponse = (value: unknown): value is VectorDatabaseResponse =>
   typeof value === 'object' &&
   value !== null &&
   'query' in value &&
@@ -71,7 +78,9 @@ export const isVectorDbResponse = (value: unknown): value is VectorDbResponse =>
 //TODO: MOVE SINCE ITS BUSINESS
 export const isChatPayload = (value: unknown): value is ChatMessage[] =>
   Array.isArray(value) && value.every(isChatMessage);
+
 export const isNullPayload = (value: unknown): value is null => (value === null ? true : false);
+
 export const isMessageBase = <T, Y = Task>(
   value: unknown,
   isPayload: (payload: unknown) => payload is T,
@@ -91,10 +100,6 @@ export const isMessageBase = <T, Y = Task>(
   }
 
   if ('error' in value && value.error !== undefined && typeof value.error !== 'string') {
-    return false;
-  }
-
-  if ('source' in value && value.source !== undefined && typeof value.source !== 'string') {
     return false;
   }
 

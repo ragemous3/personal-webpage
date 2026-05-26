@@ -1,6 +1,6 @@
-import { SeverityLevelCodes } from '../../shared/constants';
-import { WorkerBase } from '../abstracts/worker-base.abstract';
-import { MessageBase } from '../workers/models';
+import { WorkerBase } from '@/layers/data/abstracts/worker-base.abstract';
+import { type MessageBase } from '@/layers/data/workers/models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 // https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
 export class WebWorkerManager<To extends MessageBase<unknown>, From> extends WorkerBase<
@@ -46,8 +46,8 @@ export class WebWorkerManager<To extends MessageBase<unknown>, From> extends Wor
       this.carrier = new Worker(new URL(this.scriptPath, import.meta.url), {
         type: 'module',
       });
-    } catch (e) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${e}`);
+    } catch (error) {
+      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${error}`);
     }
 
     this.setupEventListeners();

@@ -1,13 +1,13 @@
 /// <reference lib="webworker" />
 import { SeverityLevelCodes } from '../../shared/constants';
-import { Nullable } from '../../shared/models';
+import { type Nullable } from '../../shared/models';
 import { StateMachineStatesEnum } from '../contants/constants';
 import {
-  StateMachineName,
-  StateMachineProtocol,
-  StateMachineStatusLog,
-  StateMachineTask,
-  SharedWorkerMessage,
+  type SharedWorkerMessage,
+  type StateMachineName,
+  type StateMachineProtocol,
+  type StateMachineStatusLog,
+  type StateMachineTask,
 } from './models';
 
 const ports = new Set<MessagePort>();
@@ -22,21 +22,21 @@ const setStatus = (entityName: StateMachineName, payload: StateMachineStatusLog)
  * Whole point here is to only have 1 live instance of something at a time.
  * If users open more tabs, another init is not necessary.
  */
-const checkStatus = (p: MessagePort, entityName: StateMachineName, msg: SharedWorkerMessage) =>
+const checkStatus = (p: MessagePort, entityName: StateMachineName, message: SharedWorkerMessage) =>
   processStatusTracker.get(entityName)
     ? p.postMessage({
-        ...msg,
+        ...message,
         payload: processStatusTracker.get(entityName),
       })
     : setStatus(entityName, {
-        initiator: msg.id,
+        initiator: message.id,
         entity: entityName,
         status: StateMachineStatesEnum.BUSY,
       }) &&
       p.postMessage({
-        ...msg,
+        ...message,
         payload: {
-          initiator: msg.id,
+          initiator: message.id,
           entity: entityName,
           status: StateMachineStatesEnum.UNINITIALIZED,
         },
@@ -68,43 +68,46 @@ const disectTask = (
     }
 
     return { entityTask, entityName };
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
     return null;
   }
 };
 
-const sharedWorkerSwitch = (p: MessagePort, msg: SharedWorkerMessage): void => {
-  const names: Nullable<{ entityName: string; entityTask: string }> = disectTask(msg.task);
+const sharedWorkerSwitch = (p: MessagePort, message: SharedWorkerMessage): void => {
+  const names: Nullable<{ entityName: string; entityTask: string }> = disectTask(message.task);
   if (!names) return;
   const { entityTask, entityName } = names;
 
   switch (entityTask) {
-    case 'check':
-      checkStatus(p, entityName, msg);
+    case 'check': {
+      checkStatus(p, entityName, message);
       break;
-    case 'set':
-      const status = msg.payload;
+    }
+    case 'set': {
+      const status = message.payload;
       if (isStateMachineState(status)) {
         setStatus(entityName, {
-          initiator: msg.id,
+          initiator: message.id,
           entity: entityName,
           status,
         });
       }
       break;
-    case 'transfer':
-      p.postMessage(msg);
+    }
+    case 'transfer': {
+      p.postMessage(message);
       break;
+    }
   }
 };
 declare const self: SharedWorkerGlobalScope;
-self.onconnect = (event: MessageEvent<SharedWorkerMessage>): void => {
+self.addEventListener('connect', (event: MessageEvent<SharedWorkerMessage>): void => {
   const port = event.ports[0];
   if (!port) throw new Error('Port was not found');
   ports.add(port);
   port.start();
   port.onmessage = (e) => {
-    ports.forEach((p) => sharedWorkerSwitch(p, e.data));
+    for (const p of ports) sharedWorkerSwitch(p, e.data);
   };
-};
+});
