@@ -16,35 +16,12 @@ import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { TokenizerUtility as TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
 export class LocalLLMData {
-  modelMaxTokens = 0;
-  tokenizerUtil: TokenizerUtility | undefined;
-  generator: TextGenerationPipeline | undefined;
-
   constructor(
-    private readonly defaultLmModelName: string,
-    private readonly defaultDevice: DeviceType,
-    private readonly defaultDataType: DataType,
+    private readonly generator: TextGenerationPipeline,
+    private readonly tokenizerUtil: TokenizerUtility,
+    private readonly modelMaxTokens: number = 0,
     private readonly options: Partial<TextGenerationConfig>,
   ) {}
-
-  loadModel = async (
-    modelName: string = this.defaultLmModelName,
-    progressTracker: (progress: ProgressInfo) => void,
-  ): Promise<TextGenerationPipeline> => {
-    return (this.generator = await pipeline('text-generation', modelName, {
-      device: this.defaultDevice,
-      dtype: this.defaultDataType,
-      progress_callback: progressTracker,
-    }));
-  };
-
-  init = async (progressTracker: (progress: ProgressInfo) => void): Promise<void> => {
-    this.tokenizerUtil = new TokenizerUtility(this.defaultLmModelName);
-    await this.tokenizerUtil.initTokenizer();
-
-    this.modelMaxTokens = this.tokenizerUtil.getMaxLength();
-    await this.loadModel(this.defaultLmModelName, progressTracker);
-  };
 
   chatWithModel = async (
     prompt: Chat,
@@ -67,23 +44,13 @@ export class LocalLLMData {
       ? true
       : false;
 
-  chatMessageHandler = async (
+  readonly chatMessageHandler = async (
     chatMessages: Chat,
     callback: (txt: string) => void,
   ): Promise<TextGenerationSingle | undefined> => {
-    if (
-      !this.generator ||
-      !Array.isArray(chatMessages) ||
-      chatMessages.length <= 1 ||
-      !chatMessages.at(-1)
-    ) {
+    if (!this.guardChatMessageHandler(chatMessages) || !this.tokenizerUtil || !this.generator)
       return;
-    }
 
-    if (!this.tokenizerUtil) {
-      console.error('TokenizerUtil is undefined, perhaps you forgot to init?');
-      return;
-    }
     const lastMessage = chatMessages.at(-1);
 
     if (
@@ -112,5 +79,8 @@ export class LocalLLMData {
       return;
     }
     return output[0];
+  };
+  private readonly guardChatMessageHandler = (chatMessages: Chat): boolean => {
+    return !(!Array.isArray(chatMessages) || chatMessages.length <= 1 || !chatMessages.at(-1));
   };
 }

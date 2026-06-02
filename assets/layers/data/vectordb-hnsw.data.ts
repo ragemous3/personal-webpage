@@ -5,16 +5,16 @@ import {
   loadHnswlib,
   syncFileSystem,
 } from 'hnswlib-wasm';
-import { type SearchResult, type SpaceName } from 'hnswlib-wasm/dist/hnswlib-wasm';
+import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
+import { type StoreContract } from '@/layers/data/contracts/store-base.contract';
 import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type ApiContract } from '@/layers/shared/contracts/api.contract';
+import { type Nullable } from '@/layers/shared/models';
+import { type ProgressInfo } from '@/layers/shared/models/progress.model';
 
-import { SeverityLevelCodes } from '../shared/constants';
-import { type Nullable } from '../shared/models';
-import { type ProgressInfo } from '../shared/models/progress.model';
-import { ApiBase } from './abstracts/base.infra';
-import { IndexDBBase } from './idb-base.data';
-import { HNSWDBEntryMetadata, type HNSWDBEntry } from './models/models';
+import { type HNSWDBEntry, type HNSWDBEntryMetadata } from './models/models';
 
 export class VectorDBHNSWData {
   private readonly key: string;
@@ -23,13 +23,12 @@ export class VectorDBHNSWData {
   private index?: HierarchicalNSW;
   private embedder: FeatureExtractionPipeline | undefined;
 
-  private readonly apiBase: ApiBase;
-  private readonly indexDb: IndexDBBase;
-
-  constructor(private readonly config: DatabaseConfig) {
+  constructor(
+    private readonly config: DatabaseConfig,
+    private readonly apiBase: ApiContract,
+    private readonly store: StoreContract<Promise<IDBDatabase>>,
+  ) {
     this.key = `${this.config.indexStoreName}/${this.config.indexEntry}`;
-    this.apiBase = new ApiBase(this.config.baseUrl);
-    this.indexDb = new IndexDBBase(this.config.indexStoreName);
   }
 
   init = async (emitProgress: (progress: ProgressInfo) => void): Promise<void> => {
@@ -69,7 +68,7 @@ export class VectorDBHNSWData {
         total: 100,
       });
 
-      await this.readInExternalFile();
+      await this.readExternalFile();
 
       emitProgress({
         name: 'vectordb',
@@ -139,50 +138,88 @@ export class VectorDBHNSWData {
     typeof data === 'object' && data !== null && 'timestamp' in data && 'mode' in data
       ? true
       : false;
+  private readonly parseMetadata = (data: unknown): HNSWDBEntryMetadata => {
+    if (!this.guardHSNWEntryMetadata(data)) {
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Expected HNSWDBEntryMetadata but got something else`,
+      );
+    }
+
+    return data;
+  };
+  private readonly getIndexedDBFailureCause = (tx: IDBTransaction, event: Event): unknown => {
+    const target = event.target;
+
+    if (tx.error) {
+      return tx.error;
+    }
+
+    if (target instanceof IDBRequest && target.error) {
+      return target.error;
+    }
+
+    return new DOMException('IndexedDB transaction failed', 'UnknownError');
+  };
+
+  private readonly storeHNSWEntry = (database: IDBDatabase, data: HNSWDBEntry): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      const tx = database.transaction('FILE_DATA', 'readwrite');
+      const store = tx.objectStore('FILE_DATA');
+
+      const cleanup = (): void => {
+        tx.removeEventListener('complete', onComplete);
+        tx.removeEventListener('error', onFailure);
+        tx.removeEventListener('abort', onFailure);
+      };
+
+      const onComplete = (): void => {
+        cleanup();
+        resolve();
+      };
+
+      const onFailure = (event: Event): void => {
+        cleanup();
+
+        reject(
+          new Error(
+            `[${SeverityLevelCodes.FATAL}] - IndexedDB transaction failed while storing HNSW database`,
+            { cause: this.getIndexedDBFailureCause(tx, event) },
+          ),
+        );
+      };
+
+      tx.addEventListener('complete', onComplete, { once: true });
+      tx.addEventListener('error', onFailure, { once: true });
+      tx.addEventListener('abort', onFailure, { once: true });
+      store.put(data, this.key);
+    });
+  };
 
   private readonly fetchAndStore = async (): Promise<void> => {
     try {
-      const database: IDBDatabase = await this.indexDb.openDB();
-      const metadata: HNSWDBEntryMetadata = await this.apiBase.loadJSON<HNSWDBEntryMetadata>(
+      const database = await this.store.openStore(this.config.indexStoreName);
+
+      const metadata = await this.apiBase.loadJSON<HNSWDBEntryMetadata>(
         this.config.metadataPath,
-        (data: unknown): HNSWDBEntryMetadata => {
-          if (!this.guardHSNWEntryMetadata(data))
-            throw new Error(
-              `[${SeverityLevelCodes.ERROR}] - Expected HNSWDBEntryMetadata but got something else`,
-            );
-          return data;
-        },
+        this.parseMetadata,
       );
-      const contents: Uint8Array | undefined = await this.apiBase.loadUint8Array();
+
+      const contents = await this.apiBase.loadUint8Array(this.config.vectorsPath);
 
       if (!contents) {
         throw new Error(`[${SeverityLevelCodes.FATAL}] - expected contents to be defined`);
       }
 
-      const data: HNSWDBEntry = {
-        timestamp: new Date(metadata.timestamp),
+      const timestamp = new Date(metadata.timestamp);
+
+      if (Number.isNaN(timestamp.getTime())) {
+        throw new TypeError(`[${SeverityLevelCodes.ERROR}] - Invalid metadata timestamp`);
+      }
+
+      await this.storeHNSWEntry(database, {
+        timestamp,
         mode: metadata.mode,
         contents,
-      };
-
-      await new Promise((resolve, reject): void => {
-        const tx = database.transaction('FILE_DATA', 'readwrite');
-        const index = tx.objectStore('FILE_DATA');
-        const cleanup = (): void => {
-          tx.removeEventListener('complete', onComplete);
-          tx.removeEventListener('error', onFailure);
-          tx.removeEventListener('abort', onFailure);
-        };
-        index.put(data, this.key);
-
-        tx.oncomplete = resolve;
-
-        const handleFailure = (event): void => {
-          reject(event);
-        };
-
-        tx.addEventListener('error', handleFailure);
-        tx.addEventListener('abort', handleFailure);
       });
     } catch (error) {
       throw new Error(`[${SeverityLevelCodes.FATAL}] - Failed to fetch and store HNSW database`, {
@@ -190,8 +227,7 @@ export class VectorDBHNSWData {
       });
     }
   };
-
-  private readonly readInExternalFile = async (): Promise<void> => {
+  private readonly readExternalFile = async (): Promise<void> => {
     try {
       await this.fetchAndStore();
       await syncFileSystem('read');

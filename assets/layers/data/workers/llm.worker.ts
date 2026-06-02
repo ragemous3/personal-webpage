@@ -1,17 +1,45 @@
-import { type ProgressInfo } from '@huggingface/transformers';
+import {
+  type DataType,
+  type DeviceType,
+  pipeline,
+  type ProgressInfo,
+  type TextGenerationPipeline,
+} from '@huggingface/transformers';
 
-import { SeverityLevelCodes } from '../../shared/constants';
-import { type Nullable } from '../../shared/models';
-import { LocalLLMData } from '../llm.data';
-import { type LlmDTO, type MessageBase } from './models';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
+import { type LocalLLMData } from '@/layers/data/llm.data';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type Nullable } from '@/layers/shared/models';
+import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
-const localLLM: LocalLLMData = undefined;
+import { type LlmDTO, type MessageBase } from './models';
+
+let localLLM: LocalLLMData | undefined;
 let ID = ''; //defined from outside
 let NAME: string | undefined = ''; //defined from outside
 //TODO: progressTracker is a dupe from vectordb hnd also the text llm:progress is hardcoded
 
-const progressTracker = (progress: ProgressInfo, entity: string = 'llm') => {
+const loadGeneratorPipeline = async (
+  modelName: string,
+  defaultDevice: DeviceType,
+  defaultDataType: DataType = 'auto',
+  progressTracker: (progress: ProgressInfo) => void,
+): Promise<TextGenerationPipeline> => {
+  return await pipeline('text-generation', modelName, {
+    device: defaultDevice,
+    dtype: defaultDataType,
+    progress_callback: progressTracker,
+  });
+};
+
+const initTokenizer = async (defaultLmModelName: string): Promise<void> => {
+  const tokenizerUtility = new TokenizerUtility(this.defaultLmModelName);
+  await tokenizerUtility.initTokenizer();
+  return tokenizerUtility;
+  //this.modelMaxTokens = this.tokenizerUtil.getMaxLength();
+};
+
+const progressTracker = (progress: ProgressInfo, entity = 'llm') => {
   //TODO: add Response to the end
   postMessage({ id: ID, name: NAME, task: `${entity}:progress`, payload: progress });
 };
@@ -40,7 +68,6 @@ onmessage = async (messageEvent: MessageEvent<MessageBase<LlmDTO | unknown>>) =>
   NAME = name;
   try {
     if (task === 'llm:init' && isLmConfig(payload)) {
-      localLLM.init();
       await localLLM.init(progressTracker);
       postMessage({ id: ID, name: NAME, task: 'llm:ready', payload });
       return;
@@ -52,7 +79,7 @@ onmessage = async (messageEvent: MessageEvent<MessageBase<LlmDTO | unknown>>) =>
       postMessage({
         ...messageEvent.data,
         error: {
-          name: `${error.name}`,
+          name: error.name,
           message: error.message,
           stack: error.stack,
         },

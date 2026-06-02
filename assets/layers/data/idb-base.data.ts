@@ -1,9 +1,11 @@
+import { type StoreContract } from '@/layers/data/contracts/store-base.contract';
+
 /* eslint-disable unicorn/prefer-add-event-listener */
-export class IndexDBBase {
+export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
   indexDBVersion = 21;
   constructor(private readonly indexName: string) {}
 
-  openDB = (storeName = 'FILE_DATA'): Promise<IDBDatabase> =>
+  openStore = (storeName = 'FILE_DATA'): Promise<IDBDatabase> =>
     new Promise((resolve, reject) => {
       const request = indexedDB.open(this.indexName, this.indexDBVersion);
 

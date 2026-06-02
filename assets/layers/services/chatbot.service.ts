@@ -54,11 +54,13 @@ export class RagService implements ChatbotServiceContract {
   };
 
   //TODO: Add a g uard and a type here. Add the msg char whenever it lands here to the chatmodel object for nw. keep track of index
-  readonly #handleChatResponse = (data: unknown): void => {};
+  readonly #handleChatResponse = (data: unknown): void => {
+    console.info(data);
+  };
 
   init = (): void => {
     if (this.#initialized) {
-      console.warn(`${SeverityLevelCodes.WARNING} Init was called twice..`);
+      console.error(`${SeverityLevelCodes.WARNING} Init was called twice..`);
     }
     this.#initialized = true;
     this.database.onData((data): void => void this.#handleDbResponse(data).catch(console.error));

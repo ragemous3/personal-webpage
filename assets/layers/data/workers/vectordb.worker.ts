@@ -1,12 +1,16 @@
 import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
-import { VectorDBHNSWData } from '@/layers/data/vectordbHNSW.data';
+import { ApiBase } from '@/layers/data/abstracts/base.infra';
+import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard';
+import { IndexDBBase } from '@/layers/data/idb-base.data';
+import { VectorDBHNSWData } from '@/layers/data/vectordb-hnsw.data';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ProgressInfo } from '@/layers/shared/models/progress.model';
 
 import { type TaskResponse, type VectorDatabaseDTO as VectorDatabaseDto } from './models';
-// Impossible to inject as a dependency to
-const database = new VectorDBHNSWData();
+
+let vectorDBInitialzed = false;
+let database: VectorDBHNSWData;
 let ID = ''; //defined from outside
 let NAME: string | undefined = ''; //defined from outside
 //TODO: // progressTracker is a dupe from llm and also the vectordb:progress is hardcoded
@@ -15,7 +19,7 @@ const progressTracker = (progress: ProgressInfo): void => {
   send('vectordb:progress:response', progress);
 };
 
-const send = <T>(task: TaskResponse, payload: T): void => {
+const send = (task: TaskResponse, payload: unknown): void => {
   postMessage({ id: ID, name: NAME, task, payload });
 };
 
@@ -31,7 +35,11 @@ onmessage = async (messageEvent: MessageEvent<VectorDatabaseDto>): Promise<void>
   ID = id;
   NAME = name;
   try {
-    if (task === 'vectordb:init') {
+    if (task === 'vectordb:init' && !vectorDBInitialzed && isDatabaseConfig(payload)) {
+      vectorDBInitialzed = true;
+      const apiBase = new ApiBase(payload.baseUrl);
+      const store = new IndexDBBase(payload.indexStoreName);
+      database = new VectorDBHNSWData(payload, apiBase, store);
       await database.init(progressTracker);
       return;
     }
