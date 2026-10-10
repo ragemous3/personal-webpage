@@ -1,0 +1,4 @@
+interface:
+  display_name: "TATR tickets"
+  short_description: "Create TATR bug and task tickets from plain English"
+  default_prompt: "Use $tatr-ticket to create a TATR ticket from these notes."
