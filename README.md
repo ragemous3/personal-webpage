@@ -3,6 +3,7 @@
 - [About](#about)
 - [Tech stack](#tech-stack)
 - [Task tracking](#task-tracking)
+- [Git workflow skill](#git-workflow-skill)
 - [Infrastructure](#infrastructure)
   - [Composition root (called composition in the folder tree)](#composition-root-called-composition-in-the-folder-tree)
   - [Layers - Dynamic data handling](#layers-dynamic-data-handling)
@@ -27,6 +28,13 @@ Hugo, typescript, lit3.0 and CSS.
 ## Task tracking
 
 Project tasks live in [`tasks/`](tasks/) and follow [TATR](https://github.com/tsoding/tatr)'s Markdown format. On Linux, follow the [TATR setup and quick start](tasks/README.md), then use `tatr new` to create a task and `tatr ls` to list open tasks from this repository.
+## Git workflow skill
+
+The project includes [Netresearch's git-workflow skill](https://github.com/netresearch/git-workflow-skill/tree/main/skills/git-workflow), version 1.35.1, in [.agents/skills/git-workflow](.agents/skills/git-workflow/SKILL.md).
+
+Use it for branching, signed Conventional Commits with DCO sign-off, PR review, and merging. Its scripts require `git`, an authenticated `gh` CLI, and `jq`; `yq` is also required when using `.spec-cleanup.yml`. Configure commit signing locally before committing.
+
+The upstream scripts, references, evaluation files, checkpoints, and MIT / CC-BY-SA-4.0 licenses are included. To inspect a PR's merge gate, run `bash .agents/skills/git-workflow/scripts/pr-status.sh <PR>`. After reviewing the current diff, merge through `pr-merge.sh` as described in the skill.
 
 ## Infrastructure
 
