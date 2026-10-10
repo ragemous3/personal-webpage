@@ -10,6 +10,8 @@ grill-with-docs → tatr-ticket → implement → code-review → blast-radius
 
 The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. Resume an existing ticket at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
 
+Update the ticket whenever entering or completing a stage: record the current stage, latest implementation snapshot SHA, completed checks/reviews and their SHAs, and next action. Commit these updates with the work snapshots so another session can resume. When returning to implementation for fixes, mark both previous review results invalid before changing the implementation; later stages must review the new snapshot.
+
 ## Required skills and tools
 
 Read each stage's installed `SKILL.md` when entering that stage. The project supplies `tatr-ticket` and `git-workflow` under `.agents/skills/`. Install the following global skills with their supporting files:

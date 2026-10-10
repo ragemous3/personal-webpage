@@ -14,12 +14,12 @@ The existing project tatr-ticket and git-workflow skills are merged into main. I
 
 ## Acceptance criteria
 
-- [ ] AGENTS.md directs agents to an implementation-flow with the requested stage order and both fix loops.
-- [ ] The TATR ticket is the spec passed to implement and code-review, including confirmed test seams and ADR links.
-- [ ] Required global skills and their dependencies are installed with supporting files.
-- [ ] The adr command is available and ADR creation uses the CLI under docs/adr.
-- [ ] The flow pins a review base, reviews committed changes, repeats both reviews after fixes, and defines ticket completion.
-- [ ] Blast-radius is scoped to bulk/destructive data operations, including checks before any live operation and an explicit not-applicable outcome.
+- [x] AGENTS.md directs agents to an implementation-flow with the requested stage order and both fix loops.
+- [x] The TATR ticket is the spec passed to implement and code-review, including confirmed test seams and ADR links.
+- [x] Required global skills and their dependencies are installed with supporting files.
+- [x] The adr command is available and ADR creation uses the CLI under docs/adr.
+- [x] The flow pins a review base, reviews committed changes, repeats both reviews after fixes, and defines ticket completion.
+- [x] Blast-radius is scoped to bulk/destructive data operations, including checks before any live operation and an explicit not-applicable outcome.
 - [ ] The change is committed and pushed on a new branch based on current main.
 
 ## Dependencies
@@ -33,11 +33,11 @@ The existing project tatr-ticket and git-workflow skills are merged into main. I
 ## Definition of Done
 
 - [ ] All acceptance criteria have evidence recorded.
-- [ ] ADR CLI creation and TATR parsing have been checked without changing live data.
-- [ ] Workflow references and the staged diff pass their applicable checks.
+- [x] ADR CLI creation and TATR parsing have been checked without changing live data.
+- [x] Workflow references and the staged diff pass their applicable checks.
 - [ ] The signed branch is pushed and the PR is available for review.
 
-Implementation state: setup ready for review on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. No end-to-end product implementation run is claimed by this setup ticket.
+Implementation state: code-review after a documentation fix, on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Previous snapshot: 4cfbd54. Next action: repeat both review axes, then publish the branch. No end-to-end product implementation run is claimed by this setup ticket.
 
 ### Setup evidence
 
@@ -45,4 +45,5 @@ Implementation state: setup ready for review on feature/implementation-flow. Rev
 - `/home/ragemous3/projects/tatr/build/tatr ls :task`: parsed this OPEN ticket with priority 100 and the task tag.
 - `git diff --check`: passed. Product source is unchanged; product tests are not exercised by this setup.
 - ADR Tools source revision: b3279baf9be2207d1a4f4bbd608fd0b591c72aee. User-local installation exposes `adr` on PATH.
-- Review and publication are pending. Blast-radius applicability: documentation and tool setup introduce no bulk writes on real application data.
+- Review of 4cfbd54: Standards found no issues; Spec found one stage-persistence gap. The flow now requires stage and review-SHA updates at every handoff and invalidates both reviews on a fix pass. Both original review results are invalidated pending review of the new snapshot.
+- Publication is pending. Blast-radius applicability: documentation and tool setup introduce no bulk writes on real application data.
