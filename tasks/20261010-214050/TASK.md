@@ -20,7 +20,7 @@ The existing project tatr-ticket and git-workflow skills are merged into main. I
 - [x] The adr command is available and ADR creation uses the CLI under docs/adr.
 - [x] The flow pins a review base, reviews committed changes, repeats both reviews after fixes, and defines ticket completion.
 - [x] Blast-radius is scoped to bulk/destructive data operations, including checks before any live operation and an explicit not-applicable outcome.
-- [ ] The change is committed and pushed on a new branch based on current main.
+- [x] The change is committed and pushed on a new branch based on current main.
 
 ## Dependencies
 
@@ -32,12 +32,13 @@ The existing project tatr-ticket and git-workflow skills are merged into main. I
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have evidence recorded.
+- [x] All acceptance criteria have evidence recorded.
 - [x] ADR CLI creation and TATR parsing have been checked without changing live data.
 - [x] Workflow references and the staged diff pass their applicable checks.
-- [ ] The signed branch is pushed and the PR is available for review.
+- [x] The signed branch is pushed and the PR is available for review.
+- [ ] The workflow PR is reviewed and merged through the project Git workflow.
 
-Implementation state: code-review after a documentation fix, on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Previous snapshot: 4cfbd54. Next action: repeat both review axes, then publish the branch. No end-to-end product implementation run is claimed by this setup ticket.
+Implementation state: PR review on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Reviewed implementation snapshot: 0dc950d. Next action: review [PR #5](https://github.com/ragemous3/personal-webpage/pull/5) and merge when authorized and the Git workflow gates pass. No end-to-end product implementation run is claimed by this setup ticket.
 
 ### Setup evidence
 
@@ -46,4 +47,6 @@ Implementation state: code-review after a documentation fix, on feature/implemen
 - `git diff --check`: passed. Product source is unchanged; product tests are not exercised by this setup.
 - ADR Tools source revision: b3279baf9be2207d1a4f4bbd608fd0b591c72aee. User-local installation exposes `adr` on PATH.
 - Review of 4cfbd54: Standards found no issues; Spec found one stage-persistence gap. The flow now requires stage and review-SHA updates at every handoff and invalidates both reviews on a fix pass. Both original review results are invalidated pending review of the new snapshot.
-- Publication is pending. Blast-radius applicability: documentation and tool setup introduce no bulk writes on real application data.
+- Repeat review of 0dc950d: Standards 0 findings, Spec 0 findings; neither axis has an unresolved issue.
+- Blast-radius on 0dc950d: not applicable, because documentation and tool setup introduce no bulk writes on real application data. No live data operation was performed.
+- Signed snapshots 4cfbd54 and 0dc950d were pushed on feature/implementation-flow, based on the pinned main SHA. PR #5 is open against main. Subsequent ticket evidence updates do not change the reviewed implementation.
