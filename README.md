@@ -2,6 +2,7 @@
 
 - [About](#about)
 - [Tech stack](#tech-stack)
+- [Task tracking](#task-tracking)
 - [Infrastructure](#infrastructure)
   - [Composition root (called composition in the folder tree)](#composition-root-called-composition-in-the-folder-tree)
   - [Layers - Dynamic data handling](#layers-dynamic-data-handling)
@@ -22,6 +23,10 @@
 ## Tech stack
 
 Hugo, typescript, lit3.0 and CSS.
+
+## Task tracking
+
+Project tasks live in [`tasks/`](tasks/) and follow [TATR](https://github.com/tsoding/tatr)'s Markdown format. On Linux, follow the [TATR setup and quick start](tasks/README.md), then use `tatr new` to create a task and `tatr ls` to list open tasks from this repository.
 
 ## Infrastructure
 
