@@ -11,7 +11,7 @@ import {
   resources,
   siteConfig,
   workers,
-} from './browser-workers.fixture.mjs';
+} from './browser-workers.fixture.js';
 
 test('a language model configuration is accepted without database fields', () => {
   assert.equal(isLmConfig(modelConfig), true);
