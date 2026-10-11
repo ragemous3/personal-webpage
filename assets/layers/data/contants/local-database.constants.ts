@@ -7,6 +7,7 @@ export const databaseNumberKeys = [
 ] as const;
 export const databaseStringKeys = [
   'source',
+  'baseUrl',
   'vectorsPath',
   'featureExtractionModel',
   'metadataPath',
