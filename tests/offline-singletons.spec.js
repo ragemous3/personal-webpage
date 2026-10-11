@@ -8,7 +8,7 @@ import { getSharedWorker } from '@/composition/factories/shared-worker.actory';
 import { HubConnection } from '@/layers/data/hub.connection';
 import { Hub } from '@/layers/data/hub.data';
 
-import { databaseConfig, modelConfig, workers } from './browser-workers.fixture.mjs';
+import { databaseConfig, modelConfig, workers } from './browser-workers.fixture.js';
 
 test('both factories reuse singletons and create independent configured clients when requested', () => {
   const coordinator = getSharedWorker('/workers/state-machine.js', false);

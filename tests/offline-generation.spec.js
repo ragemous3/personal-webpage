@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { buildChatbotOfflineDeps } from '@/composition/factories/chatbot-offline.factory';
 
-import { siteConfig, workers } from './browser-workers.fixture.mjs';
+import { siteConfig, workers } from './browser-workers.fixture.js';
 
 test('explicit valid generation options survive composition into the worker startup message', () => {
   const config = siteConfig();

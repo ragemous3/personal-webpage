@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "node --import ./scripts/typescript-test.loader.mjs --test tests/*.spec.mjs",
+    "test": "node --import ./scripts/typescript-test.loader.js --test tests/*.spec.js",
     "dev": "hugo serve --disableFastRender --ignoreCache --noHTTPCache --gc",
     "build": "eslint-project-specifc.config.js",
     "knip": "npx knip"
