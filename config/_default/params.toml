@@ -17,21 +17,21 @@ RULES:
 chunksPath = '/content-data/chunks.json'
 
 [chatbot.config.localDatabase]
-featureExtractionModel = 'Xenova/all-MiniLM-L6-v2';
+featureExtractionModel = 'Xenova/all-MiniLM-L6-v2'
 vectorsPath = '/content-data/contents.bin'
 metadataPath = '/content-data/vector-metadata.json' 
 indexStoreName =  '/hnswlib-index'
 indexKey = 'data.dat'
-dim = 384;
-nodeConnections = 16;
-maxEls = 29;
-efConstructor = 200;
-seedGen = 100;
-indexEntry = 'data.dat';
-spaceName = 'cosine';
+dim = 384
+nodeConnections = 16
+maxEls = 29
+efConstructor = 200
+seedGen = 100
+indexEntry = 'data.dat'
+spaceName = 'cosine'
 
 
 [chatbot.config.localLM]
 model = 'Xenova/Qwen1.5-0.5B-Chat'
-device = 'webgpu',
+device = 'webgpu'
 dtype = 'q4'
