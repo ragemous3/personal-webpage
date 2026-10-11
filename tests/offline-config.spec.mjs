@@ -27,6 +27,8 @@ test('unsupported model devices, dtypes and malformed generation options are rej
     { generation: null },
     { generation: 'invalid' },
     { generation: { temperature: 'cold' } },
+    { generation: { generation_kwargs: { callback: () => {} } } },
+    { generation: { constraints: [{ callback: () => {} }] } },
   ]) {
     assert.equal(isLmConfig({ ...modelConfig, ...overrides }), false, JSON.stringify(overrides));
   }
@@ -87,6 +89,40 @@ test('invalid site settings are rejected before creating any resources', (contex
   for (const change of changes) {
     const config = siteConfig();
     change(config);
+    const count = resources.length;
+    assert.equal(buildChatbotOfflineDeps(config), undefined);
+    assert.equal(resources.length, count);
+  }
+});
+
+test('non-serializable generation values are rejected before allocating worker resources', (context) => {
+  context.mock.method(console, 'error', () => {});
+  for (const generation of [
+    { generation_kwargs: { nested: [() => {}] } },
+    { constraints: [{ nested: { callback: () => {} } }] },
+  ]) {
+    const config = siteConfig();
+    config.SITE_PARAMS.params.chatbot.config.locallm.generation = generation;
+    const count = resources.length;
+    assert.equal(buildChatbotOfflineDeps(config), undefined);
+    assert.equal(resources.length, count);
+  }
+});
+
+test('invalid numeric generation options are rejected before allocating resources', (context) => {
+  context.mock.method(console, 'error', () => {});
+  for (const generation of [
+    { max_new_tokens: -1 },
+    { num_beams: 1.5 },
+    { num_beams: 0 },
+    { top_p: 1.1 },
+    { temperature: 0 },
+    { eos_token_id: -1 },
+    { suppress_tokens: [1.5] },
+  ]) {
+    assert.equal(isLmConfig({ ...modelConfig, generation }), false);
+    const config = siteConfig();
+    config.SITE_PARAMS.params.chatbot.config.locallm.generation = generation;
     const count = resources.length;
     assert.equal(buildChatbotOfflineDeps(config), undefined);
     assert.equal(resources.length, count);
