@@ -1,6 +1,6 @@
 # Restore TypeScript parsing for chatbot assets
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: bug
 
@@ -27,10 +27,10 @@ Observed with global TypeScript 6.0.3. Project declares TypeScript ^5.9.3, but n
 
 Confirmed verification seam: compile the source through the compiler CLI, observe failure before the fix and successful parsing after it, then run project-wide type checking to record remaining baseline diagnostics. This catches syntax validity but does not establish chatbot runtime correctness. Dependency installation and a Hugo build may expose unrelated pre-existing failures; record them rather than expanding this ticket.
 
-Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: implementation (ticket-record fixes before repeat review). Latest implementation snapshot: 80b23682d951f4a7ff806d014575344b80279e1b. Standards review: 80b23682d951f4a7ff806d014575344b80279e1b, two recording gaps, invalidated pending repeat review. Spec review: same snapshot, zero actionable findings, invalidated pending repeat review. Blast-radius review: pending.
-Next action: commit ticket-record fixes, record the fix snapshot SHA, rerun Standards and Spec reviews, then blast-radius. No existing tests are present for this placeholder; the agreed compiler seam provides the regression check.
+Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: complete. Latest implementation snapshot: 80b23682d951f4a7ff806d014575344b80279e1b. Standards review: a2e05c784836e9ac31e43caee10cec7e65a102d8, zero unresolved actionable findings. Spec review: same snapshot, zero actionable findings. Blast-radius review: same snapshot, not applicable; removing a syntax placeholder and adding tracking documents introduce no bulk/destructive write or live-data operation.
+Ticket-record fix snapshot: a2e05c784836e9ac31e43caee10cec7e65a102d8. Next action: implement [validated configuration wiring](../20261011-184041/TASK.md). No existing tests are present for this placeholder; the agreed compiler seam provides the regression check.
 
-Review fixes: record full implementation SHA and link the approved glossary from the queued tickets. Parser implementation is unchanged.
+Review dispositions: initial Standards review of 80b23682d951f4a7ff806d014575344b80279e1b found missing glossary links and placeholder snapshot metadata. Both were corrected in a2e05c784836e9ac31e43caee10cec7e65a102d8. Repeat Standards and Spec reviews found zero unresolved actionable findings. Parser implementation is unchanged. Ticket completion records do not alter the reviewed code.
 
 Verification evidence:
 
@@ -46,4 +46,4 @@ Verification evidence:
 
 - [x] The compiler accepts the placeholder source without syntax errors.
 - [x] Project-wide type checking proceeds beyond TS1109 parsing failures; remaining unrelated failures are recorded accurately.
-- [ ] The red/green compiler results, signed implementation snapshot, Standards and Spec reviews, and blast-radius disposition are recorded before closure.
+- [x] The red/green compiler results, signed implementation snapshot, Standards and Spec reviews, and blast-radius disposition are recorded before closure.

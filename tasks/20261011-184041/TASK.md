@@ -34,7 +34,7 @@ Restore TypeScript parsing first. Repair existing invalid TOML semicolons/traili
 - [ ] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
 - [ ] Browser smoke-check results or an explicit remaining verification limitation are recorded.
 
-Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: queued for implementation. Latest implementation snapshot: none yet. Standards review: pending. Spec review: pending. Blast-radius review: pending.
-Next action: resume after parser ticket; use test-first vertical slices at the confirmed public composition/worker-message boundary. Verification commands and harness will be recorded when selected from available tooling.
+Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: ready for implementation; prerequisite parser ticket CLOSED. Latest implementation snapshot: none yet. Standards review: pending. Spec review: pending. Blast-radius review: pending.
+Next action: install locked dependencies, repair invalid site-parameter TOML, then use test-first vertical slices at the confirmed public composition/worker-message boundary. Verification commands and harness will be recorded when selected from available tooling.
 
 Follow-up outside this ticket: StandardCommunication appears to drop vectordb:query:response; LLM progress uses a different task name from its listener. Successful startup alone does not prove full retrieval and response delivery.
