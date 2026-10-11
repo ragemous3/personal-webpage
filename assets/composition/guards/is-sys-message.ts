@@ -1,11 +1,7 @@
 import { type SysMessageConfig } from '@/composition/models/models';
+import { hasStringProperties, isRecord } from '@/layers/shared/guards/guards';
 
 export const isSysMessageConfig = (
   sysMessageConfig: unknown,
 ): sysMessageConfig is SysMessageConfig =>
-  sysMessageConfig &&
-  typeof sysMessageConfig === 'object' &&
-  'online' in sysMessageConfig &&
-  'offline' in sysMessageConfig
-    ? true
-    : false;
+  isRecord(sysMessageConfig) && hasStringProperties(sysMessageConfig, ['online', 'offline']);

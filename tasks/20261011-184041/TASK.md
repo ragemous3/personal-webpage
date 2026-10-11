@@ -16,13 +16,13 @@ Restore TypeScript parsing first. Repair existing invalid TOML semicolons/traili
 
 ## Acceptance criteria
 
-- [ ] Hugo can parse the site parameters used for startup configuration.
-- [ ] Both factory creation paths supply `(hub, stateMachine, broadcast, config)` with typed `{ name, payload }` configurations and preserve singleton behavior.
-- [ ] Offline composition reads Hugo-normalized language-model and database params, adds built worker paths as source and site baseUrl, and validates all required configuration before creating worker resources.
-- [ ] Model configuration validation checks model fields rather than database fields; database validation covers required baseUrl and rejects invalid supported values.
-- [ ] Missing generation options use an empty options object; explicit valid options are preserved, and malformed values fail validation.
-- [ ] Tests through composition/client and guard public interfaces cover valid startup messages, invalid configuration with no worker side effects, and singleton/non-singleton behavior. Fake browser worker and broadcast boundaries catch wiring errors without downloading models; they do not establish real worker loading or WebGPU support.
-- [ ] Relevant type checks, focused tests, full available tests and Hugo build run; unrelated baseline failures are recorded without claiming a clean project build.
+- [x] Hugo can parse the site parameters used for startup configuration.
+- [x] Both factory creation paths supply `(hub, stateMachine, broadcast, config)` with typed `{ name, payload }` configurations and preserve singleton behavior.
+- [x] Offline composition reads Hugo-normalized language-model and database params, adds built worker paths as source and site baseUrl, and validates all required configuration before creating worker resources.
+- [x] Model configuration validation checks model fields rather than database fields; database validation covers required baseUrl and rejects invalid supported values.
+- [x] Missing generation options use an empty options object; explicit valid options are preserved, and malformed values fail validation.
+- [x] Tests through composition/client and guard public interfaces cover valid startup messages, invalid configuration with no worker side effects, and singleton/non-singleton behavior. Fake browser worker and broadcast boundaries catch wiring errors without downloading models; they do not establish real worker loading or WebGPU support.
+- [x] Relevant type checks, focused tests, full available tests and Hugo build run; unrelated baseline failures are recorded without claiming a clean project build.
 
 ## Dependencies
 
@@ -34,7 +34,22 @@ Restore TypeScript parsing first. Repair existing invalid TOML semicolons/traili
 - [ ] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
 - [ ] Browser smoke-check results or an explicit remaining verification limitation are recorded.
 
-Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: ready for implementation; prerequisite parser ticket CLOSED. Latest implementation snapshot: none yet. Standards review: pending. Spec review: pending. Blast-radius review: pending.
-Next action: install locked dependencies, repair invalid site-parameter TOML, then use test-first vertical slices at the confirmed public composition/worker-message boundary. Verification commands and harness will be recorded when selected from available tooling.
+Branch: feature/20261011-184041-offline-config. Fixed review base: a55481504137263576105b5ad1dd0abaac9bc1f4. Current stage: implementation checks complete; preparing signed snapshot; prerequisite parser ticket CLOSED. Stacked base branch: feature/complete-offline-chatbot-refactor ([PR #6](https://github.com/ragemous3/personal-webpage/pull/6)); merge the parser PR first. Latest implementation snapshot: none yet. Standards review: pending. Spec review: pending. Blast-radius review: pending.
+Next action: commit the implementation snapshot, record its full SHA, and enter Standards/Spec review, then blast-radius.
 
 Follow-up outside this ticket: StandardCommunication appears to drop vectordb:query:response; LLM progress uses a different task name from its listener. Successful startup alone does not prove full retrieval and response delivery.
+
+
+### Implementation and verification evidence
+
+- Existing hub-based startup is preserved. All required configuration is assembled and validated before worker/broadcast construction. Both DB factory paths now match the DB constructor, retaining the user's removal of its redundant WorkerKeys argument.
+- Hugo-normalized database keys are mapped to the typed payload; built sources and site baseURL are supplied by composition. Missing generation options default to an empty object, and explicit serializable options are validated and preserved. System-message values are checked as strings.
+- The new test command uses Node's built-in test runner with a small TypeScript/alias loader and the existing TypeScript dependency; no new package dependency or model download is needed. Verified with Node 24.18.0 and locked TypeScript 5.9.3. The loader transpiles only; the separate compiler command checks types.
+- Red/green slices reproduced model guard rejection of a valid model config, acceptance of unsupported model settings, acceptance of missing database baseUrl, six resources created for invalid configuration, and non-string system messages accepted. Each now passes its regression check.
+- `npm test`: exit 0, 8 tests passed, 0 failed. Covers guard validation, default and explicit generation options, worker startup envelopes, invalid inputs without worker/broadcast side effects, and singleton/non-singleton client behavior. The initial failed checks were recorded during implementation before each relevant fix.
+- ESLint on all changed TypeScript/JavaScript files, test fixtures and eslint.config.js: exit 0, no output. `git diff --check`: exit 0. Prettier formatted the changed code and tests.
+- `hugo config`: exit 0 after removing invalid semicolons/trailing comma without changing configuration values; the output confirms lowercased parameter keys.
+- `./node_modules/.bin/tsc --noEmit --pretty false`: exit 2 with 20 pre-existing diagnostics. The parent snapshot a55481504137263576105b5ad1dd0abaac9bc1f4 was independently compiled from a temporary archive using the same installed dependencies: 23 diagnostics. Comparison found 0 new and 3 resolved diagnostics, all three in the factories. Remaining diagnostics affect the provider context import, shared message types, data model and LLM worker initialization. Full-project type correctness is not claimed.
+- `hugo --destination /tmp/offline-config-hugo-build`: exit 255. Installed Hugo 0.92.2 does not recognize the repository's current layouts/_partials structure and reports a missing page-base/head partial. Configuration parsing succeeds; a full site build is not claimed.
+- Browser smoke check was not performed: the installed Hugo cannot build the site, and real LLM initialization remains assigned to the dependent ticket. Mocked browser-worker tests establish configuration/message behavior, not actual model loading, WebGPU support or the complete RAG response path.
+- No new ADR: this ticket completes the existing startup design rather than selecting a new architectural trade-off. Approved terminology remains in the linked glossary.
