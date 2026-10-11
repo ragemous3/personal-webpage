@@ -40,6 +40,7 @@ class WorkerPort {
   }
 
   postMessage(message) {
+    message = structuredClone(message);
     for (const listener of this.listeners.get('message') ?? []) {
       listener({
         data: {
@@ -73,6 +74,7 @@ class BrowserWorker {
   }
 
   postMessage(message) {
+    message = structuredClone(message);
     this.messages.push(message);
     if (message.task === 'hub:ping') {
       this.onmessage?.({ data: message });
