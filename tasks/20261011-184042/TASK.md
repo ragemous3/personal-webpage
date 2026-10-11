@@ -8,6 +8,8 @@
 
 Commit 36652a8 moved pipeline and tokenizer loading out of LocalLLMData into the LLM worker. LocalLLMData now accepts initialized dependencies, but the worker never constructs it and calls a deleted init method. The tokenizer helper also references a nonexistent this.defaultLmModelName and declares the wrong return type.
 
+Terminology: [Offline résumé assistant glossary](../../GLOSSARY.md).
+
 ## Prerequisites
 
 Complete validated startup configuration wiring. Establish the focused test harness through the preceding ticket. Keep the existing model, device and dtype defaults unless valid explicit configuration overrides them.

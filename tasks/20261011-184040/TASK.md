@@ -27,8 +27,10 @@ Observed with global TypeScript 6.0.3. Project declares TypeScript ^5.9.3, but n
 
 Confirmed verification seam: compile the source through the compiler CLI, observe failure before the fix and successful parsing after it, then run project-wide type checking to record remaining baseline diagnostics. This catches syntax validity but does not establish chatbot runtime correctness. Dependency installation and a Hugo build may expose unrelated pre-existing failures; record them rather than expanding this ticket.
 
-Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: code-review. Latest implementation snapshot: this signed work snapshot; record full SHA after commit. Standards review: pending. Spec review: pending. Blast-radius review: pending.
-Next action: run Standards and Spec reviews against the signed snapshot, then blast-radius. No existing tests are present for this placeholder; the agreed compiler seam provides the regression check.
+Branch: feature/complete-offline-chatbot-refactor. Fixed review base: 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Current stage: implementation (ticket-record fixes before repeat review). Latest implementation snapshot: 80b23682d951f4a7ff806d014575344b80279e1b. Standards review: 80b23682d951f4a7ff806d014575344b80279e1b, two recording gaps, invalidated pending repeat review. Spec review: same snapshot, zero actionable findings, invalidated pending repeat review. Blast-radius review: pending.
+Next action: commit ticket-record fixes, record the fix snapshot SHA, rerun Standards and Spec reviews, then blast-radius. No existing tests are present for this placeholder; the agreed compiler seam provides the regression check.
+
+Review fixes: record full implementation SHA and link the approved glossary from the queued tickets. Parser implementation is unchanged.
 
 Verification evidence:
 

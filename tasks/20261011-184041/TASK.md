@@ -8,6 +8,8 @@
 
 Commit e71295d changed Chat and DB to accept RagConfigBase configuration. StandardCommunication forwards its payload through the existing hub, whose worker uses payload.source to create named workers. Factory composition still uses old argument lists, leaving startup configuration incomplete.
 
+Terminology: [Offline résumé assistant glossary](../../GLOSSARY.md).
+
 ## Prerequisites
 
 Restore TypeScript parsing first. Repair existing invalid TOML semicolons/trailing commas in config/_default/params.toml so Hugo can read the startup configuration; preserve configured values. Install locked dependencies and introduce a focused test runner if needed. Preserve the user's pre-existing removal of the redundant WorkerKeys argument in the vector database factory.
