@@ -1,6 +1,6 @@
 # Complete validated configuration wiring for offline chatbot factories
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -31,11 +31,11 @@ Restore TypeScript parsing first. Repair existing invalid TOML semicolons/traili
 ## Definition of Done
 
 - [x] All acceptance criteria have been verified, with evidence recorded.
-- [ ] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
+- [x] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
 - [x] Browser smoke-check results or an explicit remaining verification limitation are recorded.
 
-Branch: feature/20261011-184041-offline-config. Fixed review base: a55481504137263576105b5ad1dd0abaac9bc1f4. Current stage: code-review (extension fix); prerequisite parser ticket CLOSED. Stacked base branch: feature/complete-offline-chatbot-refactor ([PR #6](https://github.com/ragemous3/personal-webpage/pull/6)); merge the parser PR first. Latest implementation snapshot: ba8697d9fd6d254982e84e4167b9bffaf52ec176. Standards review: 26ba31211bc344722f88ef246cec910466806fee, invalidated pending extension fix review. Spec review: 26ba31211bc344722f88ef246cec910466806fee, invalidated pending extension fix review. Blast-radius review: invalidated pending extension fix review.
-Published [PR #7](https://github.com/ragemous3/personal-webpage/pull/7), based on PR #6. Next action: review the extension fix, refresh blast-radius disposition, and push the PR update. The LLM initialization ticket remains queued.
+Branch: feature/20261011-184041-offline-config. Fixed review base: a55481504137263576105b5ad1dd0abaac9bc1f4. Current stage: complete (published; extension update ready); prerequisite parser ticket CLOSED. Stacked base branch: feature/complete-offline-chatbot-refactor ([PR #6](https://github.com/ragemous3/personal-webpage/pull/6)); merge the parser PR first. Latest implementation snapshot: ba8697d9fd6d254982e84e4167b9bffaf52ec176. Standards review: 0aff04e7c4136d67b91d8db68fa63e8597f7af2e, no actionable findings. Spec review: 0aff04e7c4136d67b91d8db68fa63e8597f7af2e, no actionable findings. Blast-radius review: 0aff04e7c4136d67b91d8db68fa63e8597f7af2e, not applicable; extension-only fix leaves data operations unchanged.
+Published [PR #7](https://github.com/ragemous3/personal-webpage/pull/7), based on PR #6. Next action: push the extension update to PR #7; merge #6 first, then retarget and merge #7. The LLM initialization ticket remains queued.
 
 Follow-up outside this ticket: StandardCommunication appears to drop vectordb:query:response; LLM progress uses a different task name from its listener. Successful startup alone does not prove full retrieval and response delivery.
 
@@ -59,3 +59,4 @@ Follow-up outside this ticket: StandardCommunication appears to drop vectordb:qu
 - Repeat review disposition: Standards and Spec independently reviewed 26ba31211bc344722f88ef246cec910466806fee against the pinned base with no unresolved findings. All three previous findings are resolved by d7eeb1ccd2a23da6d6105492ee06fd8e580c2c24. Spec reviewer independently ran npm test: exit 0, all three spec files passed.
 - Blast-radius evidence for reviewed source snapshot 26ba31211bc344722f88ef246cec910466806fee: factory wiring invokes the existing worker initialization path. Its browser-local cache writes one named HNSW entry with store.put(data, this.key) in FILE_DATA; it introduces no bulk filters, deletion, account changes or messages to people. Tests use isolated fake workers and execute no live cache write. No bulk/destructive real-data operation applies.
 - User-requested extension fix: the test loader, browser fixture and three spec files now use .js under the existing package type: module setting. Updated the npm test command and fixture imports. npm test exited 0 with 10 tests passed; ESLint on all renamed files and git diff --check exited 0. The rename leaves TypeScript source and configuration unchanged, so the recorded compiler baseline remains applicable.
+- Extension fix repeat review: Standards and Spec passed for 0aff04e7c4136d67b91d8db68fa63e8597f7af2e with no actionable findings. Blast-radius recheck found only test-tooling renames/references and ticket metadata changed since the previous reviewed source; no asset source or data operations changed. The existing browser-cache disposition remains applicable.
