@@ -1,6 +1,6 @@
 # Complete validated configuration wiring for offline chatbot factories
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -30,12 +30,12 @@ Restore TypeScript parsing first. Repair existing invalid TOML semicolons/traili
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have been verified, with evidence recorded.
-- [ ] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
-- [ ] Browser smoke-check results or an explicit remaining verification limitation are recorded.
+- [x] All acceptance criteria have been verified, with evidence recorded.
+- [x] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
+- [x] Browser smoke-check results or an explicit remaining verification limitation are recorded.
 
-Branch: feature/20261011-184041-offline-config. Fixed review base: a55481504137263576105b5ad1dd0abaac9bc1f4. Current stage: blast-radius; prerequisite parser ticket CLOSED. Stacked base branch: feature/complete-offline-chatbot-refactor ([PR #6](https://github.com/ragemous3/personal-webpage/pull/6)); merge the parser PR first. Latest implementation snapshot: d7eeb1ccd2a23da6d6105492ee06fd8e580c2c24. Standards review: 26ba31211bc344722f88ef246cec910466806fee, no actionable findings. Spec review: 26ba31211bc344722f88ef246cec910466806fee, no actionable findings. Blast-radius review: in progress against the same source snapshot.
-Next action: finish the read-only blast-radius check, record completion, and publish the stacked PR.
+Branch: feature/20261011-184041-offline-config. Fixed review base: a55481504137263576105b5ad1dd0abaac9bc1f4. Current stage: complete (publication pending); prerequisite parser ticket CLOSED. Stacked base branch: feature/complete-offline-chatbot-refactor ([PR #6](https://github.com/ragemous3/personal-webpage/pull/6)); merge the parser PR first. Latest implementation snapshot: d7eeb1ccd2a23da6d6105492ee06fd8e580c2c24. Standards review: 26ba31211bc344722f88ef246cec910466806fee, no actionable findings. Spec review: 26ba31211bc344722f88ef246cec910466806fee, no actionable findings. Blast-radius review: 26ba31211bc344722f88ef246cec910466806fee, no bulk or destructive operation on real data; not applicable.
+Next action: publish the stacked PR; merge PR #6 first, then retarget and merge this configuration PR. The LLM initialization ticket remains queued.
 
 Follow-up outside this ticket: StandardCommunication appears to drop vectordb:query:response; LLM progress uses a different task name from its listener. Successful startup alone does not prove full retrieval and response delivery.
 
@@ -57,3 +57,4 @@ Follow-up outside this ticket: StandardCommunication appears to drop vectordb:qu
 - Review fixes: renamed the TypeScript test loader to follow the responsibility suffix convention. Worker fakes now structured-clone messages. Red/green regressions reproduce nested non-serializable generation values allocating resources and invalid numeric options passing validation; both are rejected before allocation. Numeric domains now distinguish positive counts, nonnegative counts/token IDs, positive sampling scales and bounded probabilities, while preserving negative length penalties and empty suppression lists. Final focused tests: 10 passed. Type diagnostics remain identical to the previous 20-diagnostic baseline.
 - Fix verification: ESLint on the generation guard, all test files and renamed loader exited 0; git diff --check exited 0. Both previous review results remain invalid until the fix snapshot is reviewed.
 - Repeat review disposition: Standards and Spec independently reviewed 26ba31211bc344722f88ef246cec910466806fee against the pinned base with no unresolved findings. All three previous findings are resolved by d7eeb1ccd2a23da6d6105492ee06fd8e580c2c24. Spec reviewer independently ran npm test: exit 0, all three spec files passed.
+- Blast-radius evidence for reviewed source snapshot 26ba31211bc344722f88ef246cec910466806fee: factory wiring invokes the existing worker initialization path. Its browser-local cache writes one named HNSW entry with store.put(data, this.key) in FILE_DATA; it introduces no bulk filters, deletion, account changes or messages to people. Tests use isolated fake workers and execute no live cache write. No bulk/destructive real-data operation applies.
