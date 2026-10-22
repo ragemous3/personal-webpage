@@ -18,6 +18,7 @@ const tsFiles = ['**/*.{ts,tsx,mts,cts}'];
 const jsFiles = ['**/*.{js,mjs,cjs}'];
 
 const testFiles = [
+  'tests/**/*.{ts,tsx,js,mjs,cjs}',
   '**/*.test.{ts,tsx,js,mjs,cjs}',
   '**/*.spec.{ts,tsx,js,mjs,cjs}',
   '**/__tests__/**/*.{ts,tsx,js,mjs,cjs}',
