@@ -9,7 +9,7 @@ implement → deslop → runtime verification → code-review → blast-radius
     ↑                                           │              │
     └── fixes ──────────────────────────────────┴── fixes ──────┘
                                                                ↓
-                                                    show-me → PR → handoff
+                                           show-me → full test suite → PR → handoff
 ```
 
 The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. When the user chooses an existing ticket, resume it at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
@@ -105,9 +105,11 @@ Select and record the execution mode as described above, then run `node scripts/
 
 Load `implement` and pass the full TATR ticket path; state its title before starting. Use `tdd` at the confirmed seams, consulting `codebase-design` when the interface needs design work. Work in vertical slices: one failing behavioral test, enough implementation to pass it, then the next slice. Changes to the agreed interface or scope return to the user and update the ticket before implementation proceeds.
 
-Discover checks from the repository configuration. Run relevant type checks and focused tests during implementation, and the full applicable suite before review. Record commands, results, and missing tooling honestly; an absent harness is a prerequisite to resolve, not a passing test run.
+Discover checks from the repository configuration. Run relevant type checks and focused tests during implementation. Record commands, results, and missing tools. A missing test harness is a prerequisite to resolve. It is not a passing test run.
 
 This project flow controls cleanup, review order, and completion. Override `implement`'s default review-then-commit timing: stage 4 runs deslop, verifies applicable runtime behavior, and creates a signed implementation snapshot before code-review so its committed `HEAD` diff includes the cleaned-up, verified work. Stage 5 satisfies `implement`'s code-review step; run it once per snapshot.
+
+Stage 7 satisfies `implement`'s requirement to run the full test suite once at the end. Run that check after both reviews and before push.
 
 Finish when the ticket's implementation is complete and applicable checks pass.
 
@@ -119,7 +121,7 @@ Load [deslop](https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills
 
 Make focused edits to remove unnecessary comments, redundant defensive code, type-check bypasses, avoidable nesting, and patterns inconsistent with the surrounding code. Preserve the ticket's required behavior and necessary validation. Route any discovered behavioral bug through implementation with relevant regression coverage, then repeat deslop.
 
-Rerun checks affected by cleanup and ensure the full applicable suite passes for the final implementation.
+Rerun the type checks and focused tests affected by cleanup.
 
 For changes affecting application runtime behavior, run the relevant journeys in `verify-offline-assistant` against the real application after cleanup. Record the entry points exercised, actions, observed results, evidence paths, and source revision. Observe both the user action and its result; mocked tests and a successful server start do not establish a working user journey. Recheck affected behavior after fixes. For changes with no runtime effect, record why this check is not applicable.
 
@@ -158,6 +160,10 @@ Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-blast-rad
 Record acceptance-criteria evidence, check results, reviewed commit IDs, dispositions for review findings, and blast-radius applicability in the ticket. Update its current stage so another session can resume accurately. Mark it CLOSED only when the acceptance criteria and Definition of Done are met; keep pending reviews or checks visible in an OPEN ticket.
 
 Prepare the PR title and full body before asking for publication approval. Read the installed `show-me/SKILL.md` and apply it to the final diff and evidence. Lead with the problem and resulting behavior, use the smallest useful diagram or before/after sketch, include the TATR ticket path, actual verification results, and remaining limitations, and honor any repository PR template. This is a writing pass, not an automated verifier. Record in the ticket which implementation snapshot the body describes. Local temporary paths are not usable PR attachments; include relevant output or accessible artifact links. Repeat the show-me pass whenever later fixes change what the body describes.
+
+Run the full test suite as the final verification step before push. Both reviews must be complete first. Record the command, result, and tested implementation snapshot SHA in the ticket. Update the prepared PR body with the result. A failed or blocked run prevents push. Keep the ticket OPEN until the required checks pass.
+
+If a test failure requires an implementation change, return to stages 3 through 6. Repeat cleanup, applicable runtime checks, and both reviews for the new snapshot. Refresh the PR body. Then run the full test suite again. A passing result remains valid while the implementation is unchanged. Changes to ticket records or PR text alone do not require another run.
 
 Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" before-publish`. In Guided, honor prior publishing approval or present the prepared result and wait for it. In Autopilot, the explicit ticket-scoped grant covers publication. Use git-workflow for signed commits, push, and PR creation/update; reuse an existing PR for the branch. Before pushing an existing PR, check whether auto-merge or a merge queue could merge it automatically; pause to resolve that situation if merging is outside the user's grant.
 
