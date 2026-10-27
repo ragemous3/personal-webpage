@@ -10,7 +10,7 @@ registerHooks({
     let url;
     if (specifier.startsWith('@/')) {
       url = new URL(specifier.slice(2), assets);
-    } else if (specifier.startsWith('.') && context.parentURL) {
+    } else if (specifier.startsWith('.') && context.parentURL?.startsWith(assets.href)) {
       url = new URL(specifier, context.parentURL);
     }
     if (url) {

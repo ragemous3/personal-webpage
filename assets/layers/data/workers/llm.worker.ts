@@ -1,101 +1,146 @@
 import {
-  type DataType,
-  type DeviceType,
   pipeline,
   type ProgressInfo,
   type TextGenerationPipeline,
 } from '@huggingface/transformers';
 
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
-import { type LocalLLMData } from '@/layers/data/llm.data';
+import { LocalLLMData } from '@/layers/data/llm.data';
+import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type Nullable } from '@/layers/shared/models';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
+import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 import { type LlmDTO, type MessageBase } from './models';
 
-let localLLM: LocalLLMData | undefined;
-let ID = ''; //defined from outside
-let NAME: string | undefined = ''; //defined from outside
-//TODO: progressTracker is a dupe from vectordb hnd also the text llm:progress is hardcoded
+interface LlmWorkerDependencies {
+  loadGeneratorPipeline: (
+    config: LmConfig,
+    progress: (value: ProgressInfo) => void,
+  ) => Promise<TextGenerationPipeline>;
+  loadTokenizer: (model: string) => Promise<TokenizerUtility>;
+  publish: (message: unknown) => void;
+}
 
-const loadGeneratorPipeline = async (
-  modelName: string,
-  defaultDevice: DeviceType,
-  defaultDataType: DataType = 'auto',
-  progressTracker: (progress: ProgressInfo) => void,
-): Promise<TextGenerationPipeline> => {
-  return await pipeline('text-generation', modelName, {
-    device: defaultDevice,
-    dtype: defaultDataType,
-    progress_callback: progressTracker,
-  });
+const defaultDependencies: LlmWorkerDependencies = {
+  loadGeneratorPipeline: (config, progress) =>
+    pipeline('text-generation', config.model, {
+      device: config.device,
+      dtype: config.dtype,
+      progress_callback: progress,
+    }),
+  loadTokenizer: async (model) => {
+    const tokenizer = new TokenizerUtility(model);
+    await tokenizer.initTokenizer();
+    return tokenizer;
+  },
+  publish: (message) => postMessage(message),
 };
 
-const initTokenizer = async (defaultLmModelName: string): Promise<void> => {
-  const tokenizerUtility = new TokenizerUtility(this.defaultLmModelName);
-  await tokenizerUtility.initTokenizer();
-  return tokenizerUtility;
-  //this.modelMaxTokens = this.tokenizerUtil.getMaxLength();
-};
+const isLlmDto = (value: unknown): value is LlmDTO =>
+  typeof value === 'object' && value !== null && 'message' in value && Array.isArray(value.message);
 
-const progressTracker = (progress: ProgressInfo, entity = 'llm') => {
-  //TODO: add Response to the end
-  postMessage({ id: ID, name: NAME, task: `${entity}:progress`, payload: progress });
-};
-
-const isLlmDto = (dto: unknown | Nullable<LlmDTO>): dto is LlmDTO =>
-  typeof dto === 'object' && dto !== null && 'message' in dto ? true : false;
-
-const handleChatQuery = async (llmDto: LlmDTO | unknown) => {
-  if (!isLlmDto(llmDto))
-    throw new Error(`$[${SeverityLevelCodes.ERROR}] - Expected a properly defined dto.`);
-  const { message } = llmDto;
-  if (message.length === 0)
-    throw new Error(
-      `$[${SeverityLevelCodes.ERROR}] - Expected chat message array to be populated.`,
-    );
-
-  const final = await localLLM.chatMessageHandler(message, async (txt: string) => {
-    postMessage({ id: ID, name: NAME, task: 'llm:stream:response', payload: txt });
-  });
-  postMessage({ id: ID, name: NAME, task: 'llm:message:response', payload: final });
-};
-
-onmessage = async (messageEvent: MessageEvent<MessageBase<LlmDTO | unknown>>) => {
-  const { id, task, payload, name }: MessageBase<LlmDTO | unknown> = messageEvent.data;
-  ID = id;
-  NAME = name;
-  try {
-    if (task === 'llm:init' && isLmConfig(payload)) {
-      await localLLM.init(progressTracker);
-      postMessage({ id: ID, name: NAME, task: 'llm:ready', payload });
-      return;
-    }
-
-    if (payload && task === 'llm:query') handleChatQuery(payload);
-  } catch (error) {
-    if (error instanceof Error) {
-      postMessage({
-        ...messageEvent.data,
-        error: {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        },
-      });
-
-      return;
-    }
-    postMessage({
-      ...messageEvent.data,
-      error: {
-        name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
-        message: String(error),
-        stack: null,
-      },
+const loadModel = async (
+  dependencies: LlmWorkerDependencies,
+  config: LmConfig,
+  request: MessageBase<unknown>,
+): Promise<LocalLLMData> => {
+  const generator = await dependencies.loadGeneratorPipeline(config, (progress) => {
+    dependencies.publish({
+      id: request.id,
+      name: request.name,
+      task: 'llm:progress',
+      payload: progress,
     });
-  }
+  });
+  const tokenizer = await dependencies.loadTokenizer(config.model);
+  return new LocalLLMData(generator, tokenizer, tokenizer.getMaxLength(), config.generation);
 };
 
-//
+export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => {
+  let localLLM: LocalLLMData | undefined;
+  let initialization: Promise<LocalLLMData> | undefined;
+  let activeConfiguration: LmConfig | undefined;
+
+  const handleInit = async (request: MessageBase<unknown>): Promise<void> => {
+    const { payload } = request;
+    if (!isLmConfig(payload)) {
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
+    }
+    if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
+      );
+    }
+    if (localLLM) {
+      dependencies.publish({ ...request, task: 'llm:ready' });
+      return;
+    }
+
+    activeConfiguration = payload;
+    initialization ??= loadModel(dependencies, payload, request).then(
+      (instance) => {
+        localLLM = instance;
+        return instance;
+      },
+      (error: unknown) => {
+        initialization = undefined;
+        activeConfiguration = undefined;
+        throw error;
+      },
+    );
+    await initialization;
+    dependencies.publish({ ...request, task: 'llm:ready' });
+  };
+
+  const handleQuery = async (request: MessageBase<unknown>): Promise<void> => {
+    if (!localLLM) {
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Language model is not ready.`);
+    }
+    if (!isLlmDto(request.payload) || request.payload.message.length === 0) {
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a populated chat message array.`);
+    }
+
+    const final = await localLLM.chatMessageHandler(request.payload.message, (text) => {
+      dependencies.publish({
+        id: request.id,
+        name: request.name,
+        task: 'llm:stream:response',
+        payload: text,
+      });
+    });
+    dependencies.publish({
+      id: request.id,
+      name: request.name,
+      task: 'llm:message:response',
+      payload: final,
+    });
+  };
+
+  return async (event: MessageEvent<MessageBase<unknown>>) => {
+    const request = event.data;
+    try {
+      if (request.task === 'llm:init') await handleInit(request);
+      if (request.task === 'llm:query') await handleQuery(request);
+    } catch (error) {
+      dependencies.publish({
+        ...request,
+        error:
+          error instanceof Error
+            ? { name: error.name, message: error.message, stack: error.stack }
+            : {
+                name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
+                message: String(error),
+                stack: null,
+              },
+      });
+    }
+  };
+};
+
+if ('importScripts' in globalThis) {
+  const handleMessage = createLlmMessageHandler(defaultDependencies);
+  globalThis.addEventListener('message', (event) => {
+    void handleMessage(event as MessageEvent<MessageBase<unknown>>);
+  });
+}
