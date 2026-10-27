@@ -18,17 +18,19 @@ The user approved the requirements and the documentation changes in this convers
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: create the signed snapshot, then review it. Latest signed implementation snapshot: pending. The initial GPG signing attempt failed. The user then authorized a new SSH signing key for this environment. Git now uses SSH signing. The signing preflight passed and confirmed a signature header in the probe commit. GitHub rejected automatic public-key registration with HTTP 403, `Resource not accessible by integration`. Registration in the user's GitHub settings remains pending.
+Current stage: before publication; GitHub signing-key registration pending. Latest signed implementation snapshot: `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The initial GPG signing attempt failed. The user then authorized a new SSH signing key for this environment. Git now uses SSH signing. The signing preflight and `git verify-commit` passed. GitHub rejected automatic public-key registration with HTTP 403, `Resource not accessible by integration`. Registration in the user's GitHub settings remains pending.
 
 Checks: the five decision CLI tests passed in the managed environment. The default sandbox denied child-process creation with `EPERM`. Eight local Markdown links passed. `git diff --cached --check` passed. Application runtime checks do not apply because only workflow documentation and this ticket changed.
 
-Standards review: the missing ticket records were added. The reviewer confirmed zero unresolved findings. Spec review: zero actionable findings. Both reviews examined the staged changes against the fixed base. Review of a signed implementation snapshot remains pending.
+Standards review: zero actionable findings for signed snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. Spec review: zero actionable findings for the same snapshot. Both reviewers compared it with the fixed base. The earlier staged-change finding about missing ticket records is resolved.
 
-Blast-radius review: not applicable. The changes affect workflow documentation and this ticket. They do not add bulk writes, deletion, or operations on live data.
+Blast-radius review: not applicable for signed snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The changes affect workflow documentation and this ticket. They do not add bulk writes, deletion, or operations on live data.
 
-Final test result: `npm test` exited 0 in the managed environment. All 15 tests passed. No tests failed, were cancelled, or were skipped. The tested changes were staged on base `bf479770f675667d331eec2462a1138237d641c5`. A signed implementation snapshot SHA is unavailable. Only ticket records changed after this run. The test result does not establish completion of the signed snapshot reviews.
+Final test result: `npm test` exited 0 in the managed environment. All 15 tests passed. No tests failed, were cancelled, or were skipped. The tested changes were staged on base `bf479770f675667d331eec2462a1138237d641c5`. The result covers implementation snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`: only ticket records changed after the run. The workflow and executable files are unchanged, so the passing result remains valid.
 
-Next action: create the signed snapshot and complete its reviews. Add the public key as a Signing key in GitHub settings. Obtain publication approval before push. Keep this ticket OPEN until the remaining checks are complete.
+The PR body is prepared locally with the stage order and validation results. It describes implementation snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`.
+
+Next action: add the public key as a Signing key in GitHub settings. Confirm publication is authorized before push. Keep this ticket OPEN until publication is complete.
 
 ## Acceptance criteria
 
@@ -49,5 +51,5 @@ None identified. The related workflow ticket is complete.
 
 - [x] Verify all acceptance criteria and record the evidence.
 - [x] Check local Markdown links and run `git diff --check`.
-- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
 - [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
