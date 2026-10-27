@@ -28,9 +28,9 @@ Use the committed package lock, Node 24, and the existing test and ESLint config
 ## Definition of Done
 
 - [ ] Record local test and lint command results, workflow validation, and first online check results in this ticket.
-- [ ] Review the implementation against the acceptance criteria and applicable repository standards.
+- [x] Review the implementation against the acceptance criteria and applicable repository standards.
 - [ ] Publish a PR with a show-me-prepared body; keep the PR open for review.
 
-Implementation state: stage 4, branch feature/ci-tests-lint in /tmp/personal-webpage-ci-tests-lint. Fixed review base: bf479770f675667d331eec2462a1138237d641c5. Mode: autopilot, explicitly approved by the user for scoped tests, ticket updates, signed commits, push, PR creation and CI fixes through handoff. No merge or deployment authorization. Next action: commit and review the workflow snapshot, then run CI in the PR and resolve failures within scope.
+Implementation state: stage 7, branch feature/ci-tests-lint in /tmp/personal-webpage-ci-tests-lint. Fixed review base: bf479770f675667d331eec2462a1138237d641c5. Mode: autopilot, explicitly approved by the user for scoped tests, ticket updates, signed commits, push, PR creation and CI fixes through handoff. No merge or deployment authorization. Reviewed implementation snapshot: 5b6168b67e4bdce428d97188608a391af15a85fa. Next action: publish the PR, inspect both online checks, and resolve findings within scope.
 
-Evidence: The YAML parsed successfully and the main triggers, read permission, both job commands, and dependency-install order were checked. `git diff --check` passed. Local `npm ci` remains incomplete because fetching locked packages is slow; its result is not counted as a pass. Runtime browser verification is not applicable to this CI configuration change.
+Evidence: The YAML parsed successfully and the main triggers, read permission, both job commands, and dependency-install order were checked. `git diff --check` passed. The first local `npm ci` was interrupted after registry fetching stalled, and the offline retry timed out after two minutes. Neither installation is counted as a pass; the PR's clean runner is the pending verification. Standards review of 5b6168b: 0 actionable findings. Spec review of the same snapshot: 0 actionable findings. Blast-radius is not applicable: the change configures read-only CI checks, with no bulk or destructive writes to real data. Runtime browser verification is not applicable to this CI configuration change.
