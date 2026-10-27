@@ -29,15 +29,15 @@ Complete validated startup configuration wiring. Establish the focused test harn
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have been verified, with evidence recorded.
-- [ ] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
+- [x] All acceptance criteria have been verified, with evidence recorded.
+- [x] Signed implementation snapshot, Standards and Spec reviews and blast-radius disposition cover the latest implementation.
 - [x] Browser smoke-check results or an explicit remaining verification limitation are recorded.
 
-Branch: feature/20261011-184042-llm-worker. Fixed review base: ab5c0a9a17eb59c463b44a4639bd5e7114a8f65e. Current stage: 4, fix cleanup and alternative verification complete; signed fix snapshot pending. Latest implementation snapshot: 1e14a7136dc75108104c2c903bea21dc45fd6bd4; invalidated by the fix below. Standards review: invalidated, repeat required. Spec review: invalidated, repeat required. Blast-radius review: pending.
+Branch: feature/20261011-184042-llm-worker. Fixed review base: ab5c0a9a17eb59c463b44a4639bd5e7114a8f65e. Current stage: 7, PR preparation and publication handoff. Latest implementation snapshot: 1763d17549830ef3d3af3bc0e2df21be92e43650. Standards review: 1763d17549830ef3d3af3bc0e2df21be92e43650, 0 actionable findings. Spec review: 1763d17549830ef3d3af3bc0e2df21be92e43650, 0 actionable findings. Blast-radius review: 1763d17549830ef3d3af3bc0e2df21be92e43650, not applicable.
 
 Execution mode: Autopilot. On 2026-10-27, after the flow's explicit ticket-scoped grant was requested, the user authorized recording the Autopilot decision and starting ticket #1. The grant covers routine implementation decisions, applicable tests, cleanup, review fixes, in-scope documentation/comments and ticket updates, signed commits, pushing this task branch, creating or updating its PR, and handling CI/review findings through handoff. Scope is limited to this ticket's confirmed worker message/model-loading boundary and acceptance criteria. Requirements or interface changes require a new user decision. Merging, auto-merge, deployment, and live destructive operations remain outside this grant. Finish condition: an open, unmerged PR with accurate verification and review status. This fresh branch from current origin/main replaces the recorded parser branch, whose prerequisite work has already merged; the earlier review base is superseded.
 
-Next action: create the signed fix snapshot, then repeat both reviews against the new HEAD.
+Next action: prepare the PR body with show-me, publish the branch and PR, then handle CI/review handoff without merging.
 
 ## Implementation and verification evidence
 
@@ -52,3 +52,6 @@ Next action: create the signed fix snapshot, then repeat both reviews against th
 - [Verification Doctor](evidence/doctor.json): `BLOCKED`, `runtimeVerified: false`, after a read-only retry outside the sandbox to let it inspect Hugo. It reports Hugo 0.92.2, missing postcss CLI and résumé index files, and unresolved hnswlib-wasm. The complete question-and-answer journey also depends on the separate shared chat response ticket. No real browser journey or model loading is claimed. On 2026-10-27, the user explicitly approved the passing worker message tests as this ticket's alternative verification and authorized continuing to code review and an open PR with the browser limitation recorded.
 - Review of 1e14a7136dc75108104c2c903bea21dc45fd6bd4: Standards found 0 hard violations and one nonblocking duplicated-test-setup judgement call. Spec found one actionable issue: a conflicting second llm:init could be acknowledged as ready for the first model. Both review results are invalidated for the fix pass; repeat both on the next signed snapshot.
 - Fix pass: a worker-message regression test failed on the reviewed snapshot when a second init requested a different model during loading or after readiness. The worker now rejects conflicting configuration while preserving the first model and accepts retries after a failed load. Focused worker tests pass. `npm test`: 23 passed, 0 failed outside the sandbox. ESLint, Prettier, and `git diff --check` pass. Repeated TypeScript checking reports the same diagnostics outside the changed worker; the browser prerequisite report and approved alternative remain applicable.
+- Signed fix snapshot: 1763d17549830ef3d3af3bc0e2df21be92e43650. Both review axes must cover this snapshot before publication.
+- Repeat Standards review of 1763d17549830ef3d3af3bc0e2df21be92e43650: 0 documented-standard violations and 0 actionable findings. It noted only a nonblocking duplicated-test-setup judgement call. Repeat Spec review of the same snapshot: 0 findings; the conflicting-init issue is resolved.
+- Blast-radius on 1763d17549830ef3d3af3bc0e2df21be92e43650: not applicable. The worker loads a model and sends messages; the test loader and test fixtures affect local test execution. This diff introduces no bulk or destructive write on real application data, and no live data operation was performed.
