@@ -1,0 +1,8 @@
+{
+  "action": "open",
+  "address": "http://127.0.0.1:43127/",
+  "verdict": "BLOCKED_OR_FAILED",
+  "events": [],
+  "error": "Error: Cannot find module 'puppeteer'\nRequire stack:\n- /home/ragemous3/projects/personal-webpage/package.json\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1517:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)\n    at require.resolve (node:internal/modules/helpers:171:31)\n    at file:///tmp/personal-webpage-verification-skill/verify-offline-assistant/scripts/observe.js:30:55",
+  "cleanup": "Owned browser closed and temporary profile removed, if created"
+}
