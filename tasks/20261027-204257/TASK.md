@@ -63,7 +63,7 @@ Finish with an open, unmerged PR. Merging, auto-merge, deployment, and live dest
 
 Branch: `feature/20261027-204257-lint-cleanup`.
 Fixed review base: `2de83ca38763c9c21ba805eca71c8cea236b73ec`.
-Current stage: cleanup and verification. Latest implementation snapshot: pending signed commit.
+Current stage: cleanup and verification. Latest implementation snapshot: `b17b6d8405885d3012ab7b983ba4cb41e8b9852d` (pushed).
 Standards review: pending. Spec review: pending. Blast-radius review: pending.
 Verification uses the full ESLint command and the existing test interfaces. These check rule compliance and covered behavior; they do not prove real model execution.
 Next action: refresh the baseline on current main, then correct lint errors without reducing checks.
@@ -85,7 +85,9 @@ Hugo 0.152.2 and PostCSS CLI were installed under `/tmp` for verification. The s
 Real answer verification is blocked by missing résumé index files and the existing response lifecycle work.
 Commit signing is also blocked: this machine has no configured signing key or local GPG/SSH key directory.
 The user created a separate SSH signing key and asked to push the branch. The signing preflight passed. The key is configured globally for Git signing.
-Next action: create and push the signed implementation snapshot. Live browser verification remains blocked; formal review and PR handoff are pending an agreed verification path.
+Branch push: `feature/20261027-204257-lint-cleanup` at `b17b6d8405885d3012ab7b983ba4cb41e8b9852d`. Both implementation commits carry SSH signatures. `git diff origin/main...HEAD --check` passed.
+
+Next action: resolve the live-verification blocker. The requested alternative has not been approved. Formal Standards and Spec reviews and PR creation remain pending.
 
 ### Verification evidence
 
