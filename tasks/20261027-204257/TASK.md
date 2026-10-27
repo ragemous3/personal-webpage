@@ -63,10 +63,10 @@ Finish with an open, unmerged PR. Merging, auto-merge, deployment, and live dest
 
 Branch: `feature/20261027-204257-lint-cleanup`.
 Fixed review base: `2de83ca38763c9c21ba805eca71c8cea236b73ec`.
-Current stage: PR preparation (ticket closure directed by user). Latest implementation snapshot: `309de0adc97f58c8f07a7bb9ccbf27a27a327a21` (pushed).
+Current stage: published; ticket closure directed by user. Latest implementation snapshot: `309de0adc97f58c8f07a7bb9ccbf27a27a327a21` (pushed).
 Standards review: `309de0adc97f58c8f07a7bb9ccbf27a27a327a21`, no actionable findings. Spec review: same snapshot, no gaps against the acceptance criteria. Blast-radius: not applicable; no bulk or destructive data write was performed. The existing index downloader deletion logic is unchanged.
 Verification uses the full ESLint command and the existing test interfaces. These check rule compliance and covered behavior; they do not prove real model execution.
-Closure: the user directed closure based on the recorded verification and asked to push the closed ticket.
+Closure: the user directed closure based on the recorded verification and asked to push the closed ticket. PR: [#12](https://github.com/ragemous3/personal-webpage/pull/12), open and unmerged.
 
 ### Implementation notes
 
@@ -103,4 +103,4 @@ Closure note: the user accepted the recorded lint, test, and build evidence as s
 - `observe.js --help` and `git diff --check` passed. Automatic fixes and the working diff were inspected for unintended changes.
 - The index download helper was not executed because it removes the destination data directory. Its file operations are unchanged.
 
-The user directed closure based on the recorded verification evidence. Live browser verification was not performed.
+The user directed closure based on the recorded verification evidence. Live browser verification was not performed. PR #12 was created with the prepared description and read back successfully. At handoff, the PR is open, unmerged, and has no status checks reported. PR head: `654c8f47f6f8b66c0edb9dc0c9d80a3ab845a60e`.
