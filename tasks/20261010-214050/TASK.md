@@ -1,6 +1,6 @@
 # Connect design interviews to the TATR implementation flow
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -34,7 +34,7 @@ The user approved Guided/Autopilot selection after ticket preparation, persisten
 - [x] Both modes prepare the final PR description through show-me and use the existing Git workflow for publication and CI/review handoff, without merging.
 - [x] CLI subprocess tests cover visible output, empty output, invalid input, and configuration failures. Check documentation links and decision IDs. Product runtime checks are not applicable to this tooling change.
 
-Extension state: stage 7, PR prepared and awaiting publication approval on feature/workflow-execution-modes. Extension review base: 3d552edc4bbe5318ffacdc650187fb0257958e00. Execution mode: guided (current approval rules). The user approved implementation, documentation changes, skill installation, and inclusion of the earlier verification draft and prerequisite tickets in this PR. Publication remains pending approval. AGENTS.md and the installed implement skill are unchanged. Reviewed extension implementation snapshot: 30bc55205ab186244b597a4506a99e1f2b2b13d8. Earlier review results below cover the original workflow only.
+Extension state: complete. [PR #8](https://github.com/ragemous3/personal-webpage/pull/8) merged as ab5c0a9a17eb59c463b44a4639bd5e7114a8f65e. Extension review base: 3d552edc4bbe5318ffacdc650187fb0257958e00. Execution mode: guided. AGENTS.md and the installed implement skill are unchanged. Reviewed extension implementation snapshot: 30bc55205ab186244b597a4506a99e1f2b2b13d8. Earlier review results below cover the original workflow only.
 
 Extension evidence:
 
@@ -47,8 +47,9 @@ Extension evidence:
 - Parallel Standards review: 0 actionable findings on 30bc552. Parallel Spec review: 0 actionable findings on the same snapshot, including the explicitly approved draft scope.
 - Blast-radius on 30bc552: not applicable to bulk/destructive writes on real data. The CLI reads local configuration; observation cleanup removes only its own temporary browser profile. No live data operation was performed.
 - Signature header check passed for 30bc552. PR body prepared locally at `/tmp/workflow-execution-modes-pr-body.md`; regenerate it from this snapshot and evidence if that temporary file is absent.
+- PR #8 was published with the show-me-prepared body, reviewed, and merged. The draft application verification remains OPEN in [its separate ticket](../20261027-104746/TASK.md).
 
-Next action: obtain publication approval, push the signed branch, create the PR with the show-me-prepared body, and run the Git workflow CI/review handoff. Keep this ticket OPEN through handoff.
+Next action: none for this workflow ticket. Continue application verification under its separate ticket when its prerequisites are ready.
 
 ## Dependencies
 
@@ -64,9 +65,9 @@ Next action: obtain publication approval, push the signed branch, create the PR 
 - [x] ADR CLI creation and TATR parsing have been checked without changing live data.
 - [x] Workflow references and the staged diff pass their applicable checks.
 - [x] The signed branch is pushed and the PR is available for review.
-- [ ] The workflow PR is reviewed and merged through the project Git workflow.
+- [x] The workflow PR is reviewed and merged through the project Git workflow.
 
-Historical original workflow state (superseded by the extension state above): PR review on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Reviewed implementation snapshot: 0dc950d. Next action: review [PR #5](https://github.com/ragemous3/personal-webpage/pull/5) and merge when authorized and the Git workflow gates pass. No end-to-end product implementation run is claimed by this setup ticket.
+Historical original workflow state: [PR #5](https://github.com/ragemous3/personal-webpage/pull/5) merged as 9ae6426d1c4c917a5d8b2a7254860e9a607d053b. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Reviewed implementation snapshot: 0dc950d. No end-to-end product implementation run is claimed by this setup ticket.
 
 ### Setup evidence
 
