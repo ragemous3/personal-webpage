@@ -4,12 +4,10 @@ Use this flow for feature work and bug fixes. Begin with the existing-ticket gat
 
 ```text
 ticket gate → grill-with-docs → tatr-ticket → choose Guided or Autopilot
-                                                ↓
-implement → deslop → runtime verification → code-review → blast-radius
-    ↑                                           │              │
-    └── fixes ──────────────────────────────────┴── fixes ──────┘
-                                                               ↓
-                           show-me → full test suite → push → PR → close ticket → push → handoff
+  → implement → deslop → runtime verification → code-review → blast-radius
+  → show-me → full test suite → push → PR → close ticket → push → handoff
+
+Review findings or failed tests → implement → repeat checks and both reviews
 ```
 
 The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. When the user chooses an existing ticket, resume it at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
