@@ -40,7 +40,7 @@ The user subsequently chose to create the verification skill as a draft and keep
 - [ ] Record the exercised feature, exact commands, result, evidence paths, and cleanup outcome.
 - [x] Keep unresolved application prerequisites visible; a failed launch or mocked test is not successful runtime verification.
 
-Implementation state: requested draft delivered; live proof blocked by the listed prerequisites. No committed verification snapshot or Standards/Spec reviews yet. Next action: resolve launch prerequisites and the applicable runtime tickets, execute one mapped journey including cleanup, and record retained evidence before promoting the skill. Existing product implementation tickets retain their own scope and stage.
+Implementation state: requested draft delivered; live proof blocked by the listed prerequisites. Draft included in signed snapshot 30bc55205ab186244b597a4506a99e1f2b2b13d8; Standards and Spec review both found 0 actionable issues within the approved draft scope. Live runtime proof remains pending. Next action: resolve launch prerequisites and the applicable runtime tickets, execute one mapped journey including cleanup, and record retained evidence before promoting the skill. Existing product implementation tickets retain their own scope and stage.
 
 ### Discovery evidence
 

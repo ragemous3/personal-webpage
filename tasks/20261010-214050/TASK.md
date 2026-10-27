@@ -34,7 +34,7 @@ The user approved Guided/Autopilot selection after ticket preparation, persisten
 - [x] Both modes prepare the final PR description through show-me and use the existing Git workflow for publication and CI/review handoff, without merging.
 - [x] CLI subprocess tests cover visible output, empty output, invalid input, and configuration failures. Check documentation links and decision IDs. Product runtime checks are not applicable to this tooling change.
 
-Extension state: stage 4, preparing the signed review snapshot on feature/workflow-execution-modes. Extension review base: 3d552edc4bbe5318ffacdc650187fb0257958e00. Execution mode: guided (current approval rules). The user approved implementation, documentation changes, skill installation, and inclusion of the earlier verification draft and prerequisite tickets in this PR. Publication remains pending approval. AGENTS.md and the installed implement skill are unchanged. Earlier review results below cover the original workflow only; extension reviews are pending.
+Extension state: stage 7, PR prepared and awaiting publication approval on feature/workflow-execution-modes. Extension review base: 3d552edc4bbe5318ffacdc650187fb0257958e00. Execution mode: guided (current approval rules). The user approved implementation, documentation changes, skill installation, and inclusion of the earlier verification draft and prerequisite tickets in this PR. Publication remains pending approval. AGENTS.md and the installed implement skill are unchanged. Reviewed extension implementation snapshot: 30bc55205ab186244b597a4506a99e1f2b2b13d8. Earlier review results below cover the original workflow only.
 
 Extension evidence:
 
@@ -42,9 +42,13 @@ Extension evidence:
 - Local link/decision validation: 8 local links and all 8 decision IDs passed; Autopilot map is empty. `git diff --check`: passed.
 - `npm test`: blocked before tests execute by the existing incomplete TypeScript installation (`ERR_MODULE_NOT_FOUND`). The dependency-free CLI suite above is the applicable test suite for this change; no product source changed.
 - Deslop cleanup retained required configuration validation and aligned formatting with surrounding JavaScript. Application browser journeys are not applicable to the workflow CLI; the included verification skill remains a draft with live-run blockers in its separate ticket.
-- HumanLayer show-me and Cursor deslop are installed globally. The PR body will be prepared using show-me after review.
+- HumanLayer show-me and Cursor deslop are installed globally. The PR body was prepared with show-me against implementation snapshot 30bc55205ab186244b597a4506a99e1f2b2b13d8, using a Mermaid flow and the actual verification limitations.
+- Final combined snapshot validation: 31 local links across nine Markdown files passed, draft skill structure is valid, helper syntax checks passed, and `git diff --cached --check` passed. The retained Hugo log has whitespace normalized.
+- Parallel Standards review: 0 actionable findings on 30bc552. Parallel Spec review: 0 actionable findings on the same snapshot, including the explicitly approved draft scope.
+- Blast-radius on 30bc552: not applicable to bulk/destructive writes on real data. The CLI reads local configuration; observation cleanup removes only its own temporary browser profile. No live data operation was performed.
+- Signature header check passed for 30bc552. PR body prepared locally at `/tmp/workflow-execution-modes-pr-body.md`; regenerate it from this snapshot and evidence if that temporary file is absent.
 
-Next action: commit the scoped snapshot, run Standards and Spec review, then prepare the PR body for publication approval. Keep this ticket OPEN through handoff.
+Next action: obtain publication approval, push the signed branch, create the PR with the show-me-prepared body, and run the Git workflow CI/review handoff. Keep this ticket OPEN through handoff.
 
 ## Dependencies
 
@@ -62,7 +66,7 @@ Next action: commit the scoped snapshot, run Standards and Spec review, then pre
 - [x] The signed branch is pushed and the PR is available for review.
 - [ ] The workflow PR is reviewed and merged through the project Git workflow.
 
-Implementation state: PR review on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Reviewed implementation snapshot: 0dc950d. Next action: review [PR #5](https://github.com/ragemous3/personal-webpage/pull/5) and merge when authorized and the Git workflow gates pass. No end-to-end product implementation run is claimed by this setup ticket.
+Historical original workflow state (superseded by the extension state above): PR review on feature/implementation-flow. Review base: cafbcef8592a1cb802e541fe46a88eb2aff6c06e. Reviewed implementation snapshot: 0dc950d. Next action: review [PR #5](https://github.com/ragemous3/personal-webpage/pull/5) and merge when authorized and the Git workflow gates pass. No end-to-end product implementation run is claimed by this setup ticket.
 
 ### Setup evidence
 
