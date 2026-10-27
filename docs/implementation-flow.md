@@ -9,7 +9,7 @@ implement → deslop → runtime verification → code-review → blast-radius
     ↑                                           │              │
     └── fixes ──────────────────────────────────┴── fixes ──────┘
                                                                ↓
-                                           show-me → full test suite → PR → handoff
+                           show-me → full test suite → push → PR → close ticket → push → handoff
 ```
 
 The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. When the user chooses an existing ticket, resume it at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
@@ -22,7 +22,7 @@ Offer Guided or Autopilot when a new ticket is ready at the end of stage 2. For 
 
 Guided retains the current approval rules. When offering Autopilot, explicitly ask the user to approve routine implementation decisions, applicable tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, pushing the task branch, creating or updating its PR, and handling its CI/review findings through handoff. Wait for that approval before activating Autopilot. This obtains the approval required by the existing AGENTS.md; it does not modify or override that file. Record the mode, the user's approval, authorized scope, limits, and the finish condition in the ticket body; these are workflow fields, not new TATR header properties. Changing mode requires the user's choice.
 
-Both modes use the same implementation and verification stages. Continue when a stage is complete; there is no automatic approval pause between every pair of stages. Ask when requirements or interfaces change, a necessary action exceeds authorization, or a blocker cannot be resolved within scope. Missing verification and unresolved actionable review findings remain blockers. End with an open PR and an accurate readiness report; merging, enabling auto-merge, entering a merge queue, deployment, and live destructive operations require separate explicit authorization.
+Both modes use the same implementation and verification stages. Continue when a stage is complete; there is no automatic approval pause between every pair of stages. Ask when requirements or interfaces change, a necessary action exceeds authorization, or a blocker cannot be resolved within scope. Missing verification and unresolved actionable review findings remain blockers. End with an open PR, a closed ticket pushed to its branch, and an accurate readiness report; merging, enabling auto-merge, entering a merge queue, deployment, and live destructive operations require separate explicit authorization.
 
 No mode decision rewrites an installed skill. Pass the ticket, mode, approved scope, and this flow's stage order when invoking `implement` or delegating work. The main agent owns decisions and publication; review delegates remain read-only. Preserve approval records on resumption. An absent or ambiguous grant never authorizes Autopilot or publication.
 
@@ -157,7 +157,7 @@ Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-blast-rad
 
 ## 7. Prepare the PR, publish, and hand off
 
-Record acceptance-criteria evidence, check results, reviewed commit IDs, dispositions for review findings, and blast-radius applicability in the ticket. Update its current stage so another session can resume accurately. Mark it CLOSED only when the acceptance criteria and Definition of Done are met; keep pending reviews or checks visible in an OPEN ticket.
+Record acceptance-criteria evidence, check results, reviewed commit IDs, dispositions for review findings, and blast-radius applicability in the ticket. Update its current stage so another session can resume accurately. Keep the ticket OPEN until the checks before publication pass and the PR is open.
 
 Prepare the PR title and full body before asking for publication approval. Read the installed `show-me/SKILL.md` and apply it to the final diff and evidence. Lead with the problem and resulting behavior, use the smallest useful diagram or before/after sketch, include the TATR ticket path, actual verification results, and remaining limitations, and honor any repository PR template. This is a writing pass, not an automated verifier. Record in the ticket which implementation snapshot the body describes. Local temporary paths are not usable PR attachments; include relevant output or accessible artifact links. Repeat the show-me pass whenever later fixes change what the body describes.
 
@@ -167,6 +167,8 @@ If a test failure requires an implementation change, return to stages 3 through 
 
 Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" before-publish`. In Guided, honor prior publishing approval or present the prepared result and wait for it. In Autopilot, the explicit ticket-scoped grant covers publication. Use git-workflow for signed commits, push, and PR creation/update; reuse an existing PR for the branch. Before pushing an existing PR, check whether auto-merge or a merge queue could merge it automatically; pause to resolve that situation if merging is outside the user's grant.
 
-Read back the published PR body and verify that it matches the show-me-prepared text. Use the existing git-workflow watcher to handle CI and actionable review findings on the current head. Any implementation change returns to stages 3 through 6 and refreshes the PR description. Keep the ticket OPEN while required checks or reviews remain pending. Do not introduce a second watcher.
+After the branch is pushed and the PR is open, set the ticket to CLOSED. Record the PR link and the completed stage in the ticket. Create a signed commit for the closure and push it to the same PR branch. Close the ticket at this point as standard practice. Do not wait for PR approval or merge. If the push or PR creation fails, keep the ticket OPEN and record the blocker.
 
-At handoff, run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-publish`. Report the PR link, final head SHA, verification evidence, and whether it is ready for review, waiting for required human approval, or blocked. The successful finish is an open, unmerged PR; never report a blocked run as complete. No-answer or elapsed time is not approval. This flow does not authorize merging.
+Read back the published PR body and verify that it matches the show-me-prepared text. Use the existing git-workflow watcher to handle CI and actionable review findings on the current head. Reopen the same ticket if CI fails or review identifies work to do. Any implementation change returns to stages 3 through 6 and refreshes the PR description. Resolve the findings and pass the required checks before closing the ticket again. Commit and push each closure to the same PR branch. Waiting for PR review alone does not reopen the ticket. Do not introduce a second watcher.
+
+At handoff, run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-publish`. Report the PR link, final head SHA, verification evidence, ticket status, and whether it is ready for review, waiting for required human approval, or blocked. The successful finish is an open, unmerged PR and a closed ticket pushed to its branch; never report a blocked run as complete. No-answer or elapsed time is not approval. This flow does not authorize merging.
