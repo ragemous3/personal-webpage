@@ -14,11 +14,11 @@ Related work: [Connect design interviews to the TATR implementation flow](../202
 
 ## Prerequisites
 
-The user approved the requirements and the documentation changes in this conversation. Use Guided mode. Publication is not authorized.
+The user approved the requirements and the documentation changes in this conversation. Use Guided mode. The user explicitly authorized pushing the task branch and opening a PR. Merging is not authorized.
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: before publication; GitHub signing-key registration pending. Latest signed implementation snapshot: `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The initial GPG signing attempt failed. The user then authorized a new SSH signing key for this environment. Git now uses SSH signing. The signing preflight and `git verify-commit` passed. GitHub rejected automatic public-key registration with HTTP 403, `Resource not accessible by integration`. Registration in the user's GitHub settings remains pending.
+Current stage: publish the signed branch and open a PR. Latest signed implementation snapshot: `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The initial GPG signing attempt failed. The user then authorized a new SSH signing key for this environment. Git now uses SSH signing. The signing preflight and `git verify-commit` passed. GitHub rejected automatic public-key registration with HTTP 403, `Resource not accessible by integration`. GitHub recognition of the signature has not been verified. The user explicitly requested publication after this result was reported.
 
 Checks: the five decision CLI tests passed in the managed environment. The default sandbox denied child-process creation with `EPERM`. Eight local Markdown links passed. `git diff --cached --check` passed. Application runtime checks do not apply because only workflow documentation and this ticket changed.
 
@@ -30,7 +30,7 @@ Final test result: `npm test` exited 0 in the managed environment. All 15 tests 
 
 The PR body is prepared locally with the stage order and validation results. It describes implementation snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`.
 
-Next action: add the public key as a Signing key in GitHub settings. Confirm publication is authorized before push. Keep this ticket OPEN until publication is complete.
+Next action: push `feature/final-test-step`, open the PR, and check its published state and CI results. Keep the PR open and unmerged.
 
 ## Acceptance criteria
 
