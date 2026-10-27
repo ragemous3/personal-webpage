@@ -7,6 +7,7 @@ import {
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
+import { areLmConfigsEqual } from '@/layers/data/utilities/lm-config-equality.utility';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
@@ -39,43 +40,6 @@ const defaultDependencies: LlmWorkerDependencies = {
 const isLlmDto = (value: unknown): value is LlmDTO =>
   typeof value === 'object' && value !== null && 'message' in value && Array.isArray(value.message);
 
-const isComparableObject = (value: unknown): value is object =>
-  typeof value === 'object' &&
-  value !== null &&
-  (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype);
-
-const sameArrayShape = (left: object, right: object): boolean =>
-  Array.isArray(left) === Array.isArray(right) &&
-  (!Array.isArray(left) || left.length === (right as unknown[]).length);
-
-function sameValue(left: unknown, right: unknown, seen = new WeakMap<object, object>()): boolean {
-  if (Object.is(left, right)) return true;
-  if (!isComparableObject(left) || !isComparableObject(right)) return false;
-  if (!sameArrayShape(left, right)) return false;
-  if (seen.has(left)) return seen.get(left) === right;
-  seen.set(left, right);
-
-  return sameEntries(left, right, seen);
-}
-
-function sameEntries(left: object, right: object, seen: WeakMap<object, object>): boolean {
-  const leftEntries = Object.entries(left);
-  const rightRecord = right as Record<string, unknown>;
-  return (
-    leftEntries.length === Object.keys(right).length &&
-    leftEntries.every(
-      ([key, value]) => Object.hasOwn(right, key) && sameValue(value, rightRecord[key], seen),
-    )
-  );
-}
-
-const sameConfiguration = (left: LmConfig, right: LmConfig): boolean =>
-  left.source === right.source &&
-  left.model === right.model &&
-  left.device === right.device &&
-  left.dtype === right.dtype &&
-  sameValue(left.generation, right.generation);
-
 const loadModel = async (
   dependencies: LlmWorkerDependencies,
   config: LmConfig,
@@ -103,7 +67,7 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
     if (!isLmConfig(payload)) {
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
     }
-    if (activeConfiguration && !sameConfiguration(activeConfiguration, payload)) {
+    if (activeConfiguration && !areLmConfigsEqual(activeConfiguration, payload)) {
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
       );
