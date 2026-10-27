@@ -192,6 +192,39 @@ test('conflicting initialization is rejected during loading and after readiness'
   assert.match(messages[2].error.message, /different configuration/);
 });
 
+test('reordered but equal generation options reuse the initialized model', async () => {
+  const messages = [];
+  let loads = 0;
+  const handler = createLlmMessageHandler({
+    loadGeneratorPipeline: async () => {
+      loads += 1;
+      return emptyGenerator;
+    },
+    loadTokenizer: async () => ({ getMaxLength: () => 2048, countTokens: () => 1 }),
+    publish: (message) => messages.push(message),
+  });
+  const firstConfig = {
+    ...config,
+    generation: { max_new_tokens: 32, eos_token_id: [0, 2], generation_kwargs: { a: 1, b: 2 } },
+  };
+  const secondConfig = {
+    ...config,
+    generation: { generation_kwargs: { b: 2, a: 1 }, eos_token_id: [0, 2], max_new_tokens: 32 },
+  };
+
+  await handler({ data: { id: 'init-1', name: 'llm', task: 'llm:init', payload: firstConfig } });
+  await handler({ data: { id: 'init-2', name: 'llm', task: 'llm:init', payload: secondConfig } });
+
+  assert.equal(loads, 1);
+  assert.deepEqual(
+    messages.map(({ id, task }) => ({ id, task })),
+    [
+      { id: 'init-1', task: 'llm:ready' },
+      { id: 'init-2', task: 'llm:ready' },
+    ],
+  );
+});
+
 test('a successful query streams and returns the model response with its request ID', async () => {
   const messages = [];
   const answer = { generated_text: 'Hello' };
