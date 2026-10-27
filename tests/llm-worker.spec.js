@@ -155,6 +155,43 @@ test('concurrent initialization shares one load and answers both requests when r
   );
 });
 
+test('conflicting initialization is rejected during loading and after readiness', async () => {
+  const messages = [];
+  let finishLoading;
+  let loads = 0;
+  const handler = createLlmMessageHandler({
+    loadGeneratorPipeline: () => {
+      loads += 1;
+      return new Promise((resolve) => {
+        finishLoading = () => resolve(emptyGenerator);
+      });
+    },
+    loadTokenizer: async () => ({ getMaxLength: () => 2048, countTokens: () => 1 }),
+    publish: (message) => messages.push(message),
+  });
+  const otherConfig = { ...config, model: 'different-model' };
+
+  const first = handler({ data: { id: 'init-1', name: 'llm', task: 'llm:init', payload: config } });
+  const conflicting = handler({
+    data: { id: 'init-2', name: 'llm', task: 'llm:init', payload: otherConfig },
+  });
+  finishLoading();
+  await Promise.all([first, conflicting]);
+  await handler({ data: { id: 'init-3', name: 'llm', task: 'llm:init', payload: otherConfig } });
+
+  assert.equal(loads, 1);
+  assert.deepEqual(
+    messages.map(({ id, task }) => ({ id, task })),
+    [
+      { id: 'init-2', task: 'llm:init' },
+      { id: 'init-1', task: 'llm:ready' },
+      { id: 'init-3', task: 'llm:init' },
+    ],
+  );
+  assert.match(messages[0].error.message, /different configuration/);
+  assert.match(messages[2].error.message, /different configuration/);
+});
+
 test('a successful query streams and returns the model response with its request ID', async () => {
   const messages = [];
   const answer = { generated_text: 'Hello' };

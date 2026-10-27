@@ -39,6 +39,13 @@ const defaultDependencies: LlmWorkerDependencies = {
 const isLlmDto = (value: unknown): value is LlmDTO =>
   typeof value === 'object' && value !== null && 'message' in value && Array.isArray(value.message);
 
+const sameConfiguration = (left: LmConfig, right: LmConfig): boolean =>
+  left.source === right.source &&
+  left.model === right.model &&
+  left.device === right.device &&
+  left.dtype === right.dtype &&
+  JSON.stringify(left.generation) === JSON.stringify(right.generation);
+
 const loadModel = async (
   dependencies: LlmWorkerDependencies,
   config: LmConfig,
@@ -59,17 +66,24 @@ const loadModel = async (
 export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => {
   let localLLM: LocalLLMData | undefined;
   let initialization: Promise<LocalLLMData> | undefined;
+  let activeConfiguration: LmConfig | undefined;
 
   const handleInit = async (request: MessageBase<unknown>): Promise<void> => {
     const { payload } = request;
     if (!isLmConfig(payload)) {
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
     }
+    if (activeConfiguration && !sameConfiguration(activeConfiguration, payload)) {
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
+      );
+    }
     if (localLLM) {
       dependencies.publish({ ...request, task: 'llm:ready' });
       return;
     }
 
+    activeConfiguration = payload;
     initialization ??= loadModel(dependencies, payload, request).then(
       (instance) => {
         localLLM = instance;
@@ -77,6 +91,7 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
       },
       (error: unknown) => {
         initialization = undefined;
+        activeConfiguration = undefined;
         throw error;
       },
     );
