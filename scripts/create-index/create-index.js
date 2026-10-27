@@ -1,8 +1,9 @@
 import { pipeline } from '@huggingface/transformers';
 import { loadHnswlib } from 'hnswlib-wasm';
 
-import rawData from '../../static/content-data/index.json?url';
 import { ChunkTextByToken } from './tokenizer';
+
+const rawData = new URL('../../static/content-data/index.json', import.meta.url).href;
 
 const featureExtractionModel = 'Xenova/all-MiniLM-L6-v2';
 const extractor = await pipeline('feature-extraction', featureExtractionModel, {
@@ -25,34 +26,25 @@ const getRawData = async () => {
   }
 };
 
-const getChunks = async (
-  data,
-  chunkSettings = {
-    minChars: 100,
-    maxChars: 300,
-    overlap: 40,
-  },
-) => {
+const defaultChunkSettings = { minChars: 100, maxChars: 300, overlap: 40 };
+const appendChunks = (chunkGroups, chunks) => {
+  if (chunks && chunks.length > 0) return [...chunkGroups, ...chunks];
+  console.error('Expected chunks but array was empty!');
+  return chunkGroups;
+};
+const getChunks = async (data, chunkSettings = defaultChunkSettings) => {
   let chunkGroups = [];
 
   try {
-    for (const [i, rawData] of data.entries()) {
+    for (const [index, rawData] of data.entries()) {
       const chunks = await tokenizer
-        .createChunksRecursiveTextSplitterAsync(
-          rawData.content,
-          i,
-          chunkSettings,
-        )
-        .catch((e) => console.error(e));
+        .createChunksRecursiveTextSplitterAsync(rawData.content, index, chunkSettings)
+        .catch((error) => console.error(error));
 
-      if (chunks && chunks.length) {
-        chunkGroups = [...chunkGroups, ...chunks];
-      } else {
-        console.error('Expected chunks but array was empty!');
-      }
+      chunkGroups = appendChunks(chunkGroups, chunks);
     }
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
   }
   return chunkGroups;
 };
@@ -79,10 +71,10 @@ const getVectorCollAndChunkGroups = async () => {
 };
 
 const initHNSW = async (vectorColl) => {
-  const lib = await loadHnswlib();
+  const library = await loadHnswlib();
 
   const dim = 384;
-  const index = new lib.HierarchicalNSW('cosine', dim, fileName);
+  const index = new library.HierarchicalNSW('cosine', dim, fileName);
   const nodeConnections = 16;
   const efConstructor = 200;
   const seedGen = 100;
@@ -91,9 +83,9 @@ const initHNSW = async (vectorColl) => {
   index.initIndex(maxEls, nodeConnections, efConstructor, seedGen);
 
   try {
-    vectorColl.forEach((vec, i) => {
-      index.addPoint(vec, i, false);
-    });
+    for (const [index_, vec] of vectorColl.entries()) {
+      index.addPoint(vec, index_, false);
+    }
   } catch (error) {
     console.error(error);
   }
@@ -111,10 +103,10 @@ function downloadAsFile(data, fileName, type = 'application/json') {
 
   a.href = url;
   a.download = fileName;
-  document.body.appendChild(a);
+  document.body.append(a);
   a.click();
 
-  document.body.removeChild(a);
+  a.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -125,18 +117,18 @@ const makeDBDownloadable = () => {
   const HNSW_LIB_STORE = '/hnswlib-index';
   const ENTRY_KEY = `${HNSW_LIB_STORE}/${fileName}`;
 
-  document.getElementById('download').addEventListener('click', () => {
+  document.querySelector('#download').addEventListener('click', () => {
     const openRequest = indexedDB.open(DB_NAME);
 
-    openRequest.onerror = () => console.error('Failed to open IndexedDB');
+    openRequest.addEventListener('error', () => console.error('Failed to open IndexedDB'));
 
     openRequest.onsuccess = () => {
-      const db = openRequest.result;
-      const tx = db.transaction(STORE_NAME, 'readonly');
+      const database = openRequest.result;
+      const tx = database.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const getRequest = store.get(ENTRY_KEY);
 
-      getRequest.onerror = () => console.error('Failed to read entry');
+      getRequest.addEventListener('error', () => console.error('Failed to read entry'));
 
       getRequest.onsuccess = () => {
         const data = getRequest.result;
@@ -149,11 +141,7 @@ const makeDBDownloadable = () => {
           JSON.stringify({ timestamp: data.timestamp, mode: data.mode }),
           'vector-metadata.json',
         );
-        downloadAsFile(
-          data.contents,
-          'contents.bin',
-          'application/octet-stream',
-        );
+        downloadAsFile(data.contents, 'contents.bin', 'application/octet-stream');
       };
     };
   });
@@ -161,7 +149,7 @@ const makeDBDownloadable = () => {
 
 const makeChunksDownloadAble = (chunks) => {
   document
-    .getElementById('download-chunks')
+    .querySelector('#download-chunks')
     .addEventListener('click', () =>
       downloadAsFile(JSON.stringify(chunks, null, 2), 'chunks.json'),
     );

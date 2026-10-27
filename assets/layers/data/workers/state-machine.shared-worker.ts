@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
-import { SeverityLevelCodes } from '../../shared/constants';
-import { type Nullable } from '../../shared/models';
-import { StateMachineStatesEnum } from '../contants/constants';
+import { StateMachineStatesEnum } from '@/layers/data/contants/constants';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type Nullable } from '@/layers/shared/models';
+
 import {
   type SharedWorkerMessage,
   type StateMachineName,
@@ -22,35 +23,36 @@ const setStatus = (entityName: StateMachineName, payload: StateMachineStatusLog)
  * Whole point here is to only have 1 live instance of something at a time.
  * If users open more tabs, another init is not necessary.
  */
-const checkStatus = (p: MessagePort, entityName: StateMachineName, message: SharedWorkerMessage) =>
-  processStatusTracker.get(entityName)
-    ? p.postMessage({
-        ...message,
-        payload: processStatusTracker.get(entityName),
-      })
-    : setStatus(entityName, {
-        initiator: message.id,
-        entity: entityName,
-        status: StateMachineStatesEnum.BUSY,
-      }) &&
-      p.postMessage({
-        ...message,
-        payload: {
-          initiator: message.id,
-          entity: entityName,
-          status: StateMachineStatesEnum.UNINITIALIZED,
-        },
-      });
+const checkStatus = (
+  port: MessagePort,
+  entityName: StateMachineName,
+  message: SharedWorkerMessage,
+): void => {
+  const status = processStatusTracker.get(entityName);
+  if (status) {
+    port.postMessage({ ...message, payload: status });
+    return;
+  }
+  setStatus(entityName, {
+    initiator: message.id,
+    entity: entityName,
+    status: StateMachineStatesEnum.BUSY,
+  });
+  port.postMessage({
+    ...message,
+    payload: {
+      initiator: message.id,
+      entity: entityName,
+      status: StateMachineStatesEnum.UNINITIALIZED,
+    },
+  });
+};
 
 const isStateMachineTask = (task: string | undefined): task is StateMachineTask =>
   (task && 'check' === task) || 'transfer' === task || 'set' === task ? true : false;
 
 const isStateMachineState = (state: unknown): state is StateMachineStatesEnum =>
-  state &&
-  typeof state === 'string' &&
-  (StateMachineStatesEnum.BUSY === state || StateMachineStatesEnum.UNINITIALIZED === state)
-    ? true
-    : false;
+  state === StateMachineStatesEnum.BUSY || state === StateMachineStatesEnum.UNINITIALIZED;
 
 const disectTask = (
   task: StateMachineProtocol,
@@ -107,7 +109,7 @@ self.addEventListener('connect', (event: MessageEvent<SharedWorkerMessage>): voi
   if (!port) throw new Error('Port was not found');
   ports.add(port);
   port.start();
-  port.onmessage = (e) => {
-    for (const p of ports) sharedWorkerSwitch(p, e.data);
-  };
+  port.addEventListener('message', (messageEvent: MessageEvent<SharedWorkerMessage>): void => {
+    for (const connectedPort of ports) sharedWorkerSwitch(connectedPort, messageEvent.data);
+  });
 });

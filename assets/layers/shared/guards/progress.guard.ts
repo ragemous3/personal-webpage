@@ -6,8 +6,9 @@ import {
   type ProgressInfo,
   type ProgressStatusInfo,
   type ReadyProgressInfo,
-} from '../models/progress.model';
-import { isNumber,isRecord, isString } from './guards';
+} from '@/layers/shared/models/progress.model';
+
+import { isNumber, isRecord, isString } from './guards';
 
 export const hasFileProgressBase = (
   value: Record<string, unknown>,
@@ -20,17 +21,17 @@ export const isInitiateProgressInfo = (value: unknown): value is InitiateProgres
 export const isDownloadProgressInfo = (value: unknown): value is DownloadProgressInfo =>
   isRecord(value) && value.status === 'download' && hasFileProgressBase(value);
 
+const hasProgressAmounts = (value: Record<string, unknown>): boolean =>
+  isNumber(value.loaded) && isNumber(value.total) && value.loaded >= 0 && value.total >= 0;
+
 export const isProgressStatusInfo = (value: unknown): value is ProgressStatusInfo =>
   isRecord(value) &&
   value.status === 'progress' &&
   hasFileProgressBase(value) &&
   isNumber(value.progress) &&
-  isNumber(value.loaded) &&
-  isNumber(value.total) &&
+  hasProgressAmounts(value) &&
   value.progress >= 0 &&
-  value.progress <= 100 &&
-  value.loaded >= 0 &&
-  value.total >= 0;
+  value.progress <= 100;
 
 export const isDoneProgressInfo = (value: unknown): value is DoneProgressInfo =>
   isRecord(value) && value.status === 'done' && hasFileProgressBase(value);

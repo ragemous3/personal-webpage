@@ -1,0 +1,168 @@
+{
+  "status": "BLOCKED",
+  "root": "/workspace/personal-webpage",
+  "node": "v24.19.0",
+  "runtimeVerified": false,
+  "checks": [
+    {
+      "name": "hugo-template-support",
+      "passed": true,
+      "detail": "hugo v0.152.2-6abdacad3f3fe944ea42177844469139e81feda6+extended linux/amd64 BuildDate=2025-10-24T15:31:49Z VendorInfo=gohugoio"
+    },
+    {
+      "name": "dependency:@huggingface/transformers",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:@langchain/core",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:@langchain/textsplitters",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:@lit/context",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:hnswlib-wasm",
+      "passed": false,
+      "detail": "MODULE_NOT_FOUND"
+    },
+    {
+      "name": "dependency:lit",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:@eslint/js",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:autoprefixer",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-config-prettier",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-import-resolver-typescript",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-boundaries",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-import-x",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-no-relative-import-paths",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-simple-import-sort",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-sonarjs",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:eslint-plugin-unicorn",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:globals",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:knip",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:postcss",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:prettier",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:prettier-plugin-go-template",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:puppeteer",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:typescript",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:typescript-eslint",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "dependency:vite",
+      "passed": true,
+      "detail": "Resolvable from this checkout"
+    },
+    {
+      "name": "postcss-cli",
+      "passed": true,
+      "detail": "unknown"
+    },
+    {
+      "name": "browser-executable",
+      "passed": true,
+      "detail": "/home/agent/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome"
+    },
+    {
+      "name": "data:chunks.json",
+      "passed": false,
+      "detail": "ENOENT: no such file or directory, stat '/workspace/personal-webpage/static/content-data/chunks.json'"
+    },
+    {
+      "name": "data:contents.bin",
+      "passed": false,
+      "detail": "ENOENT: no such file or directory, stat '/workspace/personal-webpage/static/content-data/contents.bin'"
+    },
+    {
+      "name": "data:vector-metadata.json",
+      "passed": false,
+      "detail": "ENOENT: no such file or directory, stat '/workspace/personal-webpage/static/content-data/vector-metadata.json'"
+    }
+  ]
+}

@@ -27,8 +27,10 @@ export abstract class MessagingBase<
     }
   };
 
-  protected abstract setupEventListeners(): void | null;
-  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => { this.emit(event.data); };
+  protected abstract setupEventListeners(): undefined | null;
+  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => {
+    this.emit(event.data);
+  };
 
   protected handleError = (error: ErrorEvent | MessageEvent<unknown>): void => {
     console.error(`${this.name}: error:`, error);

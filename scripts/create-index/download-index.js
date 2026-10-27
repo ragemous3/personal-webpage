@@ -1,8 +1,9 @@
-import fs from 'fs';
-import http from 'http';
-import path from 'path';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import puppeteer from 'puppeteer';
-import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 /*
@@ -30,12 +31,7 @@ sudo pacman -S --needed \
   gtk3
   */
 
-const downloadWhenClick = async (
-  id,
-  page,
-  downloadPath,
-  expectedFileLength,
-) => {
+const downloadWhenClick = async (id, page, downloadPath, expectedFileLength) => {
   await page.waitForSelector(`#${id}`, {
     visible: true,
   });
@@ -56,72 +52,65 @@ const downloadWhenClick = async (
   console.info(`Download completed for ${id}!`);
 };
 
-const serveDir = path.resolve(__dirname, 'dist');
+const serveDirectory = path.resolve(__dirname, 'dist');
 
-const server = http.createServer((req, res) => {
+const server = http.createServer((request, response) => {
   // Default to index.html if no file is requested
-  let filePath = path.join(serveDir, req.url === '/' ? 'index.html' : req.url);
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('File not found');
+  const filePath = path.join(serveDirectory, request.url === '/' ? 'index.html' : request.url);
+  fs.readFile(filePath, (error, data) => {
+    if (error) {
+      response.writeHead(404);
+      response.end('File not found');
     } else {
       // Basic content type detection
-      let ext = path.extname(filePath).toLowerCase();
+      const extension = path.extname(filePath).toLowerCase();
       let type = 'text/html';
-      if (ext === '.js') type = 'application/javascript';
-      if (ext === '.css') type = 'text/css';
-      if (ext === '.json') type = 'application/json';
+      if (extension === '.js') type = 'application/javascript';
+      if (extension === '.css') type = 'text/css';
+      if (extension === '.json') type = 'application/json';
 
-      res.writeHead(200, { 'Content-Type': type });
-      res.end(data);
+      response.writeHead(200, { 'Content-Type': type });
+      response.end(data);
     }
   });
 });
 
 server.listen(8000, () => {
-  console.info(`Serving ${serveDir} at http://localhost:8000`);
+  console.info(`Serving ${serveDirectory} at http://localhost:8000`);
 });
 
-(async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox'],
-  });
-  const page = await browser.newPage();
-  const downloadPath = path.resolve(__dirname, '../../static/content-data/');
+const browser = await puppeteer.launch({
+  headless: true,
+  args: ['--no-sandbox'],
+});
+const page = await browser.newPage();
+const downloadPath = path.resolve(__dirname, '../../static/content-data/');
 
-  if (!fs.existsSync(downloadPath)) {
-    fs.mkdirSync(downloadPath);
-  } else {
-    fs.rmSync(downloadPath, { recursive: true, force: true });
-    fs.mkdirSync(downloadPath);
-  }
+if (fs.existsSync(downloadPath)) {
+  fs.rmSync(downloadPath, { recursive: true, force: true });
+  fs.mkdirSync(downloadPath);
+} else {
+  fs.mkdirSync(downloadPath);
+}
 
-  const client = await page.createCDPSession();
-  await client.send('Page.setDownloadBehavior', {
-    behavior: 'allow',
-    downloadPath: downloadPath,
-    eventsEnabled: true,
-  });
+const client = await page.createCDPSession();
+await client.send('Page.setDownloadBehavior', {
+  behavior: 'allow',
+  downloadPath,
+  eventsEnabled: true,
+});
 
-  console.info('Going to page');
-  await page.goto('http://localhost:8000');
+console.info('Going to page');
+await page.goto('http://localhost:8000');
 
-  page.on('console', (msg) => {
-    console.log('BROWSER LOG:', msg.text());
-  });
-  let expectedFileLength = fs.readdirSync(downloadPath).length;
-  await downloadWhenClick('download', page, downloadPath, expectedFileLength);
-  expectedFileLength = fs.readdirSync(downloadPath).length;
+page.on('console', (message) => {
+  console.info('BROWSER LOG:', message.text());
+});
+let expectedFileLength = fs.readdirSync(downloadPath).length;
+await downloadWhenClick('download', page, downloadPath, expectedFileLength);
+expectedFileLength = fs.readdirSync(downloadPath).length;
 
-  await downloadWhenClick(
-    'download-chunks',
-    page,
-    downloadPath,
-    expectedFileLength,
-  );
-  await new Promise((r) => setTimeout(r, 5000));
-  await browser.close();
-  server.close(() => console.info('Server closed'));
-})();
+await downloadWhenClick('download-chunks', page, downloadPath, expectedFileLength);
+await new Promise((r) => setTimeout(r, 5000));
+await browser.close();
+server.close(() => console.info('Server closed'));

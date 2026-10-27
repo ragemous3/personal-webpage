@@ -1,5 +1,5 @@
-import { SeverityLevelCodes } from '../constants';
-import { type Nullable } from '../models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type Nullable } from '@/layers/shared/models';
 
 const guardIsError = (txt: string): Nullable<SeverityLevelCodes> => {
   for (const value of Object.values(SeverityLevelCodes)) {

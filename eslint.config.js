@@ -348,6 +348,7 @@ export default defineConfig([
       ...sharedPlugins,
     },
     settings: {
+      'import-x/core-modules': ['@params/config'],
       'import-x/resolver-next': [
         createTypeScriptImportResolver({
           project: ['tsconfig.json'],
@@ -384,6 +385,11 @@ export default defineConfig([
         ...globals.node,
       },
     },
+  },
+
+  {
+    files: ['scripts/create-index/create-index.js'],
+    languageOptions: { globals: globals.browser },
   },
 
   /**

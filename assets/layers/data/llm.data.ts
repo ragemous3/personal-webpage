@@ -1,10 +1,6 @@
 import {
   type Chat,
-  type DataType,
-  type DeviceType,
   type Message,
-  pipeline,
-  type ProgressInfo,
   type TextGenerationConfig,
   type TextGenerationOutput,
   type TextGenerationPipeline,
@@ -13,13 +9,13 @@ import {
 } from '@huggingface/transformers';
 
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { TokenizerUtility as TokenizerUtility } from '@/layers/shared/utils/tokenizer';
+import { type TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
 export class LocalLLMData {
   constructor(
     private readonly generator: TextGenerationPipeline,
-    private readonly tokenizerUtil: TokenizerUtility,
-    private readonly modelMaxTokens: number = 0,
+    private readonly tokenizerUtility: TokenizerUtility,
+    private readonly modelMaxTokens = 0,
     private readonly options: Partial<TextGenerationConfig>,
   ) {}
 
@@ -48,8 +44,7 @@ export class LocalLLMData {
     chatMessages: Chat,
     callback: (txt: string) => void,
   ): Promise<TextGenerationSingle | undefined> => {
-    if (!this.guardChatMessageHandler(chatMessages) || !this.tokenizerUtil || !this.generator)
-      return;
+    if (!this.guardChatMessageHandler(chatMessages)) return;
 
     const lastMessage = chatMessages.at(-1);
 
@@ -62,7 +57,7 @@ export class LocalLLMData {
       return;
     }
 
-    const tokenTotal = this.tokenizerUtil.countTokens(lastMessage.content);
+    const tokenTotal = this.tokenizerUtility.countTokens(lastMessage.content);
 
     if (tokenTotal > this.modelMaxTokens) {
       console.error(

@@ -1,0 +1,41 @@
+
+> llm-chatbot@1.0.0 test
+> node --import ./scripts/typescript-test.loader.js --test tests/*.spec.js
+
+✔ Guided returns the approval instruction before publishing (37.687822ms)
+✔ known decisions without extra instructions produce no output (98.510037ms)
+✔ invalid decisions or missing modes cannot silently authorize continuation (224.294934ms)
+✔ decision discovery and lookup work outside the repository directory (297.05995ms)
+✔ missing or invalid instruction data is an error, not an empty instruction (259.509185ms)
+✔ message validation preserves payload, task, and error checks (1.2386ms)
+✔ a custom task guard controls message acceptance (0.133472ms)
+✔ the existing vector response export accepts only valid response shapes (0.156857ms)
+✔ progress validation accepts boundary values and rejects invalid amounts (0.27821ms)
+✔ worker and broadcast listener setup delivers one notification per message (21.06492ms)
+✔ initialization loads the configured model and tokenizer before reporting ready (1.948884ms)
+✔ a query before initialization returns an error for that request (0.557352ms)
+✔ failed initialization reports the error and can be retried (0.548589ms)
+✔ tokenizer failure cannot report readiness and a later initialization can succeed (0.39677ms)
+✔ concurrent initialization shares one load and answers both requests when ready (0.781961ms)
+✔ conflicting initialization is rejected during loading and after readiness (0.785978ms)
+✔ reordered but equal generation options reuse the initialized model (0.539745ms)
+✔ a successful query streams and returns the model response with its request ID (0.715721ms)
+✔ an asynchronous query failure reports an error for the query (0.456339ms)
+✔ a language model configuration is accepted without database fields (0.671915ms)
+✔ unsupported model devices, dtypes and malformed generation options are rejected (0.353895ms)
+✔ database configuration requires a base URL, supported space and finite dimensions (0.275627ms)
+✔ invalid model configuration creates no worker or broadcast resources (0.767129ms)
+✔ invalid site settings are rejected before creating any resources (0.606016ms)
+✔ non-serializable generation values are rejected before allocating worker resources (0.330309ms)
+✔ invalid numeric generation options are rejected before allocating resources (0.677043ms)
+✔ valid normalized site params produce configured model and database startup messages (18.333354ms)
+✔ explicit valid generation options survive composition into the worker startup message (19.013852ms)
+✔ both factories reuse singletons and create independent configured clients when requested (22.734372ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3654.413828
