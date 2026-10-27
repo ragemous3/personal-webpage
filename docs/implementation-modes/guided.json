@@ -1,0 +1,4 @@
+{
+  "before-documentation-change": "Before adding or changing documentation, including ticket updates, or adding code comments or docstrings, obtain explicit user approval unless these changes are already authorized. Honor the existing approved scope without asking again.",
+  "before-publish": "Present the completed changes, verification results, and show-me-prepared PR body. Obtain approval to push and create or update the PR unless publication is already authorized. Wait for an explicit answer; no answer grants no permission."
+}

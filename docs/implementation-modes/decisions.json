@@ -1,0 +1,10 @@
+[
+  "after-ticket",
+  "before-documentation-change",
+  "after-implementation",
+  "after-verification",
+  "after-code-review",
+  "after-blast-radius",
+  "before-publish",
+  "after-publish"
+]
