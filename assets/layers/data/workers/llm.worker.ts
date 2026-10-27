@@ -7,9 +7,9 @@ import {
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
-import { areLmConfigsEqual } from '@/layers/data/utilities/lm-config-equality.utility';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
+import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 import { type LlmDTO, type MessageBase } from './models';
 
@@ -67,7 +67,7 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
     if (!isLmConfig(payload)) {
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
     }
-    if (activeConfiguration && !areLmConfigsEqual(activeConfiguration, payload)) {
+    if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
       );
