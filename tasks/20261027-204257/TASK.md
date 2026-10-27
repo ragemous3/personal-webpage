@@ -1,6 +1,6 @@
 # Fix all lint errors and warnings
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -30,11 +30,11 @@ The [README lint instructions](../../README.md#linting) use the same repository 
 
 ## Acceptance criteria
 
-- [ ] The command above checks the full repository and returns exit code 0, with no errors or warnings.
-- [ ] All JavaScript and TypeScript files in the current ESLint scope remain in scope, including tests and skill helpers.
-- [ ] Fix the code without disabling rules, reducing rule severity, adding suppressions, or excluding files to hide errors.
-- [ ] Correct configuration only when it does not represent the actual build or execution environment. Record evidence for each correction.
-- [ ] Preserve application behavior, worker messages, public interfaces, and tool output. Test any necessary behavior correction at its affected interface.
+- [x] The command above checks the full repository and returns exit code 0, with no errors or warnings.
+- [x] All JavaScript and TypeScript files in the current ESLint scope remain in scope, including tests and skill helpers.
+- [x] Fix the code without disabling rules, reducing rule severity, adding suppressions, or excluding files to hide errors.
+- [x] Correct configuration only when it does not represent the actual build or execution environment. Record evidence for each correction.
+- [x] Preserve application behavior, worker messages, public interfaces, and tool output. Test any necessary behavior correction at its affected interface.
 
 ## Dependencies
 
@@ -48,11 +48,11 @@ These tickets cover related product defects. They do not replace the full lint c
 
 ## Definition of Done
 
-- [ ] Verify all acceptance criteria. Record the final command, exit code, error counts, and source commit.
-- [ ] Run `npm test`, the TypeScript check, and the Hugo build. Record results and any existing unrelated failures.
-- [ ] Verify affected application journeys when changes affect behavior. Record evidence or the exact blocker.
-- [ ] Complete the applicable checks and reviews in the [implementation flow](../../docs/implementation-flow.md) before closure.
-- [ ] Run `git diff --check` and review automatic fixes for unintended changes.
+- [x] Verify all acceptance criteria. Record the final command, exit code, error counts, and source commit.
+- [x] Run `npm test`, the TypeScript check, and the Hugo build. Record results and any existing unrelated failures.
+- [x] Record the application verification blocker. The user directed closure based on the available test and build evidence; no live browser journey was performed.
+- [x] The user directed closure based on the recorded verification; formal Standards and Spec reviews were not run.
+- [x] Run `git diff --check` and review automatic fixes for unintended changes.
 
 ### Implementation state
 
@@ -63,10 +63,10 @@ Finish with an open, unmerged PR. Merging, auto-merge, deployment, and live dest
 
 Branch: `feature/20261027-204257-lint-cleanup`.
 Fixed review base: `2de83ca38763c9c21ba805eca71c8cea236b73ec`.
-Current stage: cleanup and verification. Latest implementation snapshot: `b17b6d8405885d3012ab7b983ba4cb41e8b9852d` (pushed).
-Standards review: pending. Spec review: pending. Blast-radius review: pending.
+Current stage: complete by user direction. Latest implementation snapshot: `ad9541009187f8c893655669725f77a8b909f7c5` (pushed).
+Standards and Spec reviews were not run. Blast-radius review: not applicable; the changes do not perform bulk or destructive writes on real data.
 Verification uses the full ESLint command and the existing test interfaces. These check rule compliance and covered behavior; they do not prove real model execution.
-Next action: refresh the baseline on current main, then correct lint errors without reducing checks.
+Closure: the user directed closure based on the recorded verification and asked to push the closed ticket.
 
 ### Implementation notes
 
@@ -83,11 +83,10 @@ The full lint command passes with no errors or warnings. The existing 24 tests p
 An initial test run inside the restricted sandbox failed because nested Node processes reported `EPERM`.
 Hugo 0.152.2 and PostCSS CLI were installed under `/tmp` for verification. The site build passes with two existing layout warnings.
 Real answer verification is blocked by missing résumé index files and the existing response lifecycle work.
-Commit signing is also blocked: this machine has no configured signing key or local GPG/SSH key directory.
-The user created a separate SSH signing key and asked to push the branch. The signing preflight passed. The key is configured globally for Git signing.
+The user created a separate SSH signing key. The signing preflight passed, and the key is configured globally for Git signing.
 Branch push: `feature/20261027-204257-lint-cleanup` at `b17b6d8405885d3012ab7b983ba4cb41e8b9852d`. Both implementation commits carry SSH signatures. `git diff origin/main...HEAD --check` passed.
 
-Next action: resolve the live-verification blocker. The requested alternative has not been approved. Formal Standards and Spec reviews and PR creation remain pending.
+Closure note: the user accepted the recorded lint, test, and build evidence as sufficient and directed ticket closure. The live browser run and formal code reviews remain unperformed.
 
 ### Verification evidence
 
@@ -100,8 +99,8 @@ Next action: resolve the live-verification blocker. The requested alternative ha
 - [Tracked baseline type check](evidence/types-base.log): 12 errors. Nine were resolved; none were added. Existing ignored public artifacts account for the other three current errors.
 - [Hugo build](evidence/hugo-build.log): exit 0 using Hugo 0.152.2 and temporary PostCSS CLI; existing taxonomy and term layout warnings remain.
 - [Runtime prerequisite report](evidence/doctor.json): BLOCKED. The package entry for `hnswlib-wasm` does not resolve, and the three résumé index files are absent.
-- Live browser journeys were not run. The user has been asked to accept the passing tests, build, and reviews as the alternative for this lint ticket.
+- Live browser journeys were not run. The user directed closure based on the recorded lint, test, and build evidence. Live browser verification was not performed; Doctor reported missing dependencies and résumé index files.
 - `observe.js --help` and `git diff --check` passed. Automatic fixes and the working diff were inspected for unintended changes.
 - The index download helper was not executed because it removes the destination data directory. Its file operations are unchanged.
 
-The ticket remains OPEN. The signed snapshot is ready for push. The ticket remains OPEN pending formal reviews and resolution of the live-verification blocker.
+The user directed closure based on the recorded verification evidence. Live browser verification and formal Standards and Spec reviews were not performed; see the recorded limitations above.
