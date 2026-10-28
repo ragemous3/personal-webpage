@@ -1,5 +1,6 @@
 import { type ChatMessageModelContract } from '@/layers/data/contracts/chat-model.contract';
 import { type ChatMessage, type Chunk } from '@/layers/data/models/models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import {
   type ChatbotServiceContract,
   type ChatState,
@@ -12,8 +13,8 @@ import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 export class RagService implements ChatbotServiceContract {
   readonly chatMessagesSubscription = createStatefulSubscribable<ChatMessage[]>([]);
   readonly stateSubscription = createStatefulSubscribable<ChatState>({ status: 'initializing' });
-  #connections: Array<() => void> = [];
-  #owners = 0;
+  #transportUnsubscribers: Array<() => void> = [];
+  #attachedClients = 0;
   #chatReady = false;
   #databaseReady = false;
   readonly #failedWorkers = new Set<'llm' | 'vectordb'>();
@@ -29,8 +30,8 @@ export class RagService implements ChatbotServiceContract {
   ) {}
 
   init = (): void => {
-    if (this.#connections.length > 0) return;
-    this.#connections = [
+    if (this.#transportUnsubscribers.length > 0) return;
+    this.#transportUnsubscribers = [
       this.database.onData((data) => {
         const requestId = this.#active;
         void this.#handleDatabase(data).catch((error: unknown) => {
@@ -42,21 +43,21 @@ export class RagService implements ChatbotServiceContract {
   };
 
   attach = (): (() => void) => {
-    this.#owners++;
+    this.#attachedClients++;
     this.init();
     let attached = true;
     return () => {
       if (!attached) return;
       attached = false;
-      if (--this.#owners === 0) this.dispose();
+      if (--this.#attachedClients === 0) this.dispose();
     };
   };
 
   dispose = (): void => {
-    if (this.#owners > 0) return;
+    if (this.#attachedClients > 0) return;
     this.reset();
-    for (const disconnect of this.#connections) disconnect();
-    this.#connections = [];
+    for (const disconnect of this.#transportUnsubscribers) disconnect();
+    this.#transportUnsubscribers = [];
   };
 
   send = (question: string): void => {
@@ -176,7 +177,7 @@ export class RagService implements ChatbotServiceContract {
 
   #context(response: unknown, chunks: Chunk[]): Chunk[] {
     if (!isRecord(response) || !Array.isArray(response.neighbors))
-      throw new Error('Invalid retrieval response');
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid retrieval response`);
     return response.neighbors.flatMap((index: unknown) =>
       typeof index === 'number' && chunks[index] ? [chunks[index]] : [],
     );

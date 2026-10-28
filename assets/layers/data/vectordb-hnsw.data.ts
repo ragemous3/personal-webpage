@@ -128,7 +128,9 @@ export class VectorDBHNSWData {
     });
     const vector = queryEmbedding.data;
     if (!(vector instanceof Float32Array) || vector.length !== this.config.dim) {
-      throw new Error('Expected one float32 query embedding with the configured dimensions');
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Expected one float32 query embedding with the configured dimensions`,
+      );
     }
     return this.index.searchKnn(vector, topK, () => true);
   };

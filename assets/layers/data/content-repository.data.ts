@@ -1,3 +1,4 @@
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ContentRepositoryContract } from '@/layers/shared/contracts/content-repository.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 
@@ -5,10 +6,11 @@ import { ApiBase } from './abstracts/base.infra';
 import { type Chunk } from './models/models';
 
 const parseChunks = (value: unknown): Chunk[] => {
-  if (!Array.isArray(value)) throw new Error('Expected résumé chunks');
+  if (!Array.isArray(value))
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected résumé chunks`);
   return value.map((chunk: unknown): Chunk => {
     if (!isRecord(chunk) || typeof chunk.text !== 'string' || typeof chunk.index !== 'number') {
-      throw new Error('Invalid résumé chunk');
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid résumé chunk`);
     }
     return { text: chunk.text, index: chunk.index };
   });

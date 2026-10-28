@@ -32,7 +32,8 @@ const handleQueries = async (query: string | undefined, topK = 5): Promise<Searc
 
 const initialize = async (request: VectorDatabaseDto): Promise<void> => {
   const { payload } = request;
-  if (!isDatabaseConfig(payload)) throw new Error('Invalid database configuration');
+  if (!isDatabaseConfig(payload))
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid database configuration`);
   const apiBase = new ApiBase(payload.baseUrl);
   const store = new IndexDBBase(payload.indexStoreName);
   database = new VectorDBHNSWData(payload, apiBase, store);

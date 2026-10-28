@@ -129,9 +129,12 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
 
   const handleInit = async (request: MessageBase<unknown>): Promise<void> => {
     const { payload } = request;
-    if (!isLmConfig(payload)) throw new Error('Invalid language model configuration.');
+    if (!isLmConfig(payload))
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
     if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
-      throw new Error('Model initialized with a different configuration.');
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
+      );
     }
     if (!localLLM) {
       activeConfiguration = payload;
