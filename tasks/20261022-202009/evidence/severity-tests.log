@@ -1,0 +1,54 @@
+
+> llm-chatbot@1.0.0 test
+> node --import ./scripts/typescript-test.loader.js --test tests/*.spec.js
+
+✔ browser handles late context, submit, plain text, interruption, retry and reconnect (2177.671875ms)
+✔ retrieved content loads and validates real JSON through the repository interface (19.645189ms)
+✔ a retrieved question streams one answer and final text does not duplicate it (4.547262ms)
+✔ cancel retains partial text; retry replaces the attempt and reset rejects stale callbacks (0.562434ms)
+✔ attachment releases only its own ownership and can reconnect without duplicate listeners (0.322044ms)
+✔ reset during retrieval does not send a late model query (1.010036ms)
+✔ a failed partial answer remains visible until explicit retry (0.672402ms)
+✔ reset preserves a failed initialization and retry restarts only the failed worker (0.313851ms)
+✔ retry after both workers fail requires fresh readiness from both (0.1767ms)
+✔ initialization retry preserves a healthy worker that is still loading (0.230088ms)
+✔ a cached client recovers on retry after another client repairs its worker (0.294125ms)
+✔ transport preserves retrieval envelopes, readiness, errors and request identity (2.11123ms)
+✔ Guided returns the approval instruction before publishing (45.21479ms)
+✔ known decisions without extra instructions produce no output (119.486622ms)
+✔ invalid decisions or missing modes cannot silently authorize continuation (251.249119ms)
+✔ decision discovery and lookup work outside the repository directory (330.330644ms)
+✔ missing or invalid instruction data is an error, not an empty instruction (252.574887ms)
+✔ message validation preserves payload, task, and error checks (1.2059ms)
+✔ a custom task guard controls message acceptance (0.300677ms)
+✔ the existing vector response export accepts only valid response shapes (0.325419ms)
+✔ progress validation accepts boundary values and rejects invalid amounts (0.390726ms)
+✔ worker and broadcast listener setup delivers one notification per message (25.96206ms)
+✔ cancel interrupts generation and suppresses its late chunks and final response (9.323927ms)
+✔ initialization loads the configured model and tokenizer before reporting ready (0.647739ms)
+✔ a query before initialization returns an error for that request (1.150057ms)
+✔ failed initialization reports the error and can be retried (0.763825ms)
+✔ tokenizer failure cannot report readiness and a later initialization can succeed (0.47821ms)
+✔ concurrent initialization shares one load and answers both requests when ready (0.437891ms)
+✔ conflicting initialization is rejected during loading and after readiness (0.838276ms)
+✔ reordered but equal generation options reuse the initialized model (0.707301ms)
+✔ a successful query streams and returns the model response with its request ID (0.465272ms)
+✔ an asynchronous query failure reports an error for the query (0.512274ms)
+✔ a language model configuration is accepted without database fields (0.901226ms)
+✔ unsupported model devices, dtypes and malformed generation options are rejected (0.438849ms)
+✔ database configuration requires a base URL, supported space and finite dimensions (0.381525ms)
+✔ invalid model configuration creates no worker or broadcast resources (0.975631ms)
+✔ invalid site settings are rejected before creating any resources (0.583561ms)
+✔ non-serializable generation values are rejected before allocating worker resources (0.541949ms)
+✔ invalid numeric generation options are rejected before allocating resources (0.573548ms)
+✔ valid normalized site params produce configured model and database startup messages (19.744084ms)
+✔ explicit valid generation options survive composition into the worker startup message (25.736307ms)
+✔ both factories reuse singletons and create independent configured clients when requested (24.365232ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8004.781985

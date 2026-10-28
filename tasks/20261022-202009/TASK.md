@@ -1,6 +1,6 @@
 # Complete shared chat response and cancellation lifecycle
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 120
 - TAGS: task
 
@@ -68,6 +68,8 @@ Affected runtime verification: [initialization recovery](evidence/initialization
 Repeat-review finding on `9dd7fa4`: a detached client retained its initialization error after another client repaired the shared worker. The public regression reproduced `error` instead of `ready`. Explicit Retry now clears that obsolete initialization error when both workers are ready and no failed question remains. The transport fake replays readiness just as the real transport does. The focused command passes 22 tests and full lint passes. Cleanup and the Chromium component check pass. The existing CPU lifecycle and real initialization-error evidence remain applicable; the additional cross-client repair sequence is verified through the agreed public-service seam with controlled callbacks. Both prior reviews are invalidated for this fix; repeat both against its signed snapshot. The final full-suite result remains pending.
 
 ### Final reviews and test gate
+
+Severity audit completion: both Standards and Spec reviews of `b4fd1d8a48477b328b184c7dbfd5156280700fec` found zero actionable issues. Full lint and whitespace checks pass. A TypeScript AST scan of assets and index scripts confirms that all 39 authored Error/TypeError throw statements carry severity grades. The missing diagnostic logs are also graded. Final `npm test` after both reviews passes 42 tests with no failures or skips; see [severity test output](evidence/severity-tests.log). The 35 focused checks pass. No changes to application control flow, exception types, cleanup, or runtime configuration are part of this follow-up. Blast-radius is not applicable to diagnostic text and imports; no live data operation was performed. The ticket is closed again for publication to PR #14. Do not wait for CI. The separate configuration ticket remains outside the update.
 
 Severity audit follow-up authorized by the user: reopen for the remaining grading gaps in application and index-generation code, including pre-existing messages. ERROR covers invalid input, unavailable data, failed fetches, failed requests, and index operations. WARNING covers duplicate initialization and skipped empty chunk groups. FATAL covers missing startup infrastructure and transport errors whose handlers terminate the transport. Existing CRITICAL grades for unexpected worker failures remain. The standalone JavaScript index scripts use the same bracketed labels without importing a TypeScript enum that their plain Node command cannot execute. Preserve control flow, exception types, original error objects, and cleanup behavior. Correct the stray dollar sign before the hub's ERROR prefix. The configuration ticket remains outside this update. Earlier reviews and final-suite evidence are invalidated for this new snapshot.
 
