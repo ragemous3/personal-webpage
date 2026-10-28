@@ -101,7 +101,11 @@ export class RagService implements ChatbotServiceContract {
       this.#retryFailedWorkers();
       return;
     }
-    if (!this.#question) return;
+    if (!this.#question) {
+      this.#failedWorkers.clear();
+      this.#ready();
+      return;
+    }
     this.#messages[this.#messages.length - 1] = { role: 'assistant', content: '' };
     this.#start();
   };

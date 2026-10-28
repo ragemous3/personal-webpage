@@ -7,16 +7,19 @@ import { RagService } from '@/layers/services/chatbot.service';
 
 const transport = () => {
   const listeners = new Set();
+  let ready;
   return {
     sent: [],
     onData(listener) {
       listeners.add(listener);
+      if (ready) listener(ready);
       return () => listeners.delete(listener);
     },
     send(payload, requestId, action = 'query') {
       this.sent.push({ payload, requestId, action });
     },
     emit(message) {
+      if (message.task.endsWith(':ready')) ready = message;
       for (const listener of listeners) listener(message);
     },
     get listeners() {
@@ -221,4 +224,26 @@ test('initialization retry preserves a healthy worker that is still loading', ()
   assert.equal(service.stateSubscription.getValue().status, 'initializing');
   database.emit({ task: 'vectordb:ready' });
   assert.equal(service.stateSubscription.getValue().status, 'ready');
+});
+
+test('a cached client recovers on retry after another client repairs its worker', () => {
+  const chat = transport();
+  const database = transport();
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+  );
+  const release = service.attach();
+  database.emit({ task: 'vectordb:ready' });
+  chat.emit({ task: 'llm:init', error: { message: 'Model failed' } });
+  release();
+  chat.emit({ task: 'llm:ready' });
+  const detach = service.attach();
+  service.retry();
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  service.send('Question after recovery');
+  assert.equal(database.sent.length, 1);
+  detach();
 });
