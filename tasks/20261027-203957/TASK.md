@@ -16,7 +16,7 @@ Scope extension approved by the user: make ticket closure a standard part of PR 
 
 PR review fixes requested by the user: restore the original overview diagram. Keep the test timing instructions in the stage text. Use a local deslop skill instead of the external link. The existing show-me stage stays in place.
 
-PR template extension requested by the user: add a default GitHub PR description template. Use the project's existing PR requirements as the baseline. Include the problem and resulting behavior, optional show-me explanation, actual verification, remaining limits, and the ticket link. Use short sentences and active verbs. The optional Theo reference has not been identified, so this template does not claim to use it.
+PR template extension approved by the user: add a default GitHub PR description template. Use Change, Explanation, and Other as section names. Explain the problem, why it matters, and the resulting behavior. Make Explanation and Other optional. Use show-me when a diagram or example helps. Require ASD-STE100 Simplified Technical English, short sentences, and active verbs. Omit verification from the PR body; retain check evidence in this ticket. Link to the ticket for background and acceptance criteria. The optional Theo reference has not been identified, so this template does not claim to use it.
 
 ## Prerequisites
 
@@ -61,9 +61,9 @@ Next action: review the template, run the final checks, and publish it to the sa
 - [x] Stage 4 and the required-skills section link to a standalone project-local deslop skill.
 - [x] Both PR review threads are answered and resolved after the fixes are pushed.
 - [ ] GitHub discovers the single default template at `.github/pull_request_template.md`.
-- [ ] The template requests the problem and resulting behavior, actual verification, and a ticket link.
-- [ ] The explanation and limits sections are optional. A diagram is requested only when it helps explain the change.
-- [ ] Template guidance uses short sentences and active verbs. It does not prefill successful checks or claim work that was not done.
+- [ ] The template requests the problem, its importance, the resulting behavior, and a ticket link. It has no Verification section.
+- [ ] Explanation and Other are optional. A diagram is requested only when it helps explain the change. Other covers applicable compatibility, setup, migration, limits, and follow-up work.
+- [ ] Template guidance requires ASD-STE100 Simplified Technical English, short sentences, and active verbs. Detail is proportional to the change.
 
 ## Dependencies
 

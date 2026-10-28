@@ -1,17 +1,15 @@
+<!-- Use ASD-STE100 Simplified Technical English. Use short sentences and active verbs. Scale the detail to the change. -->
+
 ## Change
 
-<!-- State the problem and the resulting behavior. Use short sentences and active verbs. -->
+<!-- Explain the problem, why it matters, and the resulting behavior. Include a before/after example when useful. -->
 
 ## Explanation
 
-<!-- Use show-me when a small diagram, example, or before/after view helps explain the change. Omit this section when Change is sufficient. -->
+<!-- Explain important decisions or behavior that the diff does not make clear. Use show-me for a useful diagram or example. Omit this section for simple changes. -->
 
-## Verification
+## Other
 
-<!-- Record the checks, their results, and what they cover. State any failed or omitted check and its reason. Do not claim checks that did not run. -->
+<!-- State compatibility changes, required setup or migration, known limits, and follow-up work. Include only items that apply. Omit this section when none apply. -->
 
-## Limits
-
-<!-- Record any remaining issue or follow-up. Omit this section when none apply. -->
-
-Ticket: <!-- Link to tasks/<HUID>/TASK.md in this branch. -->
+Ticket: <!-- Link to the ticket for background and acceptance criteria. -->
