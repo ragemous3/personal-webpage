@@ -1,6 +1,6 @@
 # Run the full test suite before push
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -20,21 +20,23 @@ The user approved the requirements and the documentation changes in this convers
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: implement the approved scope extension on [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Earlier signed implementation snapshot: `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The new snapshot is pending. The initial GPG signing attempt failed. The user then authorized a new SSH signing key for this environment. Git now uses SSH signing. The signing preflight and `git verify-commit` passed. GitHub rejected automatic public-key registration with HTTP 403, `Resource not accessible by integration`. GitHub recognition of the signature has not been verified. The user explicitly requested publication after this result was reported.
+Current stage: complete; the approved scope extension is published in [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Latest signed implementation snapshot: `30dd06b39358f2caa6d02b03636bd3aa11508e30`. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
 
-Checks: the five decision CLI tests passed in the managed environment. The default sandbox denied child-process creation with `EPERM`. Eight local Markdown links passed. `git diff --cached --check` passed. Application runtime checks do not apply because only workflow documentation and this ticket changed.
+Checks: all eight local Markdown links passed. `git diff --check` passed. Application runtime checks do not apply because only workflow documentation and this ticket changed.
 
-Earlier Standards and Spec reviews found zero actionable findings for signed snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. Both results are invalid for the scope extension. Repeat both reviews for the new signed snapshot. The earlier staged-change finding about missing ticket records is resolved.
+Standards review: zero actionable findings for signed snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`. Spec review: zero actionable findings for the same snapshot. Both reviewers compared it with the fixed base. The Spec review found a diagram connector that could skip the final test step. The sequential diagram fixed that issue, and the repeat review confirmed the fix.
 
-Blast-radius review: not applicable for signed snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. The changes affect workflow documentation and this ticket. They do not add bulk writes, deletion, or operations on live data.
+Blast-radius review: not applicable for signed snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`. The changes affect workflow documentation and this ticket. They do not add bulk writes, deletion, or operations on live data.
 
-Final test result: `npm test` exited 0 in the managed environment. All 15 tests passed. No tests failed, were cancelled, or were skipped. The tested changes were staged on base `bf479770f675667d331eec2462a1138237d641c5`. The result covers implementation snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`: only ticket records changed after the run. The workflow and executable files are unchanged, so the passing result remains valid.
+Final test result: `npm test` exited 0 in the managed environment after both reviews. All 15 tests passed. No tests failed, were cancelled, or were skipped. Tested implementation snapshot: `30dd06b39358f2caa6d02b03636bd3aa11508e30`. Only ticket records changed after this run, so the passing result remains valid.
 
-The published PR body matches the prepared text. It includes the stage order and validation results for implementation snapshot `91ffa1cfc7e39f2383c8c9c4bb65c2d38e10cb70`. Later commits update only ticket records.
+The published PR body matches the prepared text. It describes both approved changes in Simplified Technical English. Its show-me diagram shows reviews, final tests, push, PR publication, ticket closure, and the second push. It records validation for implementation snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`.
 
 Publication checks: the PR is OPEN, not a draft, and MERGEABLE. GitHub reports no CI checks and no required check contexts. There are no unresolved review threads. Auto-merge is disabled and the PR is not in a merge queue.
 
-Next action: complete the scope extension, review the signed snapshot, and run the full test suite. Push the changes to PR #13. Then close this ticket, commit the closure, and push it to the same PR. Merging requires separate authorization.
+Closure: the implementation branch was pushed and PR #13 was confirmed OPEN. This ticket is CLOSED as the standard publication step. Its closure is included in a signed commit pushed to the same PR branch.
+
+Next action: review the open PR. Reopen this ticket if CI or review requires more work. Merging requires separate authorization.
 
 ## Acceptance criteria
 
@@ -46,9 +48,9 @@ Next action: complete the scope extension, review the signed snapshot, and run t
 - [x] A completed test run remains valid if the implementation does not change. Ticket records and PR text alone do not require another run.
 - [x] The installed implement skill is unchanged. The project flow states that its final test step satisfies the skill's full test requirement.
 - [x] Use short sentences and direct instructions for the new text. Follow the requested ASD-STE100 writing style.
-- [ ] The standard flow closes the ticket after the branch is pushed and the PR is open. It records the PR link and pushes the signed closure commit to the same PR.
-- [ ] Ticket closure does not wait for PR approval or merge. A failed publication leaves the ticket OPEN. Later CI or review findings that require work reopen the same ticket.
-- [ ] PR #13 describes both changes in Simplified Technical English. A show-me diagram shows the final test run, publication, ticket closure, and second push.
+- [x] The standard flow closes the ticket after the branch is pushed and the PR is open. It records the PR link and pushes the signed closure commit to the same PR.
+- [x] Ticket closure does not wait for PR approval or merge. A failed publication leaves the ticket OPEN. Later CI or review findings that require work reopen the same ticket.
+- [x] PR #13 describes both changes in Simplified Technical English. A show-me diagram shows the final test run, publication, ticket closure, and second push.
 
 ## Dependencies
 
@@ -56,7 +58,7 @@ None identified. The related workflow ticket is complete.
 
 ## Definition of Done
 
-- [ ] Verify all acceptance criteria and record the evidence.
-- [ ] Check local Markdown links and run `git diff --check`.
-- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
-- [ ] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
+- [x] Verify all acceptance criteria and record the evidence.
+- [x] Check local Markdown links and run `git diff --check`.
+- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
