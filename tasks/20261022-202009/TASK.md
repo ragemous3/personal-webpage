@@ -1,6 +1,6 @@
 # Complete shared chat response and cancellation lifecycle
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 120
 - TAGS: task
 
@@ -39,7 +39,7 @@ Complete the existing local-model initialization ticket. Use the existing worker
 - [x] Record a real local-model/browser smoke-check result or the exact remaining verification limitation. Fake model tests do not establish real model loading, WebGPU support, or model quality.
 - [x] Complete the repository's implementation, Standards/Spec review, and applicable blast-radius stages against the implementation snapshot; record the commands, outcomes, and reviewed commit IDs.
 
-Implementation state: stage 7, final tests passed; publication pending. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `800636f701eac6e2f4e9974e2498d40e2d58ea5e`. Both final reviews and blast-radius disposition cover `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`. The final full-suite run passed for that snapshot. SSH signatures use the supplied signing key. Next action: publish the signed branch and PR, then close this ticket and push closure to that PR.
+Implementation state: stage 7, published on [PR #14](https://github.com/ragemous3/personal-webpage/pull/14); ticket CLOSED. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `800636f701eac6e2f4e9974e2498d40e2d58ea5e`. Both final reviews and blast-radius disposition cover `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`. The final full-suite run passed for that snapshot. SSH signatures use the supplied signing key. Next action: push this closure and monitor CI on the open, unmerged PR. Reopen this ticket if CI or actionable review requires more work.
 
 Execution mode: Autopilot. The user selected "Start implementation auto pilot" on 2026-10-28 for this ticket. Authorization covers routine implementation decisions, tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, branch pushes, PR creation/updates, and CI/review fixes through handoff. Finish with an open, unmerged PR. Merge, deployment, and live destructive operations require separate authorization.
 
@@ -68,6 +68,8 @@ Affected runtime verification: [initialization recovery](evidence/initialization
 Repeat-review finding on `9dd7fa4`: a detached client retained its initialization error after another client repaired the shared worker. The public regression reproduced `error` instead of `ready`. Explicit Retry now clears that obsolete initialization error when both workers are ready and no failed question remains. The transport fake replays readiness just as the real transport does. The focused command passes 22 tests and full lint passes. Cleanup and the Chromium component check pass. The existing CPU lifecycle and real initialization-error evidence remain applicable; the additional cross-client repair sequence is verified through the agreed public-service seam with controlled callbacks. Both prior reviews are invalidated for this fix; repeat both against its signed snapshot. The final full-suite result remains pending.
 
 ### Final reviews and test gate
+
+Publication: [PR #14](https://github.com/ragemous3/personal-webpage/pull/14) is open. The branch was signed and pushed. GitHub initially reported a conflict after `main` was force-updated from `a0a56ff` to `bb26416`. Comparing those main trees showed only the user-directed closure of the CI ticket. A local merge of current main completed without conflicts and preserved that upstream record. Comparison with the reviewed snapshot confirms no changes to application code, scripts, tests, CI, dependencies, or lint configuration. Existing reviews and the final test result remain valid under the documentation-only update rule. Auto-merge is disabled and there is no queue entry. The PR body is prepared in `/tmp/chat-lifecycle-pr-body.md`; readback comparison uses the JSON body field to avoid the CLI's extra output newline. This closure is committed and pushed to the same PR; merging remains separately authorized.
 
 - Standards review of `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`: zero documented-standard violations and zero actionable heuristic findings against the fixed base.
 - Spec review of the same snapshot: zero unresolved actionable findings. All three prior findings are resolved, including cached-client recovery through explicit Retry.
