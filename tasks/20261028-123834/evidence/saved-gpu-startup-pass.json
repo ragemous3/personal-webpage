@@ -1,0 +1,28 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/configuration-runtime-evidence-TtC9VZ",
+  "observations": [
+    "Waiting for clean-profile Auto startup",
+    "Auto startup ready: false",
+    "Saved GPU startup failure shows the requested combination and Restore defaults"
+  ],
+  "events": [
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed."
+  ],
+  "auto": {
+    "ready": false,
+    "initialized": [
+      {
+        "task": "llm:init",
+        "device": "webgpu"
+      },
+      {
+        "task": "vectordb:init",
+        "device": "webgpu"
+      }
+    ]
+  },
+  "startupError": "\n      \n        Assistant settings\n        Mode\n          \n            Local\n            Online\n          \n        Model\n          \n            Qwen1.5 0.5B Chat\n          \n        Execution\n          \n            Auto\n            CPU\n            WebGPU\n          \n        \n      \n        Advanced\n        Precision\n          \n            Q4Auto\n          \n        \n        Maximum new tokens\n          \n        \n        Sampling\n        \n      \n    \n      \n      \n      \n      \n      \n          \n                      Settings will apply after this response\n                    \n        \n      \n      \n          Could not apply {\"mode\":\"local\",\"model\":\"Xenova/Qwen1.5-0.5B-Chat\",\"execution\":\"webgpu\",\"precision\":\"q4\",\"maxNewTokens\":32,\"sampling\":false,\"temperature\":0.7,\"topP\":0.9}: [ERROR] - [ERROR] - Something went wrong with init - no available backend found. ERR: [webgpu] Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.. Retry these settings or restore defaults.\n          Retry settings\n          \n        \n      Restore defaults\n    \n    "
+}

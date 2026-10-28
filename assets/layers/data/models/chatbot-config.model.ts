@@ -10,6 +10,7 @@ export interface InitConfigBase {
 }
 
 export interface DatabaseConfig extends InitConfigBase {
+  device?: DeviceType;
   baseUrl: string;
   featureExtractionModel: string;
   vectorsPath: string;

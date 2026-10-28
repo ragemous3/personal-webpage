@@ -5,6 +5,7 @@ import {
   type TextGenerationPipeline,
 } from '@huggingface/transformers';
 
+import { isGenerationConfig } from '@/layers/data/guards/is-generation-config.guard';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
@@ -38,8 +39,10 @@ const defaultDependencies: LlmWorkerDependencies = {
   publish: (message) => postMessage(message),
 };
 
-const isLlmDto = (value: unknown): value is LlmDTO =>
-  typeof value === 'object' && value !== null && 'message' in value && Array.isArray(value.message);
+const isLlmDto = (value: unknown): value is LlmDTO => {
+  if (typeof value !== 'object' || value === null || !('message' in value) || !Array.isArray(value.message)) return false;
+  return !('generation' in value) || isGenerationConfig(value.generation);
+};
 
 const loadModel = async (
   dependencies: LlmWorkerDependencies,
@@ -62,7 +65,7 @@ const createGenerationQueue = (
   dependencies: LlmWorkerDependencies,
   getModel: () => LocalLLMData | undefined,
 ) => {
-  const pending = new Map<string, { owner: string; stopping: InterruptableStoppingCriteria }>();
+  const pending = new Map<string, { owner: string; stopping: InterruptableStoppingCriteria; done: Promise<unknown> }>();
   let generation: Promise<unknown> = Promise.resolve();
   const runQuery = async (
     request: MessageBase<unknown>,
@@ -91,6 +94,7 @@ const createGenerationQueue = (
         });
       },
       stopping,
+      request.payload.generation,
     );
     if (interrupted()) return;
     dependencies.publish({
@@ -106,12 +110,15 @@ const createGenerationQueue = (
     const key = request.requestId ?? request.id;
     if (request.task === 'llm:cancel') {
       const entry = pending.get(key);
-      if (entry?.owner === request.id) entry.stopping.interrupt();
+      if (entry && entry.owner !== request.id) return;
+      entry?.stopping.interrupt();
+      await entry?.done.catch(Boolean);
+      dependencies.publish({ ...request, task: 'llm:cancel:response' });
       return;
     }
     const stopping = new InterruptableStoppingCriteria();
-    pending.set(key, { owner: request.id, stopping });
     const next = generation.then(() => runQuery(request, stopping));
+    pending.set(key, { owner: request.id, stopping, done: next });
     generation = next.catch(Boolean);
     try {
       await next;

@@ -1,5 +1,7 @@
 import { isSiteConfiguratonGlobal } from '@/composition/guards/is-site-configuration';
 import { isSysMessageConfig } from '@/composition/guards/is-sys-message';
+import { ConfigurationRepository } from '@/layers/data/configuration-repository.data';
+import { OwnedBotRuntime } from '@/layers/data/configuration-runtime.data';
 import { BroadcastKeys, WorkerFileNames, WorkerKeys } from '@/layers/data/contants/constants';
 import {
   databaseNumberKeys,
@@ -12,10 +14,13 @@ import { HubConnection } from '@/layers/data/hub.connection';
 import { Hub } from '@/layers/data/hub.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
+import { SharedConfigurationRuntime } from '@/layers/data/shared-configuration-runtime.data';
 import { RagService } from '@/layers/services/chatbot.service';
+import { ConfigurationService } from '@/layers/services/configuration.service';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { isRecord, isString } from '@/layers/shared/guards/guards';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
+import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
 import { getOrCreateBroadcast } from './broadcast.factory';
 import { getLocalChatBot } from './local-chat-bot.factory';
@@ -132,4 +137,59 @@ export const buildChatbotOfflineDeps = (cfg: unknown): RagService | undefined =>
   } catch (error) {
     console.error(`[${SeverityLevelCodes.ERROR}] - Failed to configure offline chatbot`, error);
   }
+};
+
+interface ConfigurableChatbotDependencies {
+  service: RagService;
+  settings: ConfigurationService;
+  dispose(): void;
+}
+
+export const buildConfigurableChatbotDeps = (
+  cfg: unknown,
+  events: EventTarget & Pick<Window, 'localStorage'>,
+): ConfigurableChatbotDependencies => {
+  const configuration = getOfflineConfiguration(cfg);
+  let storage: Storage | undefined;
+  try {
+    storage = events.localStorage;
+  } catch {
+    storage = undefined;
+  }
+  const repository = new ConfigurationRepository(storage, events);
+  const responding = createStatefulSubscribable({ responding: false });
+  const coordinator = new SharedWorker(configuration.stateMachineSource, { type: 'module' });
+  const runtime = new SharedConfigurationRuntime(
+    configuration.model.payload,
+    configuration.database.payload,
+    {
+      port: coordinator.port,
+      holdOwnership: async (signal, hold) => { await navigator.locks.request('assistant.runtime.owner', { signal }, hold); },
+      createOwner: (current) => new OwnedBotRuntime(current.model, current.database,
+        (source) => new Worker(source, { type: 'module' })),
+    },
+    responding,
+    (available) => service.setAvailable(available),
+  );
+  const service = new RagService(
+    runtime.chat,
+    runtime.database,
+    new ContentRepository(configuration.baseURL),
+    new ChatMessageModel({ role: 'system', content: configuration.systemMessage }),
+  );
+  service.init();
+  const disconnect = service.stateSubscription.connect((state) => {
+    responding.emit({ responding: state.status === 'responding' });
+  });
+  const settings = new ConfigurationService(repository, runtime);
+  return {
+    service,
+    settings,
+    dispose: (): void => {
+      settings.dispose();
+      disconnect();
+      service.dispose();
+      runtime.dispose();
+    },
+  };
 };

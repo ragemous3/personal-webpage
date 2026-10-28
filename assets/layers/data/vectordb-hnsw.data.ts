@@ -113,7 +113,7 @@ export class VectorDBHNSWData {
     emitProgress: (progress: ProgressInfo) => void,
   ): Promise<FeatureExtractionPipeline> =>
     await pipeline('feature-extraction', this.config.featureExtractionModel, {
-      device: 'webgpu',
+      device: this.config.device ?? 'webgpu',
       dtype: 'uint8',
       progress_callback: emitProgress,
     });

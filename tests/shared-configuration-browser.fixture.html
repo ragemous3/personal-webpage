@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Shared configuration fixture</title></head>
+  <body>
+    <assistant-configuration></assistant-configuration>
+    <chat-container></chat-container>
+    <script type="module">
+      import '/assets/layers/views/configuration.component.ts';
+      import '/assets/layers/views/chatbot.component.ts';
+      import { OwnedBotRuntime } from '/assets/layers/data/configuration-runtime.data.ts';
+      import { SharedConfigurationRuntime } from '/assets/layers/data/shared-configuration-runtime.data.ts';
+      import { ConfigurationService } from '/assets/layers/services/configuration.service.ts';
+      import { ConfigurationRepository } from '/assets/layers/data/configuration-repository.data.ts';
+      import { RagService } from '/assets/layers/services/chatbot.service.ts';
+      import { ChatMessageModel } from '/assets/layers/data/models/chat.model.ts';
+      import { createStatefulSubscribable } from '/assets/layers/shared/utils/subscribable.ts';
+      const initializations = [];
+      const worker = (source) => {
+        const instance = new Worker(source, { type: 'module' });
+        const post = instance.postMessage.bind(instance);
+        instance.postMessage = (message) => {
+          if (message.task.endsWith(':init')) initializations.push(message);
+          post(message);
+        };
+        return instance;
+      };
+      const coordinator = new SharedWorker('/assets/layers/data/workers/state-machine.shared-worker.ts', { type: 'module' });
+      const model = { source: '/tests/shared-model.fixture.js' };
+      const database = { source: '/tests/shared-model.fixture.js' };
+      const responding = createStatefulSubscribable({ responding: false });
+      const runtime = new SharedConfigurationRuntime(model, database, {
+        port: coordinator.port,
+        holdOwnership: async (signal, hold) => { await navigator.locks.request('assistant.test.owner', { signal }, hold); },
+        createOwner: (configuration) => new OwnedBotRuntime(configuration.model, configuration.database, worker),
+      }, responding, (available) => chat.setAvailable(available));
+      const chat = new RagService(runtime.chat, runtime.database,
+        { getChunksAsync: async () => [{ index: 0, text: 'Evidence' }] },
+        new ChatMessageModel({ role: 'system', content: 'Use evidence' }));
+      chat.init();
+      const disconnect = chat.stateSubscription.connect((state) => responding.emit({ responding: state.status === 'responding' }));
+      const service = new ConfigurationService(new ConfigurationRepository(localStorage, window), runtime);
+      document.querySelector('assistant-configuration').configurationService = service;
+      document.querySelector('chat-container').chatbotService = chat;
+      globalThis.fixture = { runtime, chat, service, initializations };
+      addEventListener('pagehide', () => { service.dispose(); disconnect(); runtime.dispose(); });
+    </script>
+  </body>
+</html>

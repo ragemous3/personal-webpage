@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Configuration fixture</title></head>
+  <body>
+    <assistant-configuration></assistant-configuration>
+    <script type="module">
+      import '/assets/layers/views/configuration.component.ts';
+      import { ConfigurationService } from '/assets/layers/services/configuration.service.ts';
+      import { ConfigurationRepository } from '/assets/layers/data/configuration-repository.data.ts';
+      import { createStatefulSubscribable } from '/assets/layers/shared/utils/subscribable.ts';
+      const runtime = {
+        select() {},
+        stateSubscription: createStatefulSubscribable({ responding: false }),
+        setAvailable(value) { this.available = value; },
+        async apply(settings) {
+          if (settings.execution === 'webgpu') throw new Error('GPU unavailable');
+        },
+      };
+      const service = new ConfigurationService(new ConfigurationRepository(localStorage, window), runtime);
+      document.querySelector('assistant-configuration').configurationService = service;
+      globalThis.fixture = { runtime, service };
+    </script>
+  </body>
+</html>

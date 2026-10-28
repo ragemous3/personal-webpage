@@ -17,6 +17,7 @@ export class RagService implements ChatbotServiceContract {
   #attachedClients = 0;
   #chatReady = false;
   #databaseReady = false;
+  #available = true;
   readonly #failedWorkers = new Set<'llm' | 'vectordb'>();
   #active: string | undefined;
   #question: string | undefined;
@@ -61,10 +62,15 @@ export class RagService implements ChatbotServiceContract {
   };
 
   send = (question: string): void => {
-    if (!question.trim() || this.stateSubscription.getValue()?.status !== 'ready') return;
+    if (!this.#available || !question.trim() || this.stateSubscription.getValue()?.status !== 'ready') return;
     this.#question = question;
     this.#messages.push({ role: 'user', content: question }, { role: 'assistant', content: '' });
     this.#start();
+  };
+
+  setAvailable = (available: boolean): void => {
+    this.#available = available;
+    if (!this.#active) this.#ready();
   };
 
   readonly #start = (): void => {
@@ -122,7 +128,7 @@ export class RagService implements ChatbotServiceContract {
 
   readonly #ready = (): void => {
     this.stateSubscription.emit({
-      status: this.#chatReady && this.#databaseReady ? 'ready' : 'initializing',
+      status: this.#available && this.#chatReady && this.#databaseReady ? 'ready' : 'initializing',
     });
   };
 

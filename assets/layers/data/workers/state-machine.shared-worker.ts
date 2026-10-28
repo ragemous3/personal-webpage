@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { StateMachineStatesEnum } from '@/layers/data/contants/constants';
+import { SharedBotCoordinator } from '@/layers/data/shared-bot-coordinator.data';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type Nullable } from '@/layers/shared/models';
 
@@ -12,6 +13,7 @@ import {
 } from './models';
 
 const ports = new Set<MessagePort>();
+const assistant = new SharedBotCoordinator();
 const processStatusTracker = new Map<StateMachineName, StateMachineStatusLog>();
 
 const setStatus = (entityName: StateMachineName, payload: StateMachineStatusLog): boolean => {
@@ -110,6 +112,10 @@ self.addEventListener('connect', (event: MessageEvent<SharedWorkerMessage>): voi
   ports.add(port);
   port.start();
   port.addEventListener('message', (messageEvent: MessageEvent<SharedWorkerMessage>): void => {
+    if (assistant.receive(port, messageEvent.data)) {
+      ports.delete(port);
+      return;
+    }
     for (const connectedPort of ports) sharedWorkerSwitch(connectedPort, messageEvent.data);
   });
 });

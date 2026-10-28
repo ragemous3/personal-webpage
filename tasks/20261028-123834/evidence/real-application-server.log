@@ -1,0 +1,105 @@
+Watching for changes in /workspace/personal-webpage/archetypes, /workspace/personal-webpage/assets/{composition,layers}, /workspace/personal-webpage/content/{decision-log,notes}, /workspace/personal-webpage/layouts/_partials, /workspace/personal-webpage/package.json, /workspace/personal-webpage/postcss.config.js, /workspace/personal-webpage/static/content-data
+Watching for config changes in /workspace/personal-webpage/config/_default
+Start building sites … 
+hugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio
+
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+
+                  │ EN 
+──────────────────┼────
+ Pages            │ 14 
+ Paginator pages  │  0 
+ Non-page files   │  0 
+ Static files     │  4 
+ Processed images │  0 
+ Aliases          │  0 
+ Cleaned          │  0 
+
+Built in 723 ms
+Environment: "development"
+Serving pages from disk
+Running in Fast Render Mode. For full rebuilds on change: hugo server --disableFastRender
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1) 
+Press Ctrl+C to stop
+
+Change detected, rebuilding site (#1).
+2026-10-28 16:55:53.141 +0000
+Asset changed /composition/chatbot-offline.provider.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 207 ms
+
+Change detected, rebuilding site (#2).
+2026-10-28 16:56:58.641 +0000
+Asset changed /layers/data/configuration-repository.data.ts
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 1 ms
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+
+Change detected, rebuilding site (#3).
+2026-10-28 16:56:59.141 +0000
+Asset changed /layers/data/configuration-runtime.data.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 1 ms
+
+Change detected, rebuilding site (#4).
+2026-10-28 16:56:59.641 +0000
+Asset changed /layers/services/configuration.service.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 1 ms
+
+Change detected, rebuilding site (#5).
+2026-10-28 16:57:00.141 +0000
+Asset changed /layers/data/configuration-repository.data.ts
+Asset changed /layers/data/configuration-runtime.data.ts
+Asset changed /layers/services/configuration.service.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 23 ms
+
+Change detected, rebuilding site (#6).
+2026-10-28 16:57:00.640 +0000
+Asset changed /composition/chatbot-offline.provider.ts
+Asset changed /composition/factories/chatbot-offline.factory.ts
+Asset changed /layers/views/configuration.component.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 184 ms
+
+Change detected, rebuilding site (#7).
+2026-10-28 16:57:08.641 +0000
+Asset changed /composition/chatbot-offline.provider.ts
+Asset changed /layers/data/configuration-repository.data.ts
+Asset changed /layers/data/configuration-runtime.data.ts
+Asset changed /layers/services/configuration.service.ts
+Asset changed /layers/views/configuration.component.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 63 ms
+
+Change detected, rebuilding site (#8).
+2026-10-28 16:58:21.641 +0000
+Asset changed /layers/views/xx9iffiu/_index.md
+Asset changed /layers/views/configuration.component.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 65 ms
+
+Change detected, rebuilding site (#9).
+2026-10-28 16:58:45.641 +0000
+Asset changed /layers/views/configuration.component.ts
+WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
+Total in 68 ms

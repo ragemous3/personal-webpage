@@ -1,0 +1,119 @@
+import { spawn } from 'node:child_process';
+import { createHash, X509Certificate } from 'node:crypto';
+import fs from 'node:fs/promises';
+import puppeteer from '/workspace/personal-webpage/node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js';
+
+const evidence = await fs.mkdtemp('/tmp/configuration-runtime-evidence-');
+const scratch = await fs.mkdtemp('/tmp/configuration-runtime-scratch-');
+const result = { verdict: 'FAIL', evidence, observations: [], events: [] };
+const server = spawn('/workspace/.local/bin/hugo', ['server', '--bind', '127.0.0.1', '--port', '43139', '--baseURL', 'http://127.0.0.1:43139/', '--destination', `${scratch}/public`, '--cacheDir', `${scratch}/cache`, '--noBuildLock', '--disableLiveReload'], { cwd: '/workspace/personal-webpage', env: { ...process.env, HUGO_RESOURCEDIR: `${scratch}/resources` } });
+let log = '';
+server.stdout.on('data', (data) => { log += data; });
+server.stderr.on('data', (data) => { log += data; });
+let browser;
+let page;
+const configRoot = 'chatbot-offline-provider >>> assistant-configuration';
+const chatRoot = 'chatbot-offline-provider >>> chat-container';
+const observe = (value) => { result.observations.push(value); console.info(value); };
+try {
+  for (let i = 0; i < 100; i++) {
+    try { if ((await fetch('http://127.0.0.1:43139/')).ok) break; } catch {}
+    if (server.exitCode !== null) throw new Error(log);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  const certificate = new X509Certificate(await fs.readFile(process.env.NODE_EXTRA_CA_CERTS));
+  const trust = createHash('sha256').update(certificate.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
+  browser = await puppeteer.launch({ executablePath: '/usr/bin/chromium', headless: true, userDataDir: `${scratch}/browser`, protocolTimeout: 600000, args: ['--no-sandbox', '--disable-dev-shm-usage', `--ignore-certificate-errors-spki-list=${trust}`, `--proxy-server=${process.env.HTTPS_PROXY}`, '--proxy-bypass-list=localhost;127.0.0.1'] });
+  page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    globalThis.initializations = [];
+    const original = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function(message, ...rest) {
+      if (message?.task?.endsWith(':init')) globalThis.initializations.push({ task: message.task, device: message.payload.device });
+      return original.call(this, message, ...rest);
+    };
+  });
+  page.on('console', (message) => { if (['error', 'warn'].includes(message.type())) result.events.push(message.text()); });
+  page.on('pageerror', (error) => { result.events.push(error.message); console.info('PAGE ERROR', error.message); });
+  if (process.env.CONFIG_GPU_STARTUP_ONLY === '1') await page.evaluateOnNewDocument(() => {
+    globalThis.localStorage.setItem('assistant.preferences', JSON.stringify({ version: 1, preferences: { mode: 'local', model: 'Xenova/Qwen1.5-0.5B-Chat', execution: 'webgpu', precision: 'q4', maxNewTokens: 32, sampling: false, temperature: 0.7, topP: 0.9 } }));
+  });
+  await page.goto('http://127.0.0.1:43139/');
+  const waitReady = async (target = page) => {
+    await target.waitForFunction(() => {
+      const provider = globalThis.document.querySelector('chatbot-offline-provider')?.shadowRoot;
+      const chat = provider?.querySelector('chat-container')?.shadowRoot;
+      const settings = provider?.querySelector('assistant-configuration')?.shadowRoot;
+      return chat?.querySelector('[role=status]')?.textContent.trim() === 'ready' || Boolean(settings?.querySelector('[role=alert]'));
+    }, { timeout: 240000 });
+    return target.$eval(chatRoot, (element) => !element.shadowRoot.querySelector('input').disabled);
+  };
+  observe('Waiting for clean-profile Auto startup');
+  const autoReady = await waitReady();
+  result.auto = { ready: autoReady, initialized: await page.evaluate(() => globalThis.initializations) };
+  observe(`Auto startup ready: ${autoReady}`);
+  if (process.env.CONFIG_GPU_STARTUP_ONLY === '1') {
+    result.startupError = await page.$eval(configRoot, (element) => element.shadowRoot.textContent);
+    if (autoReady || !result.startupError.includes('webgpu') || !result.startupError.includes('Restore defaults')) throw new Error('Saved GPU startup failure did not show the selection and recovery');
+    result.verdict = 'PASS';
+    observe('Saved GPU startup failure shows the requested combination and Restore defaults');
+  } else {
+  await page.select(`${configRoot} >>> select[name=execution]`, 'wasm');
+  if (!await waitReady()) throw new Error('CPU settings failed');
+  observe('Explicit CPU initialized');
+  await page.$eval(`${configRoot} >>> details`, (element) => { element.open = true; });
+  const number = async (name, value) => page.$eval(`${configRoot} >>> input[name=${name}]`, (input, value) => { input.value = String(value); input.dispatchEvent(new Event('input', { bubbles: true })); }, value);
+  await number('maxNewTokens', 32);
+  await page.type(`${chatRoot} >>> input`, 'What experience does Rasmus have?');
+  await page.click(`${chatRoot} >>> button[type=submit]`);
+  await number('maxNewTokens', 24);
+  const pending = await page.$eval(configRoot, (element) => element.shadowRoot.textContent.includes('after this response'));
+  if (!pending) throw new Error('No pending settings feedback during response');
+  if (!await waitReady()) throw new Error('Response failed');
+  result.answer = await page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.textContent);
+  if (!result.answer.includes('assistant:')) throw new Error('No answer rendered');
+  observe('CPU answer completed; mid-response token edit applied');
+  const history = result.answer;
+  await page.select(`${configRoot} >>> select[name=mode]`, 'online');
+  await page.waitForFunction(() => globalThis.document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('chat-container').shadowRoot.querySelector('input').disabled);
+  if ((await page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.textContent)) !== history) throw new Error('Online selection lost history');
+  await page.select(`${configRoot} >>> select[name=mode]`, 'local');
+  if (!await waitReady()) throw new Error('Return to Local failed');
+  if ((await page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.textContent)) !== history) throw new Error('Runtime replacement lost history');
+  observe('Local/Online round-trip preserved history');
+  await page.select(`${configRoot} >>> select[name=execution]`, 'webgpu');
+  const gpuReady = await waitReady();
+  result.webgpu = gpuReady ? 'Available' : 'Unavailable; failure shown';
+  if (!gpuReady) {
+    await page.$eval(configRoot, (element) => [...element.shadowRoot.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Switch back').click());
+    if (!await waitReady()) throw new Error('Switch back failed');
+    observe('GPU failure displayed; explicit switch back restored CPU');
+  }
+  await page.screenshot({ path: `${evidence}/configuration.png`, fullPage: true });
+  await page.reload();
+  if (!await waitReady()) throw new Error('Returning profile failed');
+  result.returningInitializations = await page.evaluate(() => globalThis.initializations);
+  if (result.returningInitializations.some((entry) => entry.device !== 'wasm')) throw new Error('Saved CPU preferences were not resolved first');
+  observe('Returning profile started directly with saved CPU settings');
+  const second = await browser.newPage();
+  await second.goto('http://127.0.0.1:43139/');
+  if (!await waitReady(second)) throw new Error('Second tab failed');
+  await page.select(`${configRoot} >>> select[name=mode]`, 'online');
+  await second.waitForFunction(() => globalThis.document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('assistant-configuration').shadowRoot.querySelector('select[name=mode]').value === 'online');
+  observe('Real application propagated Online selection to another tab');
+  result.verdict = 'PASS';
+  }
+} catch (error) {
+  result.error = error.stack;
+  console.error(error.message);
+  if (page) result.page = await page.content().catch(() => 'unavailable');
+} finally {
+  await browser?.close();
+  const closed = new Promise((resolve) => server.once('exit', resolve));
+  server.kill('SIGTERM');
+  if (server.exitCode === null) await closed;
+  await fs.rm(scratch, { recursive: true, force: true });
+  await fs.writeFile(`${evidence}/server.log`, log);
+  await fs.writeFile(`${evidence}/result.json`, JSON.stringify(result, null, 2));
+  console.info(JSON.stringify(result, null, 2));
+}
