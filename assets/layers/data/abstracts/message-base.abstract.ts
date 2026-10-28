@@ -1,4 +1,5 @@
 import { type MessageBase } from '@/layers/data/workers/models';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type MessagingBaseContract } from '@/layers/shared/contracts/message-base.contract';
 
 export abstract class MessagingBase<
@@ -33,7 +34,7 @@ export abstract class MessagingBase<
   };
 
   protected handleError = (error: ErrorEvent | MessageEvent<unknown>): void => {
-    console.error(`${this.name}: error:`, error);
+    console.error(`[${SeverityLevelCodes.FATAL}] - ${this.name}: messaging error:`, error);
     this.terminate();
   };
 }

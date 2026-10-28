@@ -120,7 +120,7 @@ export class VectorDBHNSWData {
 
   query = async (query: string, topK = 5): Promise<SearchResult> => {
     if (!this.index || !this.embedder) {
-      throw new Error('Expected Index and embedder to be defined!');
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected Index and embedder to be defined!`);
     }
     const queryEmbedding = await this.embedder([query], {
       pooling: 'mean',
@@ -234,9 +234,11 @@ export class VectorDBHNSWData {
       await syncFileSystem('read');
     } catch (error) {
       if (error instanceof Error) {
-        console.error(error);
+        console.error(`[${SeverityLevelCodes.ERROR}] - Failed to read external index`, error);
       }
-      console.error(`Expected caught Error to be instanceof Error!`);
+      console.error(
+        `[${SeverityLevelCodes.ERROR}] - Expected caught Error to be instanceof Error!`,
+      );
     }
   };
 }

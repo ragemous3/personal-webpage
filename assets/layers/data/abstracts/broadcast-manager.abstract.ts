@@ -37,7 +37,7 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
 
   initialize(): void {
     if (this.carrier) {
-      console.error('broadcast already initialized');
+      console.error(`[${SeverityLevelCodes.WARNING}] - Broadcast already initialized`);
       return;
     }
 

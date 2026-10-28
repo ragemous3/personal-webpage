@@ -16,7 +16,7 @@ const init = (package_: unknown, payload: unknown): void => {
     !payload ||
     !isInitConfigBase(payload)
   ) {
-    throw new Error(`$[${SeverityLevelCodes.ERROR}] - Missing necessary data to perform task`);
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Missing necessary data to perform task`);
   }
 
   const ww = new WebWorkerManager(payload.source, package_.name);

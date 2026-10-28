@@ -19,7 +19,8 @@ const server = http.createServer(async (request, response) => {
       serveDirectory,
       `.${pathname === '/' ? '/index.html' : pathname}`,
     );
-    if (!filePath.startsWith(`${serveDirectory}${path.sep}`)) throw new Error('Invalid path');
+    if (!filePath.startsWith(`${serveDirectory}${path.sep}`))
+      throw new Error('[ERROR] - Invalid path');
     const types = {
       '.js': 'application/javascript',
       '.json': 'application/json',
@@ -41,7 +42,7 @@ const waitForDownloads = async (completed) => {
       [...completed.values()].some((entry) => entry.name === name && entry.state === 'completed'),
     )
   ) {
-    if (Date.now() > deadline) throw new Error('Index downloads did not complete');
+    if (Date.now() > deadline) throw new Error('[ERROR] - Index downloads did not complete');
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 };
@@ -71,7 +72,7 @@ try {
   });
   const page = await browser.newPage();
   page.on('console', (message) => console.info('BROWSER:', message.text()));
-  page.on('pageerror', (error) => console.error('BROWSER:', error.message));
+  page.on('pageerror', (error) => console.error('[ERROR] - BROWSER:', error.message));
   const session = await page.createCDPSession();
   await session.send('Browser.setDownloadBehavior', {
     behavior: 'allow',

@@ -25,7 +25,7 @@ const send = (task: TaskResponse, payload: unknown): void => {
 
 const handleQueries = async (query: string | undefined, topK = 5): Promise<SearchResult> => {
   if (!query) {
-    throw new Error('Expected defined query');
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected defined query`);
   }
   return await database.query(query, topK);
 };

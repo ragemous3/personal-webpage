@@ -41,7 +41,8 @@ export class WebWorkerManager<To extends MessageBase<unknown>, From> extends Wor
 
   initialize(wm: To): void {
     if (!this.isScriptPath(this.scriptPath)) return;
-    if (this.carrier) throw new Error('Worker already initialized');
+    if (this.carrier)
+      throw new Error(`[${SeverityLevelCodes.WARNING}] - Worker already initialized`);
 
     try {
       this.carrier = new Worker(new URL(this.scriptPath, import.meta.url), {

@@ -44,7 +44,7 @@ export class ChunkTextByToken {
     try {
       this.#populateChunks(tokenIds, index, chunks, { minTokens, maxTokens, overlap, tags });
     } catch (error) {
-      console.error(error);
+      console.error('[ERROR] - Failed to tokenize content', error);
     }
     return chunks;
   };

@@ -16,12 +16,12 @@ const getRawData = async () => {
   try {
     const response = await fetch(rawData);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`[ERROR] - HTTP error! Status: ${response.status}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to fetch raw data:', error);
+    console.error('[ERROR] - Failed to fetch raw data:', error);
     return null;
   }
 };
@@ -29,7 +29,7 @@ const getRawData = async () => {
 const defaultChunkSettings = { minChars: 100, maxChars: 300, overlap: 40 };
 const appendChunks = (chunkGroups, chunks) => {
   if (chunks && chunks.length > 0) return [...chunkGroups, ...chunks];
-  console.error('Expected chunks but array was empty!');
+  console.error('[WARNING] - Expected chunks but array was empty!');
   return chunkGroups;
 };
 const getChunks = async (data, chunkSettings = defaultChunkSettings) => {
@@ -39,12 +39,12 @@ const getChunks = async (data, chunkSettings = defaultChunkSettings) => {
     for (const [index, rawData] of data.entries()) {
       const chunks = await tokenizer
         .createChunksRecursiveTextSplitterAsync(rawData.content, index, chunkSettings)
-        .catch((error) => console.error(error));
+        .catch((error) => console.error('[ERROR] - Index generation failed', error));
 
       chunkGroups = appendChunks(chunkGroups, chunks);
     }
   } catch (error) {
-    console.error(error);
+    console.error('[ERROR] - Index generation failed', error);
   }
   return chunkGroups;
 };
@@ -64,7 +64,7 @@ const getVectorCollAndChunkGroups = async () => {
           normalize: true,
         })
           .then((result) => result.data)
-          .catch(console.error),
+          .catch((error) => console.error('[ERROR] - Feature extraction failed', error)),
     ),
   );
   return { chunkGroups, vectors };
@@ -87,7 +87,7 @@ const initHNSW = async (vectorColl) => {
       index.addPoint(vec, index_, false);
     }
   } catch (error) {
-    console.error(error);
+    console.error('[ERROR] - Index generation failed', error);
   }
 
   await index.writeIndex(fileName);
@@ -120,7 +120,9 @@ const makeDBDownloadable = () => {
   document.querySelector('#download').addEventListener('click', () => {
     const openRequest = indexedDB.open(DB_NAME);
 
-    openRequest.addEventListener('error', () => console.error('Failed to open IndexedDB'));
+    openRequest.addEventListener('error', () =>
+      console.error('[ERROR] - Failed to open IndexedDB'),
+    );
 
     openRequest.onsuccess = () => {
       const database = openRequest.result;
@@ -128,13 +130,13 @@ const makeDBDownloadable = () => {
       const store = tx.objectStore(STORE_NAME);
       const getRequest = store.get(ENTRY_KEY);
 
-      getRequest.addEventListener('error', () => console.error('Failed to read entry'));
+      getRequest.addEventListener('error', () => console.error('[ERROR] - Failed to read entry'));
 
       getRequest.onsuccess = () => {
         const data = getRequest.result;
 
         if (!data) {
-          console.error('Was expecting data!');
+          console.error('[ERROR] - Was expecting data!');
           return;
         }
         downloadAsFile(

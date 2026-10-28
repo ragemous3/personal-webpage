@@ -1,6 +1,6 @@
 # Complete shared chat response and cancellation lifecycle
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 120
 - TAGS: task
 
@@ -68,6 +68,10 @@ Affected runtime verification: [initialization recovery](evidence/initialization
 Repeat-review finding on `9dd7fa4`: a detached client retained its initialization error after another client repaired the shared worker. The public regression reproduced `error` instead of `ready`. Explicit Retry now clears that obsolete initialization error when both workers are ready and no failed question remains. The transport fake replays readiness just as the real transport does. The focused command passes 22 tests and full lint passes. Cleanup and the Chromium component check pass. The existing CPU lifecycle and real initialization-error evidence remain applicable; the additional cross-client repair sequence is verified through the agreed public-service seam with controlled callbacks. Both prior reviews are invalidated for this fix; repeat both against its signed snapshot. The final full-suite result remains pending.
 
 ### Final reviews and test gate
+
+Severity audit follow-up authorized by the user: reopen for the remaining grading gaps in application and index-generation code, including pre-existing messages. ERROR covers invalid input, unavailable data, failed fetches, failed requests, and index operations. WARNING covers duplicate initialization and skipped empty chunk groups. FATAL covers missing startup infrastructure and transport errors whose handlers terminate the transport. Existing CRITICAL grades for unexpected worker failures remain. The standalone JavaScript index scripts use the same bracketed labels without importing a TypeScript enum that their plain Node command cannot execute. Preserve control flow, exception types, original error objects, and cleanup behavior. Correct the stray dollar sign before the hub's ERROR prefix. The configuration ticket remains outside this update. Earlier reviews and final-suite evidence are invalidated for this new snapshot.
+
+Cleanup checked the complete grading diff; no behavior or runtime architecture changes are intended. Full lint passes after formatting. The public lifecycle, worker, transport, browser/HNSW, lint-regression, and configuration checks pass: 35 tests, zero failures. Runtime model journeys do not need repetition for diagnostic-only text and import changes; existing browser coverage verifies module loading. Repeat both reviews and the final full suite before publication. Do not wait for CI.
 
 Final comment-pass disposition: CLOSED after publishing `03e79e693f496f487fe83355d43b899a42bc3d40` to PR #14. Standards and Spec reviews of that snapshot each found zero actionable findings. Deslop checked the fix diff; full lint passed. The 22 focused checks passed. Final `npm test`, after both reviews, passed 42 tests with zero failures or skips; see [review test output](evidence/review-tests.log). Blast-radius is not applicable: only error text, private names, ignore rules, tracking metadata, and ticket records changed. PNGs remain on disk; no image files were deleted locally. Replies explain each requested fix and the two-subscription/client-count design. CI is not a handoff wait, per the user's instruction. No application implementation changed after this test run.
 
