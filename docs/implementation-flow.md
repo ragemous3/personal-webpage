@@ -1,6 +1,6 @@
 # Implementation flow
 
-Use this flow for feature work and bug fixes. Begin with the existing-ticket gate in stage 0. Invoking `implementation-flow` authorizes the stages below, including the user-invoked `grill-with-docs`, `implement`, and `show-me` skills, within the user's requested scope and execution permissions. Choose the execution mode after ticket preparation; approval of the design alone does not authorize publication.
+Use this flow for feature work and bug fixes. Invoking `implementation-flow` authorizes its skills within the requested scope and execution permissions. Design approval does not authorize publication.
 
 ```text
 ticket gate → grill-with-docs → tatr-ticket → choose Guided or Autopilot
@@ -12,155 +12,100 @@ implement → deslop → runtime verification → code-review → blast-radius
                                                     show-me → PR → handoff
 ```
 
-The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. When the user chooses an existing ticket, resume it at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
+## Execution rules
 
-Update the ticket whenever entering or completing a stage: record the current stage, latest implementation snapshot SHA, completed checks/reviews and their SHAs, and next action. Commit these updates with the work snapshots so another session can resume. When returning to implementation for fixes, mark both previous review results invalid before changing the implementation; later stages must review the new snapshot.
+This workflow owns stage order, check timing, reviews, commits, publication, and closure. Skills supply each stage's method. Read each required `SKILL.md` before use; see [setup and sources](implementation-setup.md).
 
-## Execution mode
+- Follow stages 0–7. After a stage passes, continue without another approval pause. Skip, replace, or reorder a required step only with explicit user approval recorded in the ticket.
+- Use the TATR ticket as the spec. Resume its recorded stage after the ticket gate. Return to stage 1 for unresolved requirements or changed scope/interfaces. Reuse recorded approvals; silence or elapsed time is not approval.
+- On stage entry and completion, record the stage, latest implementation SHA, checks and review SHAs, and next action. Commit these records with work snapshots. Keep the review-base SHA fixed.
+- Before an implementation fix, invalidate both code-review results, blast-radius review, and the final test result. Return through stages 3–7. Ticket status/evidence updates and PR-text edits alone do not invalidate them.
+- A failed or blocked requirement cannot pass. Follow the stage's failure route. If a required decision has no rule, or an action exceeds authorization, stop that action, record the blocker, and ask the user.
 
-Offer Guided or Autopilot when a new ticket is ready at the end of stage 2. For an existing ticket, first complete stage 0 and confirm its requirements are sufficient to resume, then make the same choice if none is recorded. A choice already made for this ticket remains valid through fix passes and resumed sessions. If requirements need design work, finish that work before selecting Autopilot.
+The main agent owns decisions and publication. Review delegates are read-only. No mode authorizes merge, auto-merge, a merge queue, deployment, or live destructive operations. Each needs separate explicit approval.
 
-Guided retains the current approval rules. When offering Autopilot, explicitly ask the user to approve routine implementation decisions, applicable tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, pushing the task branch, creating or updating its PR, and handling its CI/review findings through handoff. Wait for that approval before activating Autopilot. This obtains the approval required by the existing AGENTS.md; it does not modify or override that file. Record the mode, the user's approval, authorized scope, limits, and the finish condition in the ticket body; these are workflow fields, not new TATR header properties. Changing mode requires the user's choice.
+## Mode and decision lookup
 
-Both modes use the same implementation and verification stages. Continue when a stage is complete; there is no automatic approval pause between every pair of stages. Ask when requirements or interfaces change, a necessary action exceeds authorization, or a blocker cannot be resolved within scope. Missing verification and unresolved actionable review findings remain blockers. End with an open PR and an accurate readiness report; merging, enabling auto-merge, entering a merge queue, deployment, and live destructive operations require separate explicit authorization.
+At the end of stage 2, offer Guided or Autopilot. For a resumed ticket, retain its mode; if absent, select one after requirements are sufficient. A mode change needs the user's choice.
 
-No mode decision rewrites an installed skill. Pass the ticket, mode, approved scope, and this flow's stage order when invoking `implement` or delegating work. The main agent owns decisions and publication; review delegates remain read-only. Preserve approval records on resumption. An absent or ambiguous grant never authorizes Autopilot or publication.
+Guided uses existing approval rules. Before activating Autopilot, obtain explicit approval for routine implementation decisions, tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, branch pushes, PR creation/updates, and CI/review fixes through handoff. Record the mode, grant, scope, limits, and finish condition in the ticket body. An absent or ambiguous grant cannot activate Autopilot.
 
-## Decision lookup
-
-Use the [decision CLI](../scripts/implementation-decision.js) at each named point below and immediately before documentation/comment/docstring/ticket changes or publication. Run it from the repository root, setting `FLOW_MODE` to the ticket's selected `guided` or `autopilot` value. During design, before a mode is selected, use `guided` and honor any approval already given for the requested work.
-
-```sh
-node scripts/implementation-decision.js --list
-node scripts/implementation-decision.js --mode "$FLOW_MODE" before-documentation-change
-```
-
-The [decision registry](implementation-modes/decisions.json) gives stable IDs. [Guided](implementation-modes/guided.json) contains extra approval instructions; [Autopilot](implementation-modes/autopilot.json) is an empty object. These JSON maps replace Markdown instruction tables. At a decision point, read and follow stdout when present. Exit 0 with empty stdout means no extra instruction: continue only if the shared requirements and existing authorization permit it. A nonzero exit is a lookup failure; resolve it before proceeding. Do not treat missing files, an invalid mode, or a misspelled ID as an empty instruction.
-
-The CLI only retrieves instructions. It neither selects a mode nor grants permission or executes an action. Keep shared checks and stop conditions in this flow, not in the mode maps. Use the same lookup on every relevant fix pass and after resumption.
-
-## Required skills and tools
-
-Read each stage's installed `SKILL.md` when entering that stage. The project supplies `tatr-ticket` and `git-workflow` under `.agents/skills/`. Install the following global skills with their supporting files:
-
-| Source repository | Skill directory | Purpose |
-| --- | --- | --- |
-| `mattpocock/skills` | `skills/engineering/grill-with-docs` | Design interview and domain documentation |
-| `mattpocock/skills` | `skills/productivity/grilling` | Interview dependency |
-| `mattpocock/skills` | `skills/engineering/domain-modeling` | Glossary and ADR dependency |
-| `mattpocock/skills` | `skills/engineering/implement` | Implement the ticket |
-| `mattpocock/skills` | `skills/engineering/tdd` | TDD at agreed seams |
-| `mattpocock/skills` | `skills/engineering/codebase-design` | Interface and seam design reference used by TDD |
-| `cursor/plugins` | [`cursor-team-kit/skills/deslop`](https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/deslop/SKILL.md) | Clean up introduced code before review |
-| `cursor/plugins` | `pstack/skills/create-verification-skill` | Create project-specific runtime verification instructions when missing |
-| `mattpocock/skills` | `skills/engineering/code-review` | Standards and spec review |
-| `kishormorol/blast-radius` | Repository root | Review bulk operations on real data |
-| `humanlayer/skills` | [`plugins/show-me/skills/show-me`](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md) | Prepare the final PR body's visual explanation |
-
-If a required skill is missing, identify it before beginning its stage. The issue tracker is already configured here: local TATR Markdown files, with the selected ticket's full path supplied to `implement` and `code-review`.
-
-For application runtime checks, use the project [verify-offline-assistant skill](../.agents/skills/verify-offline-assistant/SKILL.md) and its feature map. It is currently a draft; [its ticket](../tasks/20261027-104746/TASK.md) records the prerequisites for the first successful live run. Generate verification instructions once and maintain them as the application changes, rather than running the generator for every ticket.
-
-Use [npryce/adr-tools](https://github.com/npryce/adr-tools) for ADR creation. Its `adr` command must be on PATH. `.adr-dir` selects `docs/adr`. On another machine, install ADR Tools using its [installation instructions](https://github.com/npryce/adr-tools/blob/master/INSTALL.md); the Git installation adds the downloaded repository's `src/` to PATH. TATR's CLI is optional for creating tickets because the project skill includes a Python helper; use the CLI when available to list and inspect them.
-
-## 0. Check for existing tickets
-
-Before beginning design, creating a ticket, or implementing work, search existing `tasks/*/TASK.md` files, including OPEN and CLOSED tickets, for the same or similar work. Compare the requested behavior, affected area, and acceptance criteria; read plausible matches rather than relying only on titles or exact wording.
-
-If a similar ticket exists, show its path, title, status, recorded stage when available, and a short explanation of the overlap. Ask the user how to proceed: resume or update an existing ticket, reopen a closed ticket, create a separate ticket with distinct scope and a link to the related work, or stop. Wait for an explicit choice before continuing. Honor a choice already made in the current conversation without asking again.
-
-If no similar ticket exists, report that result and continue to stage 1. Finish this gate only when the search found no similar tickets or the user has chosen how to handle the matches. Recheck before ticket creation if the agreed scope changed during design.
-
-## 1. Grill and record decisions
-
-Run `grill-with-docs`, which loads `grilling` and `domain-modeling`. Read the relevant code and existing domain docs before asking questions the repository can answer. Work through the design in rounds and wait for the user's answers.
-
-Resolve the intended behavior, constraints, scope, acceptance criteria, dependencies, and test seams. For each proposed seam, explain what it catches and misses. Record which seams the user confirmed; if the repository has no suitable test harness, agree how it will be introduced or how this change will be verified.
-
-Update the glossary as terms settle. Create ADRs when the domain-modeling criteria apply: a meaningful cost to reverse, surprising without context, and a real trade-off. For a new decision, use the CLI:
+At every point below, run the [decision CLI](../scripts/implementation-decision.js) from the repository root. Set `FLOW_MODE` to the ticket's `guided` or `autopilot` value. Before selection, use `guided` and honor existing approvals.
 
 ```sh
-VISUAL=true EDITOR=true adr new 'Decision title'
-# To replace decision 2:
-VISUAL=true EDITOR=true adr new -s 2 'Replacement decision title'
+node scripts/implementation-decision.js --mode "$FLOW_MODE" <decision-id>
 ```
 
-Fill the generated record with the agreed decision, alternatives, trade-offs, and consequences using the domain-modeling ADR guidance. Preserve the CLI's number and supersession links. Link relevant records in the ticket. `.adr-dir` is already initialized; use `adr init docs/adr` only when configuring a new repository.
+| Point | Decision ID |
+| --- | --- |
+| Stage 2 passes; also before resuming a prepared ticket | `after-ticket` |
+| Before documentation, comment, docstring, or ticket edits | `before-documentation-change` |
+| Stage 3 passes | `after-implementation` |
+| Stage 4 passes | `after-verification` |
+| Stage 5 passes | `after-code-review` |
+| Stage 6 passes | `after-blast-radius` |
+| Before publication, including closure push | `before-publish` |
+| Stage 7 handoff | `after-publish` |
 
-Finish this stage when the user confirms shared understanding, including the scope and test seams. This confirmation approves the design handoff; it does not expand authorization for external actions.
+Follow stdout when present. Exit 0 with empty stdout adds no instruction. A nonzero exit blocks progress until the lookup is fixed. The CLI retrieves instructions; it grants no permission. Apply it on fix passes and resumption too. Keep shared requirements here, not in the [mode maps](implementation-modes/decisions.json).
 
-## 2. Create the TATR ticket
+## 0. Check existing tickets
 
-Use the project `tatr-ticket` skill to create a native `tasks/<HUID>/TASK.md`, choosing a task or bug template as appropriate. Put the agreed behavior and constraints in the ticket rather than relying on conversation history. Capture confirmed seams, verification commands or agreed verification work, dependencies, and glossary/ADR links within the selected template's sections.
+- **Action:** Search OPEN and CLOSED `tasks/*/TASK.md` for similar behavior, affected areas, and acceptance criteria. Read plausible matches. Show each match's path, title, status, stage, and overlap. Obtain the user's choice: resume/update/reopen, create a distinct linked ticket, or stop. Reuse an existing choice.
+- **Output:** Search result and the selected ticket or agreed new scope.
+- **Pass:** No match exists, or the user selected a ticket action. Continue to stage 1 for new design; otherwise resume the recorded stage. Select a missing mode and run `after-ticket` before resuming a prepared ticket.
+- **Failure:** If the user chooses stop, end the workflow. Otherwise stay here until the choice is explicit. Recheck this gate before ticket creation if design changes the scope.
 
-Read the completed ticket back and check it matches the confirmed design. Preserve one independently verifiable outcome per ticket; link dependent tickets when a split is needed. Use the ticket's acceptance criteria as the spec for both implementation and review.
+## 1. Confirm the design
 
-Start a feature branch from fetched `origin/main` using the project git-workflow skill. Pin its initial merge-base with `origin/main` as a full commit SHA in the ticket, together with the branch and current stage. Keep that review base fixed through all implementation and fix iterations. An existing branch or user-specified base takes precedence.
+- **Action:** Run `grill-with-docs`. Inspect relevant code and domain docs before asking questions. Confirm behavior, scope, constraints, acceptance criteria, dependencies, and test seams with the user. Explain each seam's coverage and gaps. Map each implementation criterion to focused check commands, including relevant type checks. Record the final full-suite command and runtime journeys. Agree how to add a missing harness or verify the change. Update domain docs under the skill's glossary/ADR rules.
+- **Output:** User-confirmed design, seams, check mapping, prerequisites, and relevant domain-doc links.
+- **Pass:** The user confirms the design and verification plan. Continue to stage 2.
+- **Failure:** Stay here for unresolved requirements or test coverage decisions. Design confirmation grants no external-action permission.
 
-Finish when the ticket is valid TATR Markdown, its requirements and seams are recorded, and the branch and review base are known.
+## 2. Prepare the ticket and branch
 
-Select and record the execution mode as described above, then run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-ticket`. Do this for a resumed ticket too, before returning to its recorded stage.
+- **Action:** Use [tatr-ticket](../.agents/skills/tatr-ticket/SKILL.md) to create or update the selected ticket. Read it back against the design. Use [git-workflow](../.agents/skills/git-workflow/SKILL.md) to branch from fetched `origin/main`; an existing branch or user-specified base takes precedence. Record the branch and initial merge-base as a full SHA. Select the mode.
+- **Output:** Valid TATR Markdown containing the design, check mapping, seams, dependencies, branch, fixed review base, mode, approval scope, and next stage. Keep one independently verifiable outcome per ticket; link dependent tickets.
+- **Pass:** The ticket matches the confirmed design and all output fields are present. Run `after-ticket`; continue to stage 3.
+- **Failure:** Fix ticket or branch setup here. Return design gaps to stage 1. Missing approval blocks only the action that needs it.
 
-## 3. Implement with TDD
+## 3. Implement
 
-Load `implement` and pass the full TATR ticket path; state its title before starting. Use `tdd` at the confirmed seams, consulting `codebase-design` when the interface needs design work. Work in vertical slices: one failing behavioral test, enough implementation to pass it, then the next slice. Changes to the agreed interface or scope return to the user and update the ticket before implementation proceeds.
-
-Discover checks from the repository configuration. Run relevant type checks and focused tests during implementation, and the full applicable suite before review. Record commands, results, and missing tooling honestly; an absent harness is a prerequisite to resolve, not a passing test run.
-
-This project flow controls cleanup, review order, and completion. Override `implement`'s default review-then-commit timing: stage 4 runs deslop, verifies applicable runtime behavior, and creates a signed implementation snapshot before code-review so its committed `HEAD` diff includes the cleaned-up, verified work. Stage 5 satisfies `implement`'s code-review step; run it once per snapshot.
-
-Finish when the ticket's implementation is complete and applicable checks pass.
-
-Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-implementation` before stage 4.
+- **Action:** Run the project [implement skill](../.agents/skills/implement/SKILL.md), not the global skill of the same name. Supply the full ticket path, mode, and approved scope. Use its TDD and focused-check procedure.
+- **Output:** Changes for the implementation criteria, with focused check commands and results in the ticket.
+- **Pass:** All implementation criteria are met and their focused checks pass. Review and publication criteria belong to later stages. Run `after-implementation`; continue to stage 4.
+- **Failure:** Fix implementation or check failures here. A missing tool or harness blocks the stage. Return scope, interface, or verification-plan changes to stage 1.
 
 ## 4. Clean up and verify runtime behavior
 
-Load [deslop](https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/deslop/SKILL.md) before every code-review pass, including after implementation fixes. Use the ticket's pinned review-base SHA in place of the skill's default comparison against main, and inspect all introduced changes, including staged and unstaged implementation work.
-
-Make focused edits to remove unnecessary comments, redundant defensive code, type-check bypasses, avoidable nesting, and patterns inconsistent with the surrounding code. Preserve the ticket's required behavior and necessary validation. Route any discovered behavioral bug through implementation with relevant regression coverage, then repeat deslop.
-
-Rerun checks affected by cleanup and ensure the full applicable suite passes for the final implementation.
-
-For changes affecting application runtime behavior, run the relevant journeys in `verify-offline-assistant` against the real application after cleanup. Record the entry points exercised, actions, observed results, evidence paths, and source revision. Observe both the user action and its result; mocked tests and a successful server start do not establish a working user journey. Recheck affected behavior after fixes. For changes with no runtime effect, record why this check is not applicable.
-
-If a required journey cannot run or fails, record the exact blocker and prerequisite ticket, keep the implementation ticket OPEN, and resolve it or agree on alternative verification before advancing to code-review. A draft verification skill, missing data, or unavailable browser/model does not count as a pass. Route product fixes through their applicable tickets; do not silently expand a verification-only task.
-
-Record cleanup and verification in the ticket, then create a signed implementation snapshot using git-workflow, including cleanup edits. Associate the evidence with that snapshot and note any remaining limitations. Finish when cleanup is complete, applicable checks and runtime journeys pass (or an agreed alternative is recorded), and all intended implementation changes are committed for review.
-
-Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-verification` before code-review.
+- **Action:** Run local [deslop](../.agents/skills/deslop/SKILL.md) against the fixed base, including staged and unstaged changes. Run affected focused checks after cleanup. For runtime changes, use [verify-offline-assistant](../.agents/skills/verify-offline-assistant/SKILL.md) on the real application. Observe each required user action and result. Record entry points, commands, expected/actual results, evidence paths, and source revision. Mocks or server startup alone cannot prove a journey. If runtime is unaffected, record why. Create a signed snapshot with git-workflow after these checks.
+- **Output:** Committed implementation and cleanup, with check evidence tied to that snapshot. Record limitations and any user-approved alternative verification.
+- **Pass:** Cleanup and affected checks pass. Required journeys pass, have an approved alternative, or are inapplicable with a reason. All intended implementation files are committed. Run `after-verification`; continue to stage 5.
+- **Failure:** Return behavioral defects to stage 3, then repeat this stage. For other failed or blocked journeys, stay here, keep the ticket OPEN, and record the blocker and prerequisite ticket. Resolve it or obtain approval for alternative verification. Do not expand a verification-only ticket to include product fixes.
 
 ## 5. Review standards and spec
 
-Run `code-review` with the pinned review-base SHA and the TATR ticket path as its spec source. It compares `git diff <base>...HEAD`; include all intended implementation files in the committed snapshot first. Supply the project standards sources and the local TATR tracker context. Follow the skill's separate Standards and Spec reviews, including its parallel reviewers.
-
-Record findings against the reviewed commit. Return actionable findings to `implement` as a scoped fix pass on the same ticket and branch. Preserve the agreed seams, add relevant regression coverage, rerun checks, and pass through deslop and its signed snapshot before restarting code-review. Resolve judgement calls with evidence or a documented decision; do not silently discard them.
-
-Finish when both review axes have no unresolved actionable findings for the latest implementation snapshot.
-
-Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-code-review` before blast-radius.
+- **Action:** Run `code-review` against `git diff <fixed-base>...HEAD`. Supply the full TATR ticket path and project standards. Use the skill's parallel, read-only Standards and Spec reviewers.
+- **Output:** Both review results, findings, and dispositions tied to the reviewed SHA. Resolve judgment calls with evidence or a recorded decision.
+- **Pass:** Both reviews have zero unresolved actionable findings for the latest implementation snapshot. Run `after-code-review`; continue to stage 6.
+- **Failure:** Return actionable findings to stage 3 on the same ticket and branch. Repeat cleanup, runtime verification, and both reviews. Missing review evidence blocks this stage.
 
 ## 6. Review blast radius
 
-Load `kishormorol/blast-radius`. Review whether the implementation can perform bulk or destructive writes on real data, including queued jobs, batch messages, permission changes, and deletion scripts. If none apply, record that finding with its reason and the reviewed commit in the ticket.
+- **Action:** Load `blast-radius`. Assess bulk or destructive operations on real data. If applicable, follow its checks using read-only evidence or isolated fixtures. Otherwise record why it does not apply. Its pre-operation checks also apply before any real bulk write in earlier stages; this review does not replace them.
+- **Output:** Applicability, evidence, findings, and dispositions tied to the reviewed SHA.
+- **Pass:** No unresolved applicable findings remain, or non-applicability is recorded. Run `after-blast-radius`; continue to stage 7.
+- **Failure:** Return implementation fixes to stage 3 and repeat both reviews. If data cannot support a safe decision, stop the affected operation, keep the ticket OPEN, and record the missing evidence.
 
-When applicable, follow the skill: justify the filter, classify affected records as act/exclude/unknown, inspect dependencies, check dry-run and apply separation, and verify guards against ambiguity, repeated side effects, and the wrong environment. Examine code and use read-only evidence or isolated fixtures. Applying a live operation follows the user's explicit scope and authorization.
+## 7. Test, publish, and close
 
-This final stage does not replace the skill's pre-operation check: perform its checks before any real bulk write during earlier stages too. The optional Claude-specific hook is separate setup and is not required by this workflow.
-
-Return findings to `implement` as scoped fixes. After fixes, rerun deslop, code-review, and then blast-radius; a later implementation change invalidates both prior reviews. If the data cannot support a safe decision, keep the ticket OPEN, record the missing evidence, and stop the affected operation.
-
-Finish when all applicable blast-radius findings are resolved or the stage is explicitly recorded as not applicable.
-
-Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-blast-radius` before preparing the PR.
-
-## 7. Prepare the PR, publish, and hand off
-
-Record acceptance-criteria evidence, check results, reviewed commit IDs, dispositions for review findings, and blast-radius applicability in the ticket. Update its current stage so another session can resume accurately. Mark it CLOSED only when the acceptance criteria and Definition of Done are met; keep pending reviews or checks visible in an OPEN ticket.
-
-Prepare the PR title and full body before asking for publication approval. Read the installed `show-me/SKILL.md` and apply it to the final diff and evidence. Lead with the problem and resulting behavior, use the smallest useful diagram or before/after sketch, include the TATR ticket path, actual verification results, and remaining limitations, and honor any repository PR template. This is a writing pass, not an automated verifier. Record in the ticket which implementation snapshot the body describes. Local temporary paths are not usable PR attachments; include relevant output or accessible artifact links. Repeat the show-me pass whenever later fixes change what the body describes.
-
-Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" before-publish`. In Guided, honor prior publishing approval or present the prepared result and wait for it. In Autopilot, the explicit ticket-scoped grant covers publication. Use git-workflow for signed commits, push, and PR creation/update; reuse an existing PR for the branch. Before pushing an existing PR, check whether auto-merge or a merge queue could merge it automatically; pause to resolve that situation if merging is outside the user's grant.
-
-Read back the published PR body and verify that it matches the show-me-prepared text. Use the existing git-workflow watcher to handle CI and actionable review findings on the current head. Any implementation change returns to stages 3 through 6 and refreshes the PR description. Keep the ticket OPEN while required checks or reviews remain pending. Do not introduce a second watcher.
-
-At handoff, run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-publish`. Report the PR link, final head SHA, verification evidence, and whether it is ready for review, waiting for required human approval, or blocked. The successful finish is an open, unmerged PR; never report a blocked run as complete. No-answer or elapsed time is not approval. This flow does not authorize merging.
+- **Action:** Complete these steps in order:
+  1. Record acceptance-criteria and Definition of Done evidence in the ticket. Read `show-me` and prepare the PR title and body from the final diff. Follow the [PR template](../.github/pull_request_template.md) and ASD-STE100 Simplified Technical English. Use the smallest useful diagram or example. Keep verification results in the ticket, not the PR body. Record which snapshot the body describes; use accessible links instead of local temporary paths.
+  2. Run the ticket's full-suite command once, after reviews and before push. Record the command, result, and tested implementation SHA. Reuse a passing result only if no implementation changed; ticket status/evidence and PR-text edits alone do not require another run.
+  3. Run `before-publish` and satisfy its instructions. Reuse publication approval already given. Use git-workflow for signed commits and branch push. Create or update the branch's existing PR. Before every push to an existing PR, check auto-merge and merge-queue state; stop if either could merge without authorization.
+  4. After the branch is pushed and the PR is open, set the ticket to CLOSED. Record the PR URL and completed stage. Sign and push the closure commit to the same branch. Do not wait for PR approval or merge.
+  5. Read back the PR body and compare it with the prepared text. Use the existing git-workflow watcher for CI and actionable review findings on the current head. Do not add another watcher. Pending human review alone does not reopen the ticket. Run `after-publish` at handoff.
+- **Output:** Open, unmerged PR; CLOSED ticket pushed to its branch. Report the PR URL, final head SHA, verification evidence, ticket status, and readiness or remaining blocker.
+- **Pass:** Publication and closure pushes succeed, the body matches, required checks pass, and no actionable findings remain. Report whether the PR is ready for review or waiting for required human approval. Do not merge.
+- **Failure:** A failed or blocked full-suite run prevents push. Keep the ticket OPEN. Any CI failure or actionable review finding reopens the same ticket. Route implementation fixes through stages 3–6, refresh the PR body, and repeat this stage. Resolve other blockers here. Publication failure leaves the ticket OPEN. If the closure push fails, restore OPEN locally, record the blocker, and retry after resolution. Never report blocked work as complete.
