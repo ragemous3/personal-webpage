@@ -1,6 +1,6 @@
 # Run the full test suite before push
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -26,7 +26,7 @@ The user approved the requirements and the documentation changes in this convers
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: cleanup and focused verification are complete for the workflow simplification. Create the signed implementation snapshot, then run both reviews for [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Both previous review results are invalid for this extension. SSH commit signing is configured. Local signature verification passed for earlier commits. GitHub recognition of the signature has not been verified.
+Current stage: stage 7, publication complete on [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). This ticket record is the closure commit. Signed implementation snapshot: `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. Both reviews and the final test run passed for this snapshot. SSH commit signing is configured, and `git verify-commit HEAD` exited 0 with a good SSH signature. GitHub recognition of the signature has not been verified.
 
 Focused check mapping: all six simplification criteria use `node /tmp/final-test-workflow-check.cjs` and `git diff --check`, followed by Standards and Spec review. The first command checks structure and references; review assesses meaning and preserved controls. No type-check command or behavioral TDD seam applies to these Markdown changes. No application files changed.
 
@@ -36,23 +36,32 @@ Focused check output:
 PASS: 19 local links; original diagram; 8 stages with 4 fields; 8 decision IDs in both modes; 2 skill headers; PR template.
 ```
 
-Both focused commands exited 0. Cleanup removed repeated skill instructions and retained the original diagram. The main workflow is reduced from 2,988 to about 1,800 words. Setup is in `docs/implementation-setup.md`. The local implement skill handles only implementation and focused checks. Runtime journeys do not apply because these changes affect instructions only.
+Both focused commands exited 0 for the content committed in `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. Cleanup removed repeated skill instructions and retained the original diagram. The main workflow is reduced from 2,988 to about 1,800 words. Setup is in `docs/implementation-setup.md`. The local implement skill handles only implementation and focused checks. Runtime journeys do not apply because these changes affect instructions only.
 
-Standards review: pending for the new snapshot. Spec review: pending for the same snapshot. Earlier passing results for `35243aa4560541e5b4fab3f843d3c9a2314015b5` do not cover the workflow simplification.
+Standards review: zero documented-standard violations and zero heuristic findings for `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. Spec review: zero actionable findings for the same snapshot. Both reviewers assessed the full diff from the fixed review base. They confirmed the local implement boundary, explicit stages, preserved controls, setup reference, unchanged overview diagram, and PR evidence policy.
 
-Blast-radius review: pending for the new snapshot. No bulk write or live data operation is part of this change.
+Blast-radius review: not applicable for `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. Only Markdown instructions and ticket records changed. No bulk write or live data operation is part of this change.
 
-Final test result: pending after the new reviews. The earlier `npm test` run passed all 15 tests for `35243aa4560541e5b4fab3f843d3c9a2314015b5`; it does not cover this extension.
+Final test result: `npm test` exited 0 after both reviews for `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. Only ticket evidence changed after this snapshot. The final output was:
 
-PR body update: pending for the simplification. Use Change, Explanation, and Other in Simplified Technical English. Retain the show-me explanation, omit verification results, and link to this ticket. GitHub will apply the default template to new PRs after it reaches the default branch.
+```text
+tests 15
+pass 15
+fail 0
+cancelled 0
+skipped 0
+todo 0
+```
+
+PR body: prepared with show-me for `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. It uses Change, Explanation, and Other in Simplified Technical English. It explains the local implement boundary and the publication sequence, omits verification results, and links to this ticket. Publication succeeded, and the readback matches the prepared text. GitHub will apply the default template to new PRs after it reaches the default branch.
 
 PR review disposition: comment `4398148613` is answered and resolved. The original overview diagram is restored. Comment `4398194168` is answered and resolved. Stage 4 and the local-skills section link to `.agents/skills/deslop/SKILL.md`. The global deslop installation entry is removed.
 
-Publication checks: recheck the PR head, CI, review threads, auto-merge, and merge-queue state before push.
+Publication checks: PR #13 is OPEN with implementation head `e1c1cd831c5a6bca6f50f7e386adb566f8f185fa`. The pre-push status check reported no unresolved threads, disabled auto-merge, and no merge-queue entry. There were no CI checks or required contexts. Recheck the status after pushing this closure. The PR remains unmerged.
 
-Closure: the approved template passed checks and was pushed to PR #13. Both earlier review threads are resolved. This ticket is now OPEN for the workflow simplification. Close it after the new work passes checks and is published.
+Closure: the workflow simplification passed focused checks, both reviews, and the final full suite. The implementation and updated body are published on PR #13. This ticket is CLOSED. Commit and push this closure to the same branch. No implementation changed after the final test run.
 
-Next action: complete and review the new workflow and local implement skill. Run the full suite before push. Update PR #13, close the ticket, and push the closure. Merging requires separate authorization.
+Next action: hand off the open PR after the closure push and final status check. Reopen this ticket if CI fails or review requires more work. Merging requires separate authorization.
 
 ## Acceptance criteria
 
@@ -78,7 +87,7 @@ Next action: complete and review the new workflow and local implement skill. Run
 - [x] Each stage states its action, required output, pass condition, and failure destination. Existing scope, approval, review, runtime, and publication controls are preserved.
 - [x] The local implement skill uses the ticket's listed seams and commands. It runs focused checks after each implemented acceptance criterion and returns to the workflow without reviews, commits, full-suite runs, or publication.
 - [x] Setup instructions are in a linked reference. The workflow calls skills instead of repeating their internal checklists. The original overview diagram and all eight decision IDs are preserved.
-- [ ] Verification evidence stays in the ticket. The PR body follows the approved template without verification results.
+- [x] Verification evidence stays in the ticket. The PR body follows the approved template without verification results.
 - [x] Required step changes need explicit approval. A completed stage continues automatically. Missing prerequisites and failed checks have explicit failure paths.
 
 Verification for this extension: no application behavior changes and no new behavioral test seam. Check local links, stage fields, decision IDs, skill headers, and exact preservation of the overview diagram. Run the existing full suite, `npm test`, after the reviews. These documentation checks establish structure and references; the reviews assess the workflow's meaning.
@@ -89,7 +98,7 @@ None identified. The related workflow ticket is complete.
 
 ## Definition of Done
 
-- [ ] Verify all acceptance criteria and record the evidence.
+- [x] Verify all acceptance criteria and record the evidence.
 - [x] Check local Markdown links and run `git diff --check`.
-- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
-- [ ] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
+- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
