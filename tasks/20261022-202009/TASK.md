@@ -39,7 +39,7 @@ Complete the existing local-model initialization ticket. Use the existing worker
 - [ ] Record a real local-model/browser smoke-check result or the exact remaining verification limitation. Fake model tests do not establish real model loading, WebGPU support, or model quality.
 - [ ] Complete the repository's implementation, Standards/Spec review, and applicable blast-radius stages against the implementation snapshot; record the commands, outcomes, and reviewed commit IDs.
 
-Implementation state: stage 5, repeat Standards and Spec review. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `ea0244b5b9a7a3a87fb52f35df8eaf2407c0b156`. Both code reviews, blast-radius review, and the final full-suite run remain pending. SSH signatures use the supplied signing key.
+Implementation state: stage 5, repeat Standards and Spec review. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `800636f701eac6e2f4e9974e2498d40e2d58ea5e`. Both code reviews, blast-radius review, and the final full-suite run remain pending. SSH signatures use the supplied signing key.
 
 Execution mode: Autopilot. The user selected "Start implementation auto pilot" on 2026-10-28 for this ticket. Authorization covers routine implementation decisions, tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, branch pushes, PR creation/updates, and CI/review fixes through handoff. Finish with an open, unmerged PR. Merge, deployment, and live destructive operations require separate authorization.
 
