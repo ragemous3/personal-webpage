@@ -71,7 +71,7 @@ const disectTask = (
 
     return { entityTask, entityName };
   } catch (error) {
-    console.error(error);
+    console.error(`[${SeverityLevelCodes.ERROR}] - Invalid state machine request`, error);
     return null;
   }
 };
@@ -106,7 +106,7 @@ const sharedWorkerSwitch = (p: MessagePort, message: SharedWorkerMessage): void 
 declare const self: SharedWorkerGlobalScope;
 self.addEventListener('connect', (event: MessageEvent<SharedWorkerMessage>): void => {
   const port = event.ports[0];
-  if (!port) throw new Error('Port was not found');
+  if (!port) throw new Error(`[${SeverityLevelCodes.FATAL}] - Port was not found`);
   ports.add(port);
   port.start();
   port.addEventListener('message', (messageEvent: MessageEvent<SharedWorkerMessage>): void => {

@@ -2,6 +2,7 @@ export type RoleTypes = 'system' | 'user' | 'assistant';
 export interface ChatMessage {
   role: RoleTypes;
   content: string;
+  interrupted?: boolean;
 }
 export interface SysMessage {
   role: 'system';

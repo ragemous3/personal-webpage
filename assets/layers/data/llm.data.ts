@@ -1,6 +1,7 @@
 import {
   type Chat,
   type Message,
+  type StoppingCriteria,
   type TextGenerationConfig,
   type TextGenerationOutput,
   type TextGenerationPipeline,
@@ -22,7 +23,7 @@ export class LocalLLMData {
   chatWithModel = async (
     prompt: Chat,
     generator: TextGenerationPipeline,
-    options: Partial<TextGenerationConfig>,
+    options: Partial<TextGenerationConfig> & { stopping_criteria?: StoppingCriteria | undefined },
   ): Promise<TextGenerationOutput | TextGenerationOutput[]> => await generator(prompt, options);
 
   getTextStreamer = (
@@ -43,6 +44,7 @@ export class LocalLLMData {
   readonly chatMessageHandler = async (
     chatMessages: Chat,
     callback: (txt: string) => void,
+    stoppingCriteria?: StoppingCriteria,
   ): Promise<TextGenerationSingle | undefined> => {
     if (!this.guardChatMessageHandler(chatMessages)) return;
 
@@ -68,6 +70,7 @@ export class LocalLLMData {
     const output = await this.chatWithModel(chatMessages, this.generator, {
       ...this.options,
       streamer: this.getTextStreamer(this.generator, callback),
+      stopping_criteria: stoppingCriteria,
     });
 
     if (!output[0] || !('generated_text' in output[0])) {

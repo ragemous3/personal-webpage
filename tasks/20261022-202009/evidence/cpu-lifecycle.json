@@ -1,0 +1,26 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/chat-lifecycle-runtime-evidence-rqajkx",
+  "events": [
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    }
+  ],
+  "browser": "Chrome/154.0.8037.57",
+  "initialState": "ready",
+  "answer": "\n          \n                \n                                user: What experience does Rasmus have?\n                              \n              \n                \n                                assistant: In the given context, Rasmus is described as having a lot of experience in the field of full-stack development, including building a UI platform for machine learning, working on multiple POCs, and building an open-source framework called Open RMM.\n                              \n              \n        ",
+  "state": "ready",
+  "cancel": "\n      \n        \n          \n                \n                                user: What experience does Rasmus have?\n                              \n              \n                \n                                assistant: In the given context, Rasmus is described as having a lot of experience in the field of full-stack development, including building a UI platform for machine learning, working on multiple POCs, and building an open-source framework called Open RMM.\n                              \n              \n                \n                                user: What does Rasmus work with?\n                              \n              \n                \n                                assistant:  (interrupted)\n                              \n              \n        \n        error\n        Response interrupted.\n        \n          \n          \n            Send\n          \n        \n        \n          Cancel\n        \n        Reset\n        Retry\n      \n    ",
+  "retryMessageCount": 4,
+  "resetMessageCount": 0,
+  "cleanup": "Owned browser and Hugo stopped; scratch removed; evidence retained"
+}

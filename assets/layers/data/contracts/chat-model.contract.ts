@@ -6,4 +6,5 @@ export interface ChatMessageModelContract {
   createNewUserEntry(context: Chunk[], query: string): UserMessage;
 
   populate(message: ChatMessage): void;
+  reset(): void;
 }

@@ -32,7 +32,7 @@ export class ProgressService implements ProgressServiceContract<Map<string, Prog
 
   readonly #init = (): void => {
     if (this.#initialized) {
-      console.error(`${SeverityLevelCodes.WARNING} Init was called twice..`);
+      console.error(`[${SeverityLevelCodes.WARNING}] - Init was called twice..`);
     }
     this.#initialized = true;
     for (const broadcast of this.broadcasts) {

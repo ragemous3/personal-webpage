@@ -13,6 +13,7 @@ import { Hub } from '@/layers/data/hub.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { RagService } from '@/layers/services/chatbot.service';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { isRecord, isString } from '@/layers/shared/guards/guards';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
 
@@ -32,7 +33,7 @@ interface OfflineConfiguration {
 
 const requireRecord = (value: unknown, name: string): Record<string, unknown> => {
   if (!isRecord(value) || Array.isArray(value)) {
-    throw new Error(`Expected an object for ${name}`);
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected an object for ${name}`);
   }
   return value;
 };
@@ -40,14 +41,14 @@ const requireRecord = (value: unknown, name: string): Record<string, unknown> =>
 const requireString = (record: Record<string, unknown>, key: string): string => {
   const value = record[key];
   if (!isString(value) || value.trim().length === 0) {
-    throw new Error(`Expected a nonempty string for ${key}`);
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a nonempty string for ${key}`);
   }
   return value;
 };
 
 const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
   if (!isSiteConfiguratonGlobal(cfg)) {
-    throw new Error('Expected a defined site configuration global');
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a defined site configuration global`);
   }
   const workers = requireRecord(cfg.WORKER_NAMES, 'WORKER_NAMES');
   const site = requireRecord(cfg.SITE_PARAMS, 'SITE_PARAMS');
@@ -75,13 +76,15 @@ const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
     baseUrl: baseURL,
   };
   if (!isLmConfig(model)) {
-    throw new Error('Invalid chatbot.config.locallm configuration');
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid chatbot.config.locallm configuration`);
   }
   if (!isDatabaseConfig(database)) {
-    throw new Error('Invalid chatbot.config.localdatabase configuration');
+    throw new Error(
+      `[${SeverityLevelCodes.ERROR}] - Invalid chatbot.config.localdatabase configuration`,
+    );
   }
   if (!isSysMessageConfig(chatbot.sysmessage)) {
-    throw new Error('Invalid chatbot.sysmessage configuration');
+    throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid chatbot.sysmessage configuration`);
   }
   return {
     baseURL,
@@ -127,6 +130,6 @@ export const buildChatbotOfflineDeps = (cfg: unknown): RagService | undefined =>
     });
     return new RagService(chat, database, chunkRepo, chatModel);
   } catch (error) {
-    console.error(error);
+    console.error(`[${SeverityLevelCodes.ERROR}] - Failed to configure offline chatbot`, error);
   }
 };

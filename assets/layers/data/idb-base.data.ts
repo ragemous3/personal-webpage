@@ -1,4 +1,5 @@
 import { type StoreContract } from '@/layers/data/contracts/store-base.contract';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 
 /* eslint-disable unicorn/prefer-add-event-listener */
 export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
@@ -12,7 +13,9 @@ export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(storeName)) {
-          reject(new Error('Store should`ve been loaded earlier.'));
+          reject(
+            new Error(`[${SeverityLevelCodes.FATAL}] - Store should have been loaded earlier.`),
+          );
         }
       };
 
@@ -21,7 +24,7 @@ export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
         resolve(database);
       };
       request.onerror = () => {
-        console.error(request.error);
+        console.error(`[${SeverityLevelCodes.ERROR}] - Failed to open IndexedDB`, request.error);
         if (request.error instanceof Error) {
           reject(request.error);
         }

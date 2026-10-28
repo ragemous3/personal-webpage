@@ -120,18 +120,19 @@ export class VectorDBHNSWData {
 
   query = async (query: string, topK = 5): Promise<SearchResult> => {
     if (!this.index || !this.embedder) {
-      throw new Error('Expected Index and embedder to be defined!');
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected Index and embedder to be defined!`);
     }
     const queryEmbedding = await this.embedder([query], {
       pooling: 'mean',
       normalize: true,
     });
-
-    return this.index.searchKnn(
-      queryEmbedding.tolist(),
-      topK,
-      () => false, //TODO: Might break since im not sure what to filter off etc.
-    );
+    const vector = queryEmbedding.data;
+    if (!(vector instanceof Float32Array) || vector.length !== this.config.dim) {
+      throw new Error(
+        `[${SeverityLevelCodes.ERROR}] - Expected one float32 query embedding with the configured dimensions`,
+      );
+    }
+    return this.index.searchKnn(vector, topK, () => true);
   };
 
   private readonly guardHSNWEntryMetadata = (data: unknown): data is HNSWDBEntryMetadata =>
@@ -233,9 +234,11 @@ export class VectorDBHNSWData {
       await syncFileSystem('read');
     } catch (error) {
       if (error instanceof Error) {
-        console.error(error);
+        console.error(`[${SeverityLevelCodes.ERROR}] - Failed to read external index`, error);
       }
-      console.error(`Expected caught Error to be instanceof Error!`);
+      console.error(
+        `[${SeverityLevelCodes.ERROR}] - Expected caught Error to be instanceof Error!`,
+      );
     }
   };
 }

@@ -1,0 +1,107 @@
+import { spawn } from 'node:child_process';
+import { createHash, X509Certificate } from 'node:crypto';
+import fs from 'node:fs/promises';
+import puppeteer from '/workspace/personal-webpage/node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js';
+const evidence = await fs.mkdtemp('/tmp/chat-lifecycle-runtime-evidence-');
+const scratch = await fs.mkdtemp('/tmp/chat-lifecycle-runtime-scratch-');
+const events = [];
+const result = { verdict: 'BLOCKED', evidence, events };
+const server = spawn('/workspace/.local/bin/hugo', ['server', '--bind', '127.0.0.1', '--port', '43129',
+  '--baseURL', 'http://127.0.0.1:43129/', '--destination', `${scratch}/public`, '--cacheDir', `${scratch}/cache`,
+  '--noBuildLock', '--disableLiveReload'], { cwd: process.env.CHAT_RUNTIME_ROOT ?? '/workspace/personal-webpage', env: { ...process.env, HUGO_RESOURCEDIR: `${scratch}/resources` } });
+let serverLog = '';
+server.stdout.on('data', (data) => { serverLog += data; });
+server.stderr.on('data', (data) => { serverLog += data; });
+let browser;
+let page;
+try {
+  let reachable = false;
+  for (let i = 0; i < 100; i++) {
+    try { reachable = (await fetch('http://127.0.0.1:43129/')).ok; } catch {}
+    if (reachable) break;
+    if (server.exitCode !== null) throw new Error(serverLog);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (!reachable) throw new Error('Hugo launch timed out');
+  const certificate = new X509Certificate(await fs.readFile(process.env.NODE_EXTRA_CA_CERTS));
+  const trust = createHash('sha256').update(certificate.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
+  browser = await puppeteer.launch({ executablePath: '/usr/bin/chromium', headless: true, userDataDir: `${scratch}/browser`, protocolTimeout: 600_000,
+    args: ['--no-sandbox', '--disable-dev-shm-usage',
+      `--ignore-certificate-errors-spki-list=${trust}`, `--proxy-server=${process.env.HTTPS_PROXY}`, '--proxy-bypass-list=localhost;127.0.0.1'] });
+  result.browser = await browser.version();
+  page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    globalThis.modelQueryCount = 0;
+    const post = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function(message, ...arguments_) {
+      if (message?.task === 'hub:query' && message.payload?.task === 'llm:query') globalThis.modelQueryCount++;
+      return post.call(this, message, ...arguments_);
+    };
+  });
+  page.on('console', (message) => { if (['error', 'warn'].includes(message.type())) {
+    events.push({ type: message.type(), text: message.text() }); console.info(message.text());
+  } });
+  page.on('pageerror', (error) => { events.push({ type: 'pageerror', text: error.message }); console.info('PAGE ERROR', error.message); });
+  page.on('requestfailed', (request) => events.push({ type: 'requestfailed', url: request.url(), failure: request.failure() }));
+  await page.goto('http://127.0.0.1:43129/', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('chatbot-offline-provider >>> chat-container >>> input', { timeout: 30_000 });
+  await page.screenshot({ path: `${evidence}/startup.png`, fullPage: true });
+  console.info('Waiting for readiness');
+  const getState = () => page.$eval('chatbot-offline-provider >>> chat-container >>> [role=status]', (element) => element.textContent.trim());
+  const waitTerminal = () => page.waitForFunction(() => {
+    const root = document.querySelector('chatbot-offline-provider')?.shadowRoot?.querySelector('chat-container')?.shadowRoot;
+    return ['ready', 'error'].includes(root?.querySelector('[role=status]')?.textContent.trim());
+  }, { timeout: 240_000 });
+  await waitTerminal();
+  result.initialState = await getState();
+  if (result.initialState !== 'ready') throw new Error('Application initialization failed');
+  await page.type('chatbot-offline-provider >>> chat-container >>> input', 'What experience does Rasmus have?');
+  await page.click('chatbot-offline-provider >>> chat-container >>> button[type=submit]');
+  await waitTerminal();
+  result.answer = await page.$eval('chatbot-offline-provider >>> chat-container >>> [role=log]', (element) => element.textContent);
+  result.state = await getState();
+  result.alert = await page.$eval('chatbot-offline-provider >>> chat-container', (element) => element.shadowRoot.querySelector('[role=alert]')?.textContent);
+  await page.screenshot({ path: `${evidence}/answer.png`, fullPage: true });
+  result.verdict = result.state === 'ready' && result.answer.includes('assistant:') ? 'OBSERVED_ANSWER' : 'FAIL';
+  if (result.state !== 'ready') throw new Error(result.alert ?? 'Answer failed');
+  const chatRoot = 'chatbot-offline-provider >>> chat-container';
+  const clickAction = (name) => page.$eval(chatRoot, (element, name) => {
+    [...element.shadowRoot.querySelectorAll('button')].find((button) => button.textContent.trim() === name).click();
+  }, name);
+  await page.type(`${chatRoot} >>> input`, 'What does Rasmus work with?');
+  await page.keyboard.press('Enter');
+  const waitChunk = (count) => page.waitForFunction((count) => {
+    const root = document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('chat-container').shadowRoot;
+    return globalThis.modelQueryCount >= count && root.querySelector('[role=status]').textContent.trim() === 'responding';
+  }, { timeout: 30_000 }, count);
+  await waitChunk(2);
+  await clickAction('Cancel');
+  await page.waitForFunction(() => document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('chat-container').shadowRoot.textContent.includes('(interrupted)'));
+  result.cancel = await page.$eval(chatRoot, (element) => element.shadowRoot.textContent);
+  await clickAction('Retry');
+  result.retryMessageCount = await page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.querySelectorAll('p').length);
+  await waitChunk(3);
+  await clickAction('Reset');
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  result.resetMessageCount = await page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.querySelectorAll('p').length);
+  await page.screenshot({ path: `${evidence}/reset.png`, fullPage: true });
+  result.verdict = result.retryMessageCount === 4 && result.resetMessageCount === 0 ? 'PASS' : 'FAIL';
+} catch (error) {
+  result.verdict = 'FAIL';
+  result.error = error.stack;
+  console.error(error.message);
+  if (page) {
+    result.page = await page.evaluate(() => document.querySelector('chatbot-offline-provider')?.shadowRoot?.querySelector('chat-container')?.shadowRoot?.textContent).catch((error) => error.message);
+    await page.screenshot({ path: `${evidence}/failure.png`, fullPage: true }).catch(() => {});
+  }
+} finally {
+  await browser?.close();
+  const closed = new Promise((resolve) => server.once('exit', resolve));
+  server.kill('SIGTERM');
+  if (server.exitCode === null) await closed;
+  await fs.rm(scratch, { recursive: true, force: true });
+  result.cleanup = 'Owned browser and Hugo stopped; scratch removed; evidence retained';
+  await fs.writeFile(`${evidence}/server.log`, serverLog);
+  await fs.writeFile(`${evidence}/result.json`, JSON.stringify(result, null, 2));
+  console.info(JSON.stringify(result, null, 2));
+}

@@ -13,6 +13,8 @@ export type Action =
   | 'stream'
   | 'progress'
   | 'query'
+  | 'cancel'
+  | 'ready'
   | 'cleanup';
 
 export type Task = `${string}:${Action}`;
@@ -22,6 +24,7 @@ export interface MessageBase<T, Y = Task | TaskResponse> {
   name: string;
   task: Y;
   payload: T;
+  requestId?: string;
   error?: string;
 }
 

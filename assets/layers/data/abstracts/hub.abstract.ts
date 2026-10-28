@@ -55,10 +55,6 @@ export abstract class HubAbstract extends StandardCommunicationBaseAbstract impl
   onData = (listener: (data: unknown) => void): (() => void) => this.#$data.connect(listener);
 
   handleHubConnectionMsg = (message: MessageBase<unknown>): null | undefined => {
-    if (message.error) {
-      console.error(message.error);
-      return null;
-    }
     if (message.task === 'hub:ping') {
       //Signaling that its OK to connect to hub - ping bounced back.
       this.$isReady.emit(true);

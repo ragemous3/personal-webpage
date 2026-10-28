@@ -26,7 +26,8 @@ export abstract class SharedWorkerManager<To extends MessageBase<unknown>, From>
 
   initialize(): void {
     if (!this.isScriptPath(this.scriptPath)) return;
-    if (this.carrier) throw new Error('Worker already initialized');
+    if (this.carrier)
+      throw new Error(`[${SeverityLevelCodes.WARNING}] - Worker already initialized`);
 
     try {
       const carrier = new SharedWorker(new URL(this.scriptPath, import.meta.url), {
