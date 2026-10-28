@@ -11,13 +11,16 @@ export class ChunkTextByToken {
     this.tokenizer = await AutoTokenizer.from_pretrained(this.model_id);
   };
 
-  tagContent = (arr, text) => arr.join(' ') + ' ' + text;
+  tagContent = (array, text) => `${array.join(' ')} ${text}`;
+
+  #isShortIntermediateChunk = (chunkIds, minTokens, end, totalTokens, start) =>
+    chunkIds.length < minTokens && end !== totalTokens && start !== 0;
 
   // https://docs.langchain.com/oss/javascript/integrations/splitters/code_splitter
   createChunksRecursiveTextSplitterAsync = async (
     text,
     index,
-    { minChars = 100, maxChars = 200, overlap = 40, tags = [] } = {},
+    { maxChars = 200, overlap = 40 } = {},
   ) => {
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: maxChars,
@@ -38,31 +41,23 @@ export class ChunkTextByToken {
   ) => {
     const tokenIds = this.tokenizer.encode(text);
     const chunks = [];
-    let start = 0;
     try {
-      while (start < tokenIds.length) {
-        let end = start + maxTokens;
-        const chunkIds = tokenIds.slice(start, end);
-
-        // If this is not the first chunk and it's too small,
-        // only allow it if it's the final chunk (completeness).
-        if (chunkIds.length < minTokens && end !== tokenIds.length && start !== 0) {
-          break;
-        }
-
-        const chunkText = this.tokenizer.decode(chunkIds);
-        chunks.push({
-          text: this.tagContent(tags, chunkText),
-          tokenCount: chunkIds.length,
-          index,
-        });
-
-        // Move start forward with overlap
-        start = end - overlap;
-      }
-    } catch (e) {
-      console.error(e);
+      this.#populateChunks(tokenIds, index, chunks, { minTokens, maxTokens, overlap, tags });
+    } catch (error) {
+      console.error(error);
     }
     return chunks;
   };
+
+  #populateChunks(tokenIds, index, chunks, { minTokens, maxTokens, overlap, tags }) {
+    let start = 0;
+    while (start < tokenIds.length) {
+      const end = start + maxTokens;
+      const chunkIds = tokenIds.slice(start, end);
+      if (this.#isShortIntermediateChunk(chunkIds, minTokens, end, tokenIds.length, start)) break;
+      const chunkText = this.tokenizer.decode(chunkIds);
+      chunks.push({ text: this.tagContent(tags, chunkText), tokenCount: chunkIds.length, index });
+      start = end - overlap;
+    }
+  }
 }

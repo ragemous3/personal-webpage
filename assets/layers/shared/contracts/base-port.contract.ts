@@ -1,4 +1,4 @@
-import { type MessageBase } from '../../data/workers/models';
+import { type MessageBase } from '@/layers/data/workers/models';
 
 export interface StandardCommunicationBaseContract<TMessage = unknown> {
   readonly name: string;

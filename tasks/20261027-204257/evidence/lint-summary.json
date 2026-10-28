@@ -1,0 +1,11 @@
+{
+  "command": "node node_modules/eslint/bin/eslint.js . --max-warnings 0",
+  "exitCode": 0,
+  "filesChecked": 97,
+  "errorCount": 0,
+  "warningCount": 0,
+  "baselineCommit": "2de83ca38763c9c21ba805eca71c8cea236b73ec",
+  "baselineErrors": 173,
+  "baselineWarnings": 0,
+  "committedSnapshot": null
+}

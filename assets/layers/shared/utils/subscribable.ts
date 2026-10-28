@@ -1,8 +1,8 @@
 export type Listener<T> = (data: T) => void;
 export type Unsubscribeable = () => void;
-export type ReadonlyConnections<T> = {
+export interface ReadonlyConnections<T> {
   connect: (listener: Listener<T>) => () => void;
-};
+}
 
 export type WritableConnections<T> = ReadonlyConnections<T> & {
   emit: (data: T) => void;

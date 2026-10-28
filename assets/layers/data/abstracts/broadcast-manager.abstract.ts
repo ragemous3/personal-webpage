@@ -20,9 +20,9 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
     this.isTerminating = false;
   };
 
-  setupEventListeners(): void | null {
+  setupEventListeners(): undefined | null {
     if (!this.carrier) return null;
-    this.carrier.onmessage = this.handleMessage.bind(this);
+    this.carrier.addEventListener('message', this.handleMessage);
     this.carrier.addEventListener('messageerror', this.handleError.bind(this));
   }
 
@@ -44,7 +44,7 @@ export abstract class BroadcastManager<To extends MessageBase<unknown>, From>
     try {
       this.carrier = new BroadcastChannel(this.name);
     } catch (error) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init broadcast: ${error}`);
+      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init broadcast: ${String(error)}`);
     }
 
     this.setupEventListeners();

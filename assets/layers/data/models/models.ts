@@ -1,9 +1,16 @@
-import { type TextGenerationConfig } from '@huggingface/transformers';
-
 export type RoleTypes = 'system' | 'user' | 'assistant';
-export type ChatMessage = { role: RoleTypes; content: string };
-export type SysMessage = { role: 'system'; content: string };
-export type UserMessage = { role: 'user'; content: string };
+export interface ChatMessage {
+  role: RoleTypes;
+  content: string;
+}
+export interface SysMessage {
+  role: 'system';
+  content: string;
+}
+export interface UserMessage {
+  role: 'user';
+  content: string;
+}
 
 export interface Chunk {
   readonly text: string;
@@ -14,17 +21,17 @@ export type HNSWDBEntry = {
   contents: Uint8Array;
 } & HNSWDBEntryMetadata;
 
-export type HNSWDBEntryMetadata = {
+export interface HNSWDBEntryMetadata {
   mode: number;
   timestamp: string | Date;
-};
+}
 
-export type RAGStatus = {
+export interface RAGStatus {
   status: RagStates;
-};
+}
 
 export type Workers<T extends string> = Record<T, string>;
 
-export type InfraConfigurationDTO<T extends string> = {
+export interface InfraConfigurationDTO<T extends string> {
   workerMap: Workers<T>;
-};
+}

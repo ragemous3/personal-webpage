@@ -87,6 +87,6 @@ export abstract class StandardCommunication
   };
 
   protected recieveBroadcastMessage = (data: MessageBase<unknown>): void => {
-    if (isMessageBase(data, (payload): payload is unknown => true)) this.handleBroadcast(data);
+    if (isMessageBase(data, (_payload): _payload is unknown => true)) this.handleBroadcast(data);
   };
 }

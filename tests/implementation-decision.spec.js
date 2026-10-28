@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const command = fileURLToPath(new URL('../scripts/implementation-decision.js', import.meta.url));
-const run = (...args) => spawnSync(process.execPath, [command, ...args], { encoding: 'utf8' });
+const run = (...arguments_) =>
+  spawnSync(process.execPath, [command, ...arguments_], { encoding: 'utf8' });
 
 test('Guided returns the approval instruction before publishing', () => {
   const result = run('--mode', 'guided', 'before-publish');
@@ -31,7 +32,7 @@ test('known decisions without extra instructions produce no output', () => {
 });
 
 test('invalid decisions or missing modes cannot silently authorize continuation', () => {
-  for (const args of [
+  for (const arguments_ of [
     ['--mode', 'guided', 'before-publsh'],
     ['--mode', 'autopilot', 'before-publsh'],
     ['before-publish'],
@@ -39,7 +40,7 @@ test('invalid decisions or missing modes cannot silently authorize continuation'
     ['--mode', 'guided'],
     ['--mode', 'guided', 'before-publish', 'extra'],
   ]) {
-    const result = run(...args);
+    const result = run(...arguments_);
     assert.equal(result.status, 2);
     assert.equal(result.stdout, '');
     assert.notEqual(result.stderr, '');
@@ -47,7 +48,10 @@ test('invalid decisions or missing modes cannot silently authorize continuation'
 });
 
 test('decision discovery and lookup work outside the repository directory', () => {
-  const result = spawnSync(process.execPath, [command, '--list'], { cwd: tmpdir(), encoding: 'utf8' });
+  const result = spawnSync(process.execPath, [command, '--list'], {
+    cwd: tmpdir(),
+    encoding: 'utf8',
+  });
   assert.equal(result.status, 0, result.stderr);
   const ids = result.stdout.trim().split('\n');
   assert.ok(ids.includes('before-documentation-change'));
@@ -60,15 +64,15 @@ test('decision discovery and lookup work outside the repository directory', () =
 });
 
 test('missing or invalid instruction data is an error, not an empty instruction', (t) => {
-  const root = mkdtempSync(join(tmpdir(), 'implementation-decision-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'implementation-decision-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(join(root, 'scripts'));
-  const maps = join(root, 'docs/implementation-modes');
+  mkdirSync(path.join(root, 'scripts'));
+  const maps = path.join(root, 'docs/implementation-modes');
   mkdirSync(maps, { recursive: true });
-  const copy = join(root, 'scripts/implementation-decision.js');
+  const copy = path.join(root, 'scripts/implementation-decision.js');
   cpSync(command, copy);
-  writeFileSync(join(root, 'package.json'), '{"type":"module"}');
-  writeFileSync(join(maps, 'decisions.json'), '["before-publish"]');
+  writeFileSync(path.join(root, 'package.json'), '{"type":"module"}');
+  writeFileSync(path.join(maps, 'decisions.json'), '["before-publish"]');
   for (const data of [
     undefined,
     '{',
@@ -78,8 +82,8 @@ test('missing or invalid instruction data is an error, not an empty instruction'
     '{"before-publish":""}',
     '{"before-publsh":"Ask"}',
   ]) {
-    if (data === undefined) rmSync(join(maps, 'guided.json'), { force: true });
-    else writeFileSync(join(maps, 'guided.json'), data);
+    if (data === undefined) rmSync(path.join(maps, 'guided.json'), { force: true });
+    else writeFileSync(path.join(maps, 'guided.json'), data);
     const result = spawnSync(process.execPath, [copy, '--mode', 'guided', 'before-publish'], {
       encoding: 'utf8',
     });

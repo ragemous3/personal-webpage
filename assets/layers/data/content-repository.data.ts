@@ -1,4 +1,5 @@
-import { type ContentRepositoryContract } from '../shared/contracts/content-repository.contract';
+import { type ContentRepositoryContract } from '@/layers/shared/contracts/content-repository.contract';
+
 import { ApiBase } from './abstracts/base.infra';
 import { type Chunk } from './models/models';
 

@@ -1,4 +1,5 @@
-import { type BroadcastContract } from '../shared/contracts/broadcast-port.contract';
+import { type BroadcastContract } from '@/layers/shared/contracts/broadcast-port.contract';
+
 import { BroadcastManager } from './abstracts/broadcast-manager.abstract';
 import { type MessageBase } from './workers/models';
 

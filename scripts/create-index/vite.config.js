@@ -1,14 +1,15 @@
 // vite.index-only.config.js
-import { resolve } from 'path';
+import path from 'node:path';
+
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   assetsInclude: ['**/*.json'],
-  root: __dirname,
+  root: import.meta.dirname,
   build: {
     outDir: 'dist',
     rollupOptions: {
-      input: resolve(__dirname, 'index.html'),
+      input: path.resolve(import.meta.dirname, 'index.html'),
     },
   },
 });

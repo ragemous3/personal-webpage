@@ -1,4 +1,5 @@
-import { type Chunk } from '../../data/models/models';
+import { type Chunk } from '@/layers/data/models/models';
+
 import { type ApiContract } from './api.contract';
 
 export interface ContentRepositoryContract extends ApiContract {

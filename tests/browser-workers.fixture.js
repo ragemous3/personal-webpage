@@ -64,10 +64,11 @@ class BrowserSharedWorker {
   }
 }
 
-class BrowserWorker {
+class BrowserWorker extends EventTarget {
   messages = [];
 
   constructor(source) {
+    super();
     this.source = source;
     resources.push(this);
     workers.push(this);
@@ -77,7 +78,7 @@ class BrowserWorker {
     message = structuredClone(message);
     this.messages.push(message);
     if (message.task === 'hub:ping') {
-      this.onmessage?.({ data: message });
+      this.dispatchEvent(new MessageEvent('message', { data: message }));
     }
   }
 
