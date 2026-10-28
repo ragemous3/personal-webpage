@@ -25,4 +25,5 @@ export class ChatMessageModel implements ChatMessageModelContract {
   };
 
   populate = (message: ChatMessage): number => this.#chatMessages.push(message);
+  reset = (): void => { this.#chatMessages.splice(1); };
 }

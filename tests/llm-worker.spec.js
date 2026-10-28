@@ -19,6 +19,34 @@ const failingGenerator = async () => {
 };
 failingGenerator.tokenizer = {};
 
+test('cancel interrupts generation and suppresses its late chunks and final response', async () => {
+  const messages = [];
+  let finish;
+  let stopping;
+  let stream;
+  const generator = async (_prompt, options) => {
+    stopping = options.stopping_criteria;
+    stream = options.streamer.callback_function;
+    return await new Promise((resolve) => { finish = resolve; });
+  };
+  generator.tokenizer = {};
+  const handler = createLlmMessageHandler({
+    loadGeneratorPipeline: async () => generator,
+    loadTokenizer: async () => ({ getMaxLength: () => 2048, countTokens: () => 1 }),
+    publish: (message) => messages.push(message),
+  });
+  await handler({ data: { id: 'owner', name: 'llm', task: 'llm:init', payload: config } });
+  const query = handler({ data: { id: 'owner', name: 'llm', task: 'llm:query', requestId: 'answer-1',
+    payload: { message: [{ role: 'system', content: 'Help' }, { role: 'user', content: 'Question' }] } } });
+  await new Promise((resolve) => setImmediate(resolve));
+  await handler({ data: { id: 'owner', name: 'llm', task: 'llm:cancel', requestId: 'answer-1', payload: {} } });
+  assert.deepEqual(stopping([[1]], [[0]]), [true]);
+  stream('Late');
+  finish([{ generated_text: 'Late' }]);
+  await query;
+  assert.equal(messages.filter(({ task }) => task === 'llm:stream:response' || task === 'llm:message:response').length, 0);
+});
+
 test('initialization loads the configured model and tokenizer before reporting ready', async () => {
   const calls = [];
   const messages = [];

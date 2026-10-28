@@ -90,7 +90,7 @@ const initHNSW = async (vectorColl) => {
     console.error(error);
   }
 
-  index.writeIndex(fileName);
+  await index.writeIndex(fileName);
 };
 
 function downloadAsFile(data, fileName, type = 'application/json') {
@@ -159,3 +159,4 @@ makeDBDownloadable();
 const collections = await getVectorCollAndChunkGroups();
 makeChunksDownloadAble(collections.chunkGroups);
 await initHNSW(collections.vectors);
+globalThis.indexReady = true;

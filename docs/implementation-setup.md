@@ -8,6 +8,8 @@ Read these files from the repository:
 
 - [tatr-ticket](../.agents/skills/tatr-ticket/SKILL.md): local `tasks/<HUID>/TASK.md` tickets.
 - [implement](../.agents/skills/implement/SKILL.md): implementation and focused checks. This replaces the global implement dependency for this project.
+- [tdd](../.agents/skills/tdd/SKILL.md): Matt Pocock's TDD method and test references.
+- [code-review](../.agents/skills/code-review/SKILL.md): Matt Pocock's parallel Standards and Spec reviews.
 - [deslop](../.agents/skills/deslop/SKILL.md): cleanup before review.
 - [git-workflow](../.agents/skills/git-workflow/SKILL.md): signed commits, branches, PRs, and the existing status watcher.
 - [verify-offline-assistant](../.agents/skills/verify-offline-assistant/SKILL.md): real application journeys and the feature map. This skill is a draft; [its ticket](../tasks/20261027-104746/TASK.md) lists prerequisites for the first successful live run.
@@ -21,9 +23,7 @@ Install each skill with its supporting files. Do not edit installed skill caches
 | `mattpocock/skills` | `skills/engineering/grill-with-docs` | Design interview and domain documentation |
 | `mattpocock/skills` | `skills/productivity/grilling` | Interview dependency |
 | `mattpocock/skills` | `skills/engineering/domain-modeling` | Glossary and ADR rules |
-| `mattpocock/skills` | `skills/engineering/tdd` | TDD at confirmed seams |
 | `mattpocock/skills` | `skills/engineering/codebase-design` | Interface and seam design reference |
-| `mattpocock/skills` | `skills/engineering/code-review` | Standards and Spec reviews |
 | `cursor/plugins` | `pstack/skills/create-verification-skill` | Runtime verification instructions when missing |
 | `kishormorol/blast-radius` | Repository root | Bulk operations on real data |
 | `humanlayer/skills` | [`plugins/show-me/skills/show-me`](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md) | PR explanation |

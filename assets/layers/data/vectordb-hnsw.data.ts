@@ -126,12 +126,11 @@ export class VectorDBHNSWData {
       pooling: 'mean',
       normalize: true,
     });
-
-    return this.index.searchKnn(
-      queryEmbedding.tolist(),
-      topK,
-      () => false, //TODO: Might break since im not sure what to filter off etc.
-    );
+    const vector = queryEmbedding.data;
+    if (!(vector instanceof Float32Array) || vector.length !== this.config.dim) {
+      throw new Error('Expected one float32 query embedding with the configured dimensions');
+    }
+    return this.index.searchKnn(vector, topK, () => true);
   };
 
   private readonly guardHSNWEntryMetadata = (data: unknown): data is HNSWDBEntryMetadata =>

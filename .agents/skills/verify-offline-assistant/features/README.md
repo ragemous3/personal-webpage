@@ -13,14 +13,14 @@ This map describes the existing home-page surface. It is a draft with no success
 
 | Feature | Entry point | Current limitation |
 | --- | --- | --- |
-| [Open and type a question](question-entry.md) | Home page `/` | Hugo/dependencies prevent a live run; component wiring needs live validation. |
-| [Observe loading](loading.md) | Fresh visit to `/` | Model initialization is unfinished. |
-| [Get a résumé answer](resume-answer.md) | Submit button or Enter in the input | Model initialization, response rendering, and résumé data are prerequisites. |
+| [Open and type a question](question-entry.md) | Home page `/` | Input is disabled until both workers report ready. |
+| [Observe loading](loading.md) | Fresh visit to `/` | The configured WebGPU models require an available GPU adapter. |
+| [Get a résumé answer](resume-answer.md) | Send button or Enter in the input | Matching résumé data and working model backends are required. |
 
 ## Driving conventions
 
-The form is inside `chatbot-offline-provider` then `chat-container`, each with an open shadow root. Use Puppeteer's `>>>` selectors to cross them. The current input has no accessible label; use its scoped selector until the application supplies one. Button text is `send away a question`.
+The form is inside `chatbot-offline-provider` then `chat-container`, each with an open shadow root. Use Puppeteer's `>>>` selectors to cross them. The input has accessible label `Question`. The submit button is `Send`. Observe `[role="status"]`, `[role="alert"]`, and `[role="log"]` within the chat shadow root. `Cancel` interrupts a response; `Reset` clears the conversation. `Retry` appears after an error and requires an explicit click.
 
 Report each entry point separately. A typing check does not verify submission, retrieval, generation, or answers. A skipped path is not covered by another passing path.
 
-Local/Online selection, cancellation, retry, and rendered history are pending product work. Add their real entry points after implementation.
+Local/Online selection is pending product work. Rendered history, cancellation, reset, and retry are part of the shared response lifecycle; verify each affected action against the real model before claiming a full journey.

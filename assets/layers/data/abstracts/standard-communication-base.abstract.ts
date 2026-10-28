@@ -36,5 +36,5 @@ export abstract class StandardCommunicationBaseAbstract implements StandardCommu
   protected abstract handleStateMachineData(data: MessageBase<unknown>): void;
   abstract initialize(payload: MessageBase<unknown>): void;
   abstract send(payload: MessageBase<unknown>): void;
-  abstract onData(listener: (data: unknown) => void): void;
+  abstract onData(listener: (data: unknown) => void): () => void;
 }

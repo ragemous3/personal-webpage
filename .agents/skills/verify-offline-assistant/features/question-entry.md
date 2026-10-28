@@ -9,7 +9,7 @@ A visitor opens the Offline assistant and enters a question about Rasmus.
 
 ## How to get to it (user POV)
 
-Open `/`. Click the question input and type `What experience does Rasmus have?`.
+Open `/`. Wait for `ready`, click the question input, and type `What experience does Rasmus have?`.
 
 ## Driving it with Puppeteer
 
@@ -22,5 +22,5 @@ Preconditions: Doctor passes, the owned Hugo instance builds, and the browser re
 ## Gotchas
 
 - A plain `document.querySelector('input')` cannot reach the form through the shadow roots.
-- The form template contains a malformed input closing fragment. Record what the browser renders.
+- The input and Send button remain disabled during initialization and active responses. An initialization failure must show an error and Retry.
 - Typing does not prove an answer. This journey cannot close a model or response-lifecycle ticket.

@@ -10,20 +10,21 @@ A visitor submits a question and reads an answer supported by résumé content. 
 
 ## How to get to it (user POV)
 
-Open `/`, type a question, then click `send away a question` or press Enter in the input.
+Open `/`, wait for `ready`, type a question, then click `Send` or press Enter in the input.
 
 ## Driving it with Puppeteer
 
-Preconditions: loading completes; matching chunks, vectors, and metadata exist; the application renders responses. These conditions are not currently met.
+Preconditions: loading completes; matching chunks, vectors, and metadata exist; both model backends initialize successfully.
 
 - **Choose evidence.** Read `content/experience.md` and `content/employment.md`. Identify résumé facts against which to check the helper's question: `What experience does Rasmus have?`.
 - **Button.** Run `send`. The helper types through the input and clicks the actual button. Capture the question, request failures, navigation, and visible result.
 - **Keyboard.** Run the same command with `enter` instead of `send`. Assess this entry point independently.
-- **Answer.** Expect a visible answer and no accidental navigation. There is currently no answer element, so this step is blocked. After response rendering is implemented, record its actual selector and check its displayed text against the résumé before promoting this recipe.
+- **Answer.** Expect one user message and one assistant message inside `[role="log"]`, with no accidental navigation. Observe successive text updates and the terminal `ready` status. Check the displayed answer against the résumé source.
+- **Cancel and retry.** Submit another question and click `Cancel` during generation. The partial answer must stay visible and read `interrupted`. Click `Retry`; the failed assistant attempt is replaced without adding another user question.
+- **Reset.** Click `Reset` during a response. The log must remain empty even if late worker callbacks arrive. Submit a fresh question once ready.
 - **Proof.** Preserve both actions and results. A console response or input echo does not count as an answer.
 
 ## Gotchas
 
-- [Model initialization](../../../../tasks/20261011-184042/TASK.md) and [response rendering](../../../../tasks/20261022-202009/TASK.md) remain prerequisites.
-- The submit binding currently returns a handler rather than invoking it. Exercise the form rather than bypassing it through service calls.
+- Exercise the form rather than bypassing it through service calls. Browser fixture tests establish view behavior but do not prove real model execution.
 - Missing data blocks this journey. Mocking the model or inserting answer DOM would not prove it.

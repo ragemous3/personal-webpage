@@ -22,6 +22,6 @@ Preconditions: working model initialization, résumé data, and browser support 
 
 ## Gotchas
 
-- The LLM worker calls a method on an unconstructed model instance. Track its fix in [the model ticket](../../../../tasks/20261011-184042/TASK.md).
+- The chat's `[role="status"]` reports `initializing`, `ready`, `responding`, or `error`. Require both retrieval and generation workers to reach readiness.
 - Downloads require network access even though generation is local.
 - Headless browser/WebGPU support is unverified. Changing the configured device or model would change what this run proves.

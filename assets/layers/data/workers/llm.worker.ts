@@ -1,4 +1,5 @@
 import {
+  InterruptableStoppingCriteria,
   pipeline,
   type ProgressInfo,
   type TextGenerationPipeline,
@@ -57,43 +58,19 @@ const loadModel = async (
   return new LocalLLMData(generator, tokenizer, tokenizer.getMaxLength(), config.generation);
 };
 
-export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => {
-  let localLLM: LocalLLMData | undefined;
-  let initialization: Promise<LocalLLMData> | undefined;
-  let activeConfiguration: LmConfig | undefined;
-
-  const handleInit = async (request: MessageBase<unknown>): Promise<void> => {
-    const { payload } = request;
-    if (!isLmConfig(payload)) {
-      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
-    }
-    if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
-      throw new Error(
-        `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
-      );
-    }
-    if (localLLM) {
-      dependencies.publish({ ...request, task: 'llm:ready' });
-      return;
-    }
-
-    activeConfiguration = payload;
-    initialization ??= loadModel(dependencies, payload, request).then(
-      (instance) => {
-        localLLM = instance;
-        return instance;
-      },
-      (error: unknown) => {
-        initialization = undefined;
-        activeConfiguration = undefined;
-        throw error;
-      },
-    );
-    await initialization;
-    dependencies.publish({ ...request, task: 'llm:ready' });
-  };
-
-  const handleQuery = async (request: MessageBase<unknown>): Promise<void> => {
+const createGenerationQueue = (
+  dependencies: LlmWorkerDependencies,
+  getModel: () => LocalLLMData | undefined,
+) => {
+  const pending = new Map<string, { owner: string; stopping: InterruptableStoppingCriteria }>();
+  let generation: Promise<unknown> = Promise.resolve();
+  const runQuery = async (
+    request: MessageBase<unknown>,
+    stopping: InterruptableStoppingCriteria,
+  ): Promise<void> => {
+    const interrupted = (): boolean => stopping.interrupted;
+    if (interrupted()) return;
+    const localLLM = getModel();
     if (!localLLM) {
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Language model is not ready.`);
     }
@@ -101,27 +78,85 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a populated chat message array.`);
     }
 
-    const final = await localLLM.chatMessageHandler(request.payload.message, (text) => {
-      dependencies.publish({
-        id: request.id,
-        name: request.name,
-        task: 'llm:stream:response',
-        payload: text,
-      });
-    });
+    const final = await localLLM.chatMessageHandler(
+      request.payload.message,
+      (text) => {
+        if (stopping.interrupted) return;
+        dependencies.publish({
+          id: request.id,
+          ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
+          name: request.name,
+          task: 'llm:stream:response',
+          payload: text,
+        });
+      },
+      stopping,
+    );
+    if (interrupted()) return;
     dependencies.publish({
       id: request.id,
+      ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
       name: request.name,
       task: 'llm:message:response',
       payload: final,
     });
   };
 
+  return async (request: MessageBase<unknown>): Promise<void> => {
+    const key = request.requestId ?? request.id;
+    if (request.task === 'llm:cancel') {
+      const entry = pending.get(key);
+      if (entry?.owner === request.id) entry.stopping.interrupt();
+      return;
+    }
+    const stopping = new InterruptableStoppingCriteria();
+    pending.set(key, { owner: request.id, stopping });
+    const next = generation.then(() => runQuery(request, stopping));
+    generation = next.catch(Boolean);
+    try {
+      await next;
+    } finally {
+      pending.delete(key);
+    }
+  };
+};
+
+export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => {
+  let localLLM: LocalLLMData | undefined;
+  let initialization: Promise<LocalLLMData> | undefined;
+  let activeConfiguration: LmConfig | undefined;
+  const handleGeneration = createGenerationQueue(dependencies, () => localLLM);
+
+  const handleInit = async (request: MessageBase<unknown>): Promise<void> => {
+    const { payload } = request;
+    if (!isLmConfig(payload)) throw new Error('Invalid language model configuration.');
+    if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
+      throw new Error('Model initialized with a different configuration.');
+    }
+    if (!localLLM) {
+      activeConfiguration = payload;
+      initialization ??= loadModel(dependencies, payload, request).then(
+        (instance) => {
+          localLLM = instance;
+          return instance;
+        },
+        (error: unknown) => {
+          initialization = undefined;
+          activeConfiguration = undefined;
+          throw error;
+        },
+      );
+      await initialization;
+    }
+    dependencies.publish({ ...request, task: 'llm:ready' });
+  };
+
   return async (event: MessageEvent<MessageBase<unknown>>) => {
     const request = event.data;
     try {
       if (request.task === 'llm:init') await handleInit(request);
-      if (request.task === 'llm:query') await handleQuery(request);
+      if (request.task === 'llm:cancel' || request.task === 'llm:query')
+        await handleGeneration(request);
     } catch (error) {
       dependencies.publish({
         ...request,

@@ -15,6 +15,7 @@ export abstract class StandardCommunication
   implements StandardCommunicationContract
 {
   readonly #$data: WritableConnections<unknown> = createSubscribable();
+  #readyMessage?: MessageBase<unknown>;
 
   constructor(
     protected hub: HubContract,
@@ -35,7 +36,11 @@ export abstract class StandardCommunication
     );
   }
 
-  onData = (listener: (data: unknown) => void): (() => void) => this.#$data.connect(listener);
+  onData = (listener: (data: unknown) => void): (() => void) => {
+    const disconnect = this.#$data.connect(listener);
+    if (this.#readyMessage) listener(this.#readyMessage);
+    return disconnect;
+  };
 
   initialize = (): void => {
     this.hub.host({
@@ -46,11 +51,12 @@ export abstract class StandardCommunication
     });
   };
 
-  send = (payload: unknown): void => {
+  send = (payload: unknown, requestId?: string, action: 'query' | 'cancel' = 'query'): void => {
     this.hub.send({
       id: this.channelId,
       name: this.name,
-      task: `${this.name}:query`,
+      task: `${this.name}:${action}`,
+      ...(requestId === undefined ? {} : { requestId }),
       payload,
     });
   };
@@ -71,11 +77,10 @@ export abstract class StandardCommunication
   };
 
   protected handleBroadcast = (data: MessageBase<unknown>): void => {
-    const { id, task, payload } = data;
+    const { id, task } = data;
     if (id !== this.channelId) return;
-    const slices = task.split(':');
-    if (slices[1] === 'stream' && slices[2] === 'response') this.#$data.emit(payload);
-    if (slices[1] === 'message' && slices[2] === 'response') this.#$data.emit(payload);
+    if (task.endsWith(':ready')) this.#readyMessage = data;
+    this.#$data.emit(data);
   };
 
   protected handleStateMachineData = (data: MessageBase<unknown>): void => {

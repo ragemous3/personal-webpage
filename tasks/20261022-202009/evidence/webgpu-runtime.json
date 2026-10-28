@@ -1,0 +1,23 @@
+{
+  "verdict": "BLOCKED",
+  "evidence": "/tmp/chat-lifecycle-runtime-evidence-WzjiOp",
+  "events": [
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    }
+  ],
+  "browser": "Chrome/154.0.8037.57",
+  "initialState": "error",
+  "error": "Error: Application initialization failed\n    at file:///tmp/chat-lifecycle-runtime.mjs:49:46",
+  "page": "\n      \n        \n          \n        \n        error\n        [ERROR] - Something went wrong with init - no available backend found. ERR: [webgpu] Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.\n        \n          \n          \n            Send\n          \n        \n        \n          Cancel\n        \n        Reset\n        Retry\n      \n    ",
+  "cleanup": "Owned browser and Hugo stopped; scratch removed; evidence retained"
+}
