@@ -1,6 +1,6 @@
 # Run the full test suite before push
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -24,25 +24,25 @@ The user approved the requirements and the documentation changes in this convers
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: add the default PR template to [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Previous signed implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Both previous review results are invalid for this extension. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
+Current stage: complete; the approved PR template is published in [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Latest signed implementation snapshot: `35243aa4560541e5b4fab3f843d3c9a2314015b5`. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
 
-Checks: all 10 local Markdown links passed. The overview diagram matches the fixed review base exactly. The local deslop skill header and `git diff --check` passed. Application runtime checks do not apply because only workflow documentation, the local cleanup skill, and this ticket changed.
+Checks: the approved template sections and ASD-STE100 instruction passed validation. All 10 local Markdown links and `git diff --check` passed. The earlier checks confirmed the original overview diagram and local deslop header. Application runtime checks do not apply because only documentation, the PR template, and a local cleanup skill changed.
 
-Standards review: zero actionable findings for signed snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Spec review: zero actionable findings for the same snapshot. Both reviewers compared it with the fixed base. The latest user request restores the original overview diagram and keeps the test timing in the stage text. It supersedes the earlier review's request for a new sequential diagram.
+Standards review: zero actionable findings for signed snapshot `35243aa4560541e5b4fab3f843d3c9a2314015b5`. Spec review: zero actionable findings for the same snapshot. Both reviewers confirmed the approved template wording, optional sections, and absence of a Verification section. The user's instruction to omit verification from the PR body takes precedence over the earlier workflow wording. Check evidence remains in this ticket.
 
-Blast-radius review: not applicable for signed snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. The changes affect documentation and a local cleanup skill. They do not add bulk writes, deletion, or operations on live data.
+Blast-radius review: not applicable for signed snapshot `35243aa4560541e5b4fab3f843d3c9a2314015b5`. The changes affect documentation, the PR template, and a local cleanup skill. They do not add bulk writes, deletion, or operations on live data.
 
-Final test result: `npm test` exited 0 in the managed environment after both reviews. All 15 tests passed. No tests failed, were cancelled, or were skipped. Tested implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Only ticket records changed after this run, so the passing result remains valid.
+Final test result: `npm test` exited 0 in the managed environment after both reviews. All 15 tests passed. No tests failed, were cancelled, or were skipped. Tested implementation snapshot: `35243aa4560541e5b4fab3f843d3c9a2314015b5`. Only ticket records changed after this run, so the passing result remains valid.
 
-The published PR body matches the prepared text. It describes both approved changes and the review fixes in Simplified Technical English. Its show-me diagram shows reviews, final tests, push, PR publication, ticket closure, and the second push. It records validation for implementation snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`.
+The published PR body matches the prepared text and follows the approved template. It uses Change, Explanation, and Other. It describes the full change in Simplified Technical English and includes the show-me diagram. It omits verification results and links to this ticket. GitHub will apply the default template to new PRs after it reaches the default branch.
 
 PR review disposition: comment `4398148613` is answered and resolved. The original overview diagram is restored. Comment `4398194168` is answered and resolved. Stage 4 and the local-skills section link to `.agents/skills/deslop/SKILL.md`. The global deslop installation entry is removed.
 
 Publication checks: the PR is OPEN, not a draft, and MERGEABLE. GitHub reports no CI checks and no required check contexts. There are no unresolved review threads. Auto-merge is disabled and the PR is not in a merge queue.
 
-Closure: the review fixes passed checks and were pushed to PR #13. Both review threads are resolved. This ticket is now OPEN for the requested template extension. Close it again after that work passes checks and is published.
+Closure: the approved template passed checks and was pushed to PR #13. Both earlier review threads are resolved. This ticket is CLOSED again. Commit and push this closure to the same PR branch.
 
-Next action: review the template, run the final checks, and publish it to the same PR. Then close the ticket and push the closure. Merging requires separate authorization.
+Next action: review the open PR. The user's next request is a review of the implement skill, without edits to that skill. Merging requires separate authorization.
 
 ## Acceptance criteria
 
@@ -60,10 +60,10 @@ Next action: review the template, run the final checks, and publish it to the sa
 - [x] The overview diagram matches the original diagram at the fixed review base.
 - [x] Stage 4 and the required-skills section link to a standalone project-local deslop skill.
 - [x] Both PR review threads are answered and resolved after the fixes are pushed.
-- [ ] GitHub discovers the single default template at `.github/pull_request_template.md`.
-- [ ] The template requests the problem, its importance, the resulting behavior, and a ticket link. It has no Verification section.
-- [ ] Explanation and Other are optional. A diagram is requested only when it helps explain the change. Other covers applicable compatibility, setup, migration, limits, and follow-up work.
-- [ ] Template guidance requires ASD-STE100 Simplified Technical English, short sentences, and active verbs. Detail is proportional to the change.
+- [x] The single default template uses GitHub's supported path, `.github/pull_request_template.md`.
+- [x] The template requests the problem, its importance, the resulting behavior, and a ticket link. It has no Verification section.
+- [x] Explanation and Other are optional. A diagram is requested only when it helps explain the change. Other covers applicable compatibility, setup, migration, limits, and follow-up work.
+- [x] Template guidance requires ASD-STE100 Simplified Technical English, short sentences, and active verbs. Detail is proportional to the change.
 
 ## Dependencies
 
@@ -71,7 +71,7 @@ None identified. The related workflow ticket is complete.
 
 ## Definition of Done
 
-- [ ] Verify all acceptance criteria and record the evidence.
-- [ ] Check local Markdown links and run `git diff --check`.
-- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
-- [ ] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
+- [x] Verify all acceptance criteria and record the evidence.
+- [x] Check local Markdown links and run `git diff --check`.
+- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
