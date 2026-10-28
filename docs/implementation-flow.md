@@ -4,10 +4,12 @@ Use this flow for feature work and bug fixes. Begin with the existing-ticket gat
 
 ```text
 ticket gate → grill-with-docs → tatr-ticket → choose Guided or Autopilot
-  → implement → deslop → runtime verification → code-review → blast-radius
-  → show-me → full test suite → push → PR → close ticket → push → handoff
-
-Review findings or failed tests → implement → repeat checks and both reviews
+                                                ↓
+implement → deslop → runtime verification → code-review → blast-radius
+    ↑                                           │              │
+    └── fixes ──────────────────────────────────┴── fixes ──────┘
+                                                               ↓
+                                                    show-me → PR → handoff
 ```
 
 The TATR ticket is the implementation spec and the handoff between stages. Keep the same ticket through fixes. When the user chooses an existing ticket, resume it at its recorded stage; return to grilling when a requirement or scope decision is unresolved.
@@ -39,7 +41,7 @@ The CLI only retrieves instructions. It neither selects a mode nor grants permis
 
 ## Required skills and tools
 
-Read each stage's installed `SKILL.md` when entering that stage. The project supplies `tatr-ticket` and `git-workflow` under `.agents/skills/`. Install the following global skills with their supporting files:
+Read each stage's installed `SKILL.md` when entering that stage. The project supplies `tatr-ticket`, `git-workflow`, and [deslop](../.agents/skills/deslop/SKILL.md) under `.agents/skills/`. Install the following global skills with their supporting files:
 
 | Source repository | Skill directory | Purpose |
 | --- | --- | --- |
@@ -49,7 +51,6 @@ Read each stage's installed `SKILL.md` when entering that stage. The project sup
 | `mattpocock/skills` | `skills/engineering/implement` | Implement the ticket |
 | `mattpocock/skills` | `skills/engineering/tdd` | TDD at agreed seams |
 | `mattpocock/skills` | `skills/engineering/codebase-design` | Interface and seam design reference used by TDD |
-| `cursor/plugins` | [`cursor-team-kit/skills/deslop`](https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/deslop/SKILL.md) | Clean up introduced code before review |
 | `cursor/plugins` | `pstack/skills/create-verification-skill` | Create project-specific runtime verification instructions when missing |
 | `mattpocock/skills` | `skills/engineering/code-review` | Standards and spec review |
 | `kishormorol/blast-radius` | Repository root | Review bulk operations on real data |
@@ -115,7 +116,7 @@ Run `node scripts/implementation-decision.js --mode "$FLOW_MODE" after-implement
 
 ## 4. Clean up and verify runtime behavior
 
-Load [deslop](https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/deslop/SKILL.md) before every code-review pass, including after implementation fixes. Use the ticket's pinned review-base SHA in place of the skill's default comparison against main, and inspect all introduced changes, including staged and unstaged implementation work.
+Load the project [deslop skill](../.agents/skills/deslop/SKILL.md) before every code-review pass, including after implementation fixes. Use the ticket's pinned review-base SHA and inspect all introduced changes, including staged and unstaged implementation work.
 
 Make focused edits to remove unnecessary comments, redundant defensive code, type-check bypasses, avoidable nesting, and patterns inconsistent with the surrounding code. Preserve the ticket's required behavior and necessary validation. Route any discovered behavioral bug through implementation with relevant regression coverage, then repeat deslop.
 
