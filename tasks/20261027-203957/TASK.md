@@ -1,6 +1,6 @@
 # Run the full test suite before push
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -22,23 +22,25 @@ The user approved the requirements and the documentation changes in this convers
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: implement the requested PR review fixes on [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Previous signed implementation snapshot: `30dd06b39358f2caa6d02b03636bd3aa11508e30`. Both previous review results are invalid for this fix pass. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
+Current stage: complete; the requested review fixes are published in [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Latest signed implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
 
-Checks: all eight local Markdown links passed. `git diff --check` passed. Application runtime checks do not apply because only workflow documentation and this ticket changed.
+Checks: all 10 local Markdown links passed. The overview diagram matches the fixed review base exactly. The local deslop skill header and `git diff --check` passed. Application runtime checks do not apply because only workflow documentation, the local cleanup skill, and this ticket changed.
 
-Standards review: zero actionable findings for signed snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`. Spec review: zero actionable findings for the same snapshot. Both reviewers compared it with the fixed base. The Spec review found a diagram connector that could skip the final test step. The sequential diagram fixed that issue, and the repeat review confirmed the fix.
+Standards review: zero actionable findings for signed snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Spec review: zero actionable findings for the same snapshot. Both reviewers compared it with the fixed base. The latest user request restores the original overview diagram and keeps the test timing in the stage text. It supersedes the earlier review's request for a new sequential diagram.
 
-Blast-radius review: not applicable for signed snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`. The changes affect workflow documentation and this ticket. They do not add bulk writes, deletion, or operations on live data.
+Blast-radius review: not applicable for signed snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. The changes affect documentation and a local cleanup skill. They do not add bulk writes, deletion, or operations on live data.
 
-Final test result: `npm test` exited 0 in the managed environment after both reviews. All 15 tests passed. No tests failed, were cancelled, or were skipped. Tested implementation snapshot: `30dd06b39358f2caa6d02b03636bd3aa11508e30`. Only ticket records changed after this run, so the passing result remains valid.
+Final test result: `npm test` exited 0 in the managed environment after both reviews. All 15 tests passed. No tests failed, were cancelled, or were skipped. Tested implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Only ticket records changed after this run, so the passing result remains valid.
 
-The published PR body matches the prepared text. It describes both approved changes in Simplified Technical English. Its show-me diagram shows reviews, final tests, push, PR publication, ticket closure, and the second push. It records validation for implementation snapshot `30dd06b39358f2caa6d02b03636bd3aa11508e30`.
+The published PR body matches the prepared text. It describes both approved changes and the review fixes in Simplified Technical English. Its show-me diagram shows reviews, final tests, push, PR publication, ticket closure, and the second push. It records validation for implementation snapshot `c87e13f80f79cfacac679c5c93bb12916fe49fc2`.
+
+PR review disposition: comment `4398148613` is answered and resolved. The original overview diagram is restored. Comment `4398194168` is answered and resolved. Stage 4 and the local-skills section link to `.agents/skills/deslop/SKILL.md`. The global deslop installation entry is removed.
 
 Publication checks: the PR is OPEN, not a draft, and MERGEABLE. GitHub reports no CI checks and no required check contexts. There are no unresolved review threads. Auto-merge is disabled and the PR is not in a merge queue.
 
-Closure: this ticket was closed after publication. It is now OPEN because PR review requires more work. Close it again after the fixes pass checks and are pushed to the same PR.
+Closure: the review fixes passed checks and were pushed to PR #13. Both review threads are resolved. This ticket is CLOSED again. Its closure is included in a signed commit pushed to the same PR branch.
 
-Next action: review the signed fixes, run the final test suite, and push to PR #13. Reply to and resolve both review threads. Then close this ticket and push its closure. Merging requires separate authorization.
+Next action: review the open PR. Reopen this ticket if further CI or review findings require work. Merging requires separate authorization.
 
 ## Acceptance criteria
 
@@ -53,9 +55,9 @@ Next action: review the signed fixes, run the final test suite, and push to PR #
 - [x] The standard flow closes the ticket after the branch is pushed and the PR is open. It records the PR link and pushes the signed closure commit to the same PR.
 - [x] Ticket closure does not wait for PR approval or merge. A failed publication leaves the ticket OPEN. Later CI or review findings that require work reopen the same ticket.
 - [x] PR #13 describes both changes in Simplified Technical English. A show-me diagram shows the final test run, publication, ticket closure, and second push.
-- [ ] The overview diagram matches the original diagram at the fixed review base.
-- [ ] Stage 4 and the required-skills table link to a standalone project-local deslop skill.
-- [ ] Both PR review threads are answered and resolved after the fixes are pushed.
+- [x] The overview diagram matches the original diagram at the fixed review base.
+- [x] Stage 4 and the required-skills section link to a standalone project-local deslop skill.
+- [x] Both PR review threads are answered and resolved after the fixes are pushed.
 
 ## Dependencies
 
@@ -63,7 +65,7 @@ None identified. The related workflow ticket is complete.
 
 ## Definition of Done
 
-- [ ] Verify all acceptance criteria and record the evidence.
-- [ ] Check local Markdown links and run `git diff --check`.
-- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
-- [ ] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
+- [x] Verify all acceptance criteria and record the evidence.
+- [x] Check local Markdown links and run `git diff --check`.
+- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
