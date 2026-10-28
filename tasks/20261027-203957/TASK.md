@@ -1,6 +1,6 @@
 # Run the full test suite before push
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 100
 - TAGS: task
 
@@ -16,13 +16,15 @@ Scope extension approved by the user: make ticket closure a standard part of PR 
 
 PR review fixes requested by the user: restore the original overview diagram. Keep the test timing instructions in the stage text. Use a local deslop skill instead of the external link. The existing show-me stage stays in place.
 
+PR template extension requested by the user: add a default GitHub PR description template. Use the project's existing PR requirements as the baseline. Include the problem and resulting behavior, optional show-me explanation, actual verification, remaining limits, and the ticket link. Use short sentences and active verbs. The optional Theo reference has not been identified, so this template does not claim to use it.
+
 ## Prerequisites
 
 The user approved the requirements and the documentation changes in this conversation. Use Guided mode. The user explicitly authorized pushing the task branch and opening a PR. Merging is not authorized.
 
 Branch: `feature/final-test-step`. Fixed review base: `bf479770f675667d331eec2462a1138237d641c5`. A fetch of `origin/main` confirmed this base.
 
-Current stage: complete; the requested review fixes are published in [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Latest signed implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
+Current stage: add the default PR template to [PR #13](https://github.com/ragemous3/personal-webpage/pull/13). Previous signed implementation snapshot: `c87e13f80f79cfacac679c5c93bb12916fe49fc2`. Both previous review results are invalid for this extension. SSH commit signing is configured. Local signature verification passed. GitHub recognition of the signature has not been verified.
 
 Checks: all 10 local Markdown links passed. The overview diagram matches the fixed review base exactly. The local deslop skill header and `git diff --check` passed. Application runtime checks do not apply because only workflow documentation, the local cleanup skill, and this ticket changed.
 
@@ -38,9 +40,9 @@ PR review disposition: comment `4398148613` is answered and resolved. The origin
 
 Publication checks: the PR is OPEN, not a draft, and MERGEABLE. GitHub reports no CI checks and no required check contexts. There are no unresolved review threads. Auto-merge is disabled and the PR is not in a merge queue.
 
-Closure: the review fixes passed checks and were pushed to PR #13. Both review threads are resolved. This ticket is CLOSED again. Its closure is included in a signed commit pushed to the same PR branch.
+Closure: the review fixes passed checks and were pushed to PR #13. Both review threads are resolved. This ticket is now OPEN for the requested template extension. Close it again after that work passes checks and is published.
 
-Next action: review the open PR. Reopen this ticket if further CI or review findings require work. Merging requires separate authorization.
+Next action: review the template, run the final checks, and publish it to the same PR. Then close the ticket and push the closure. Merging requires separate authorization.
 
 ## Acceptance criteria
 
@@ -58,6 +60,10 @@ Next action: review the open PR. Reopen this ticket if further CI or review find
 - [x] The overview diagram matches the original diagram at the fixed review base.
 - [x] Stage 4 and the required-skills section link to a standalone project-local deslop skill.
 - [x] Both PR review threads are answered and resolved after the fixes are pushed.
+- [ ] GitHub discovers the single default template at `.github/pull_request_template.md`.
+- [ ] The template requests the problem and resulting behavior, actual verification, and a ticket link.
+- [ ] The explanation and limits sections are optional. A diagram is requested only when it helps explain the change.
+- [ ] Template guidance uses short sentences and active verbs. It does not prefill successful checks or claim work that was not done.
 
 ## Dependencies
 
@@ -65,7 +71,7 @@ None identified. The related workflow ticket is complete.
 
 ## Definition of Done
 
-- [x] Verify all acceptance criteria and record the evidence.
-- [x] Check local Markdown links and run `git diff --check`.
-- [x] Complete Standards, Spec, and blast-radius reviews for this documentation change.
-- [x] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
+- [ ] Verify all acceptance criteria and record the evidence.
+- [ ] Check local Markdown links and run `git diff --check`.
+- [ ] Complete Standards, Spec, and blast-radius reviews for this documentation change.
+- [ ] Run `npm test` at the final test step. Record any failure or missing prerequisite. Keep this ticket OPEN if a required check is blocked.
