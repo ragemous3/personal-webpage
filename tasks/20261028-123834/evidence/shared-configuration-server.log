@@ -1,24 +1,24 @@
 Watching for changes in /workspace/personal-webpage/archetypes, /workspace/personal-webpage/assets/{composition,layers}, /workspace/personal-webpage/content/{decision-log,notes}, /workspace/personal-webpage/layouts/_partials, /workspace/personal-webpage/package.json, /workspace/personal-webpage/postcss.config.js, /workspace/personal-webpage/static/content-data
 Watching for config changes in /workspace/personal-webpage/config/_default
-Start building sites … 
+Start building sites …
 hugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio
 
 WARN  found no layout file for "html" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
 WARN  found no layout file for "html" for kind "term": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
 
-                  │ EN 
+                  │ EN
 ──────────────────┼────
- Pages            │ 14 
- Paginator pages  │  0 
- Non-page files   │  0 
- Static files     │  4 
- Processed images │  0 
- Aliases          │  0 
- Cleaned          │  0 
+ Pages            │ 14
+ Paginator pages  │  0
+ Non-page files   │  0
+ Static files     │  4
+ Processed images │  0
+ Aliases          │  0
+ Cleaned          │  0
 
 Built in 844 ms
 Environment: "development"
 Serving pages from disk
 Running in Fast Render Mode. For full rebuilds on change: hugo server --disableFastRender
-Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1) 
+Web Server is available at http://127.0.0.1:43139/ (bind address 127.0.0.1)
 Press Ctrl+C to stop
