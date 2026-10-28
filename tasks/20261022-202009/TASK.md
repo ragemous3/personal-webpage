@@ -1,6 +1,6 @@
 # Complete shared chat response and cancellation lifecycle
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 120
 - TAGS: task
 
@@ -68,6 +68,8 @@ Affected runtime verification: [initialization recovery](evidence/initialization
 Repeat-review finding on `9dd7fa4`: a detached client retained its initialization error after another client repaired the shared worker. The public regression reproduced `error` instead of `ready`. Explicit Retry now clears that obsolete initialization error when both workers are ready and no failed question remains. The transport fake replays readiness just as the real transport does. The focused command passes 22 tests and full lint passes. Cleanup and the Chromium component check pass. The existing CPU lifecycle and real initialization-error evidence remain applicable; the additional cross-client repair sequence is verified through the agreed public-service seam with controlled callbacks. Both prior reviews are invalidated for this fix; repeat both against its signed snapshot. The final full-suite result remains pending.
 
 ### Final reviews and test gate
+
+Final comment-pass disposition: CLOSED after publishing `03e79e693f496f487fe83355d43b899a42bc3d40` to PR #14. Standards and Spec reviews of that snapshot each found zero actionable findings. Deslop checked the fix diff; full lint passed. The 22 focused checks passed. Final `npm test`, after both reviews, passed 42 tests with zero failures or skips; see [review test output](evidence/review-tests.log). Blast-radius is not applicable: only error text, private names, ignore rules, tracking metadata, and ticket records changed. PNGs remain on disk; no image files were deleted locally. Replies explain each requested fix and the two-subscription/client-count design. CI is not a handoff wait, per the user's instruction. No application implementation changed after this test run.
 
 PR #14 comment fix pass: ticket reopened for the user's review comments on 2026-10-28. The earlier reviews and final-suite result are invalidated for this snapshot. Use the existing ERROR severity for the new application validation errors. Rename service cleanup callbacks to `transportUnsubscribers` and the attachment count to `attachedClients`. The service subscribes once to each transport; it stores two unsubscribe callbacks, not multiple worker connections. The count prevents one client from disposing resources still used by another client. No lifecycle behavior changes. Runtime model journeys are unaffected by private-name and diagnostic-text changes; use the existing public lifecycle/worker and Chromium regression checks. Repeat cleanup, both reviews, blast-radius assessment, and the final full suite before push. Per user direction, do not wait for CI.
 
