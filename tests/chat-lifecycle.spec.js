@@ -149,3 +149,76 @@ test('a failed partial answer remains visible until explicit retry', () => {
   service.retry();
   assert.equal(database.sent.length, 2);
 });
+
+test('reset preserves a failed initialization and retry restarts only the failed worker', () => {
+  const chat = transport();
+  const database = transport();
+  const initialized = [];
+  chat.initialize = () => initialized.push('chat');
+  database.initialize = () => initialized.push('database');
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+  );
+  service.init();
+  database.emit({ task: 'vectordb:ready' });
+  chat.emit({ task: 'llm:init', error: { message: 'Model initialization failed' } });
+  service.reset();
+  assert.deepEqual(service.chatMessagesSubscription.getValue(), []);
+  assert.deepEqual(service.stateSubscription.getValue(), {
+    status: 'error',
+    error: 'Model initialization failed',
+  });
+  service.retry();
+  assert.deepEqual(initialized, ['chat']);
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  chat.emit({ task: 'llm:ready' });
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+});
+
+test('retry after both workers fail requires fresh readiness from both', () => {
+  const chat = transport();
+  const database = transport();
+  const initialized = [];
+  chat.initialize = () => initialized.push('chat');
+  database.initialize = () => initialized.push('database');
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+  );
+  service.init();
+  chat.emit({ task: 'llm:init', error: { message: 'Model failed' } });
+  database.emit({ task: 'vectordb:init', error: { message: 'Retrieval failed' } });
+  service.retry();
+  chat.emit({ task: 'llm:ready' });
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  database.emit({ task: 'vectordb:ready' });
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.deepEqual(initialized, ['chat', 'database']);
+});
+
+test('initialization retry preserves a healthy worker that is still loading', () => {
+  const chat = transport();
+  const database = transport();
+  const initialized = [];
+  chat.initialize = () => initialized.push('chat');
+  database.initialize = () => initialized.push('database');
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+  );
+  service.init();
+  chat.emit({ task: 'llm:init', error: { message: 'Model failed' } });
+  service.retry();
+  assert.deepEqual(initialized, ['chat']);
+  chat.emit({ task: 'llm:ready' });
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  database.emit({ task: 'vectordb:ready' });
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+});

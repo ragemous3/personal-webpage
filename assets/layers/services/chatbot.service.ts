@@ -16,6 +16,7 @@ export class RagService implements ChatbotServiceContract {
   #owners = 0;
   #chatReady = false;
   #databaseReady = false;
+  readonly #failedWorkers = new Set<'llm' | 'vectordb'>();
   #active: string | undefined;
   #question: string | undefined;
   #messages: ChatMessage[] = [];
@@ -90,21 +91,29 @@ export class RagService implements ChatbotServiceContract {
     this.#messages = [];
     this.chatModel.reset();
     this.#publish();
-    this.#ready();
+    if (this.#chatReady && this.#databaseReady) this.#ready();
   };
 
   retry = (): void => {
     if (this.stateSubscription.getValue()?.status !== 'error') return;
     if (!this.#chatReady || !this.#databaseReady) {
       this.#ready();
-      this.chat.initialize();
-      this.database.initialize();
+      this.#retryFailedWorkers();
       return;
     }
     if (!this.#question) return;
     this.#messages[this.#messages.length - 1] = { role: 'assistant', content: '' };
     this.#start();
   };
+
+  #retryFailedWorkers(): void {
+    const failed = [...this.#failedWorkers];
+    this.#failedWorkers.clear();
+    for (const worker of failed) {
+      if (worker === 'llm') this.chat.initialize();
+      else this.database.initialize();
+    }
+  }
 
   readonly #ready = (): void => {
     this.stateSubscription.emit({
@@ -133,12 +142,24 @@ export class RagService implements ChatbotServiceContract {
   #accept(data: unknown): data is Record<string, unknown> {
     if (!isRecord(data)) return false;
     if (this.#handleReady(data.task)) return false;
+    if (this.#handleInitializationError(data)) return false;
     const current = Boolean(this.#active) && data.requestId === this.#active;
     if (data.error && (current || !data.requestId)) {
       this.#fail(data.error);
       return false;
     }
     return current;
+  }
+
+  #handleInitializationError(data: Record<string, unknown>): boolean {
+    if (!data.error) return false;
+    if (data.task !== 'llm:init' && data.task !== 'vectordb:init') return false;
+    const worker = data.task === 'llm:init' ? 'llm' : 'vectordb';
+    this.#failedWorkers.add(worker);
+    if (worker === 'llm') this.#chatReady = false;
+    else this.#databaseReady = false;
+    this.#fail(data.error);
+    return true;
   }
 
   #handleReady(task: unknown): boolean {

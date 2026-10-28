@@ -1,0 +1,28 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/chat-lifecycle-runtime-evidence-bO873v",
+  "events": [
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    },
+    {
+      "type": "warn",
+      "text": "Unable to determine content-length from response headers. Will expand buffer when needed."
+    }
+  ],
+  "browser": "Chrome/154.0.8037.57",
+  "initialState": "error",
+  "afterResetState": "error",
+  "retryVisibleAfterReset": true,
+  "afterRetryState": "error",
+  "cleanup": "Owned browser and Hugo stopped; scratch removed; evidence retained"
+}
