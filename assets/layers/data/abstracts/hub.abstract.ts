@@ -54,8 +54,8 @@ export abstract class HubAbstract extends StandardCommunicationBaseAbstract impl
 
   onData = (listener: (data: unknown) => void): (() => void) => this.#$data.connect(listener);
 
-  handleHubConnectionMsg = (message: MessageBase<unknown>): null | void => {
-    if (message?.error) {
+  handleHubConnectionMsg = (message: MessageBase<unknown>): null | undefined => {
+    if (message.error) {
       console.error(message.error);
       return null;
     }

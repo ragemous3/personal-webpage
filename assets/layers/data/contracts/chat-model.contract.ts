@@ -1,4 +1,4 @@
-import { type ChatMessage, type Chunk, type UserMessage } from '../models/models';
+import { type ChatMessage, type Chunk, type UserMessage } from '@/layers/data/models/models';
 
 export interface ChatMessageModelContract {
   getMsg(): ChatMessage[];

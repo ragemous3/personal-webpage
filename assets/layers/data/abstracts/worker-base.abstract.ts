@@ -1,5 +1,5 @@
-import { type MessagingBaseContract } from '../../shared/contracts/message-base.contract';
-import { type MessageBase } from '../workers/models';
+import { type MessageBase } from '@/layers/data/workers/models';
+import { type MessagingBaseContract } from '@/layers/shared/contracts/message-base.contract';
 // https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
 export abstract class WorkerBase<
@@ -34,9 +34,11 @@ export abstract class WorkerBase<
       listener(data);
     }
   };
-  protected abstract setupEventListeners(): void | null;
+  protected abstract setupEventListeners(): undefined | null;
 
-  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => { this.emit(event.data); };
+  protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => {
+    this.emit(event.data);
+  };
 
   protected handleError = (error: ErrorEvent | MessageEvent<unknown>): void => {
     console.error(`${this.carrierName}: error:`, error);

@@ -1,14 +1,14 @@
 import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
-import { type ChatMessage } from '../models/models';
+import { type ChatMessage } from '@/layers/data/models/models';
 import {
   type Action,
   type MessageBase,
   type Task,
   type TaskResponse,
-  type VectorDatabaseResponse as VectorDatabaseResponse,
-} from '../workers/models';
-const ACTIONS = new Set<Action>([
+  type VectorDatabaseResponse,
+} from '@/layers/data/workers/models';
+const ACTIONS = new Set<string>([
   'host',
   'ping',
   'init',
@@ -22,7 +22,7 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 export const isAction = (value: unknown): value is Action =>
-  typeof value === 'string' && ACTIONS.has(value as Action);
+  typeof value === 'string' && ACTIONS.has(value);
 
 export const isTask = (value: unknown): value is Task => {
   if (typeof value !== 'string') return false;
@@ -65,7 +65,7 @@ export const isSearchResults = (value: unknown): value is SearchResult =>
   Array.isArray(value.neighbors);
 
 //TODO: Need to move somewhere more fitting - BUSINESS
-export const isVectorDbResponse = (value: unknown): value is VectorDatabaseResponse =>
+const isVectorDatabaseResponse = (value: unknown): value is VectorDatabaseResponse =>
   typeof value === 'object' &&
   value !== null &&
   'query' in value &&
@@ -88,20 +88,17 @@ export const isMessageBase = <T, Y = Task>(
 ): value is MessageBase<T, Y> => {
   if (!isObject(value)) return false;
 
-  if (typeof value.id !== 'string') return false;
-  if (typeof value.name !== 'string') return false;
+  if (!hasMessageIdentity(value)) return false;
   if (!('payload' in value) || !isPayload(value.payload)) return false;
-
   if (!('task' in value)) return false;
-  if (isTaskGuard) {
-    if (!isTaskGuard(value.task)) return false;
-  } else {
-    if (!isTask(value.task)) return false;
-  }
-
-  if ('error' in value && value.error !== undefined && typeof value.error !== 'string') {
-    return false;
-  }
-
-  return true;
+  const validateTask = isTaskGuard ?? isTask;
+  return validateTask(value.task) && hasValidMessageError(value);
 };
+
+const hasMessageIdentity = (value: Record<string, unknown>): boolean =>
+  typeof value.id === 'string' && typeof value.name === 'string';
+
+const hasValidMessageError = (value: Record<string, unknown>): boolean =>
+  !('error' in value) || value.error === undefined || typeof value.error === 'string';
+
+export { isVectorDatabaseResponse as isVectorDbResponse };

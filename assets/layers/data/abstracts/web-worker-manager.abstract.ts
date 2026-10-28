@@ -23,10 +23,10 @@ export class WebWorkerManager<To extends MessageBase<unknown>, From> extends Wor
     this.isTerminating = false;
   };
 
-  setupEventListeners(): void | null {
+  setupEventListeners(): undefined | null {
     if (!this.carrier) return null;
-    this.carrier.onmessage = this.handleMessage.bind(this);
-    this.carrier.onerror = this.handleError.bind(this);
+    this.carrier.addEventListener('message', this.handleMessage);
+    this.carrier.addEventListener('error', this.handleError);
   }
 
   send(message: To): void {
@@ -47,7 +47,7 @@ export class WebWorkerManager<To extends MessageBase<unknown>, From> extends Wor
         type: 'module',
       });
     } catch (error) {
-      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${error}`);
+      console.error(`[${SeverityLevelCodes.FATAL}] - Failed to init worker: ${String(error)}`);
     }
 
     this.setupEventListeners();

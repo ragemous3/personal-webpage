@@ -1,4 +1,5 @@
-import { type MessageBase } from '../../data/workers/models';
+import { type MessageBase } from '@/layers/data/workers/models';
+
 import { type MessagingBaseContract } from './message-base.contract';
 
 export interface BroadcastBaseContract<

@@ -1,4 +1,5 @@
-import { type StateMachineConnectionContract } from '../shared/contracts/message-connection.contract';
+import { type StateMachineConnectionContract } from '@/layers/shared/contracts/message-connection.contract';
+
 import { SharedWorkerManager } from './abstracts/state-machine-manager.abstract';
 import { type MessageBase } from './workers/models';
 

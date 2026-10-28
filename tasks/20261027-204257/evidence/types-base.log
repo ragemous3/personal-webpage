@@ -1,0 +1,22 @@
+../../tmp/lint-work-base/assets/composition/chatbot-offline.provider.ts(7,32): error TS2307: Cannot find module './contexts/chatbot.context' or its corresponding type declarations.
+../../tmp/lint-work-base/assets/layers/data/abstracts/standard-communication.abstract.ts(90,30): error TS6133: 'payload' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/content-repository.data.ts(9,31): error TS2554: Expected 2 arguments, but got 1.
+../../tmp/lint-work-base/assets/layers/data/guards/is-message-base.guard.ts(11,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(iterable?: Iterable<Action> | null | undefined): Set<Action>', gave the following error.
+    Argument of type '("host" | "ping" | "init" | "check" | "progress" | "query" | "cleanup" | "chat")[]' is not assignable to parameter of type 'Iterable<Action>'.
+      The types returned by '[Symbol.iterator]().next(...)' are incompatible between these types.
+        Type 'IteratorResult<"host" | "ping" | "init" | "check" | "progress" | "query" | "cleanup" | "chat", undefined>' is not assignable to type 'IteratorResult<Action, any>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+          Type 'IteratorYieldResult<"host" | "ping" | "init" | "check" | "progress" | "query" | "cleanup" | "chat">' is not assignable to type 'IteratorResult<Action, any>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+            Type 'IteratorYieldResult<"host" | "ping" | "init" | "check" | "progress" | "query" | "cleanup" | "chat">' is not assignable to type 'IteratorYieldResult<Action>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+              Type '"host" | "ping" | "init" | "check" | "progress" | "query" | "cleanup" | "chat"' is not assignable to type 'Action'.
+                Type '"chat"' is not assignable to type 'Action'.
+  Overload 2 of 2, '(values?: readonly Action[] | null | undefined): Set<Action>', gave the following error.
+    Type '"chat"' is not assignable to type 'Action'.
+../../tmp/lint-work-base/assets/layers/data/llm.data.ts(3,8): error TS6133: 'DataType' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/llm.data.ts(4,8): error TS6133: 'DeviceType' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/llm.data.ts(6,3): error TS6133: 'pipeline' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/llm.data.ts(7,8): error TS6133: 'ProgressInfo' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/models.ts(2,1): error TS6192: All imports in import declaration are unused.
+../../tmp/lint-work-base/assets/layers/data/models/models.ts(1,1): error TS6133: 'TextGenerationConfig' is declared but its value is never read.
+../../tmp/lint-work-base/assets/layers/data/models/models.ts(23,11): error TS2552: Cannot find name 'RagStates'. Did you mean 'RAGStatus'?
+../../tmp/lint-work-base/assets/layers/data/vectordb-hnsw.data.ts(115,11): error TS2590: Expression produces a union type that is too complex to represent.
