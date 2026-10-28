@@ -18,14 +18,14 @@ Complete the existing local-model initialization ticket. Use the existing worker
 
 ## Acceptance criteria
 
-- [ ] A submitted question travels through résumé retrieval to the local language model; retrieval responses reach the service, and the view receives and renders message updates. Repair the provider context import and form submission needed for this path.
-- [ ] The shared chat interface represents initialization, readiness, an active response, completion, and errors. Text chunks update one assistant message in order; the final response does not duplicate streamed text. Request identity distinguishes active responses from stale callbacks.
-- [ ] Initialization and attachment are repeatable without duplicate subscriptions. Disconnection releases the caller's subscriptions; disposal does not invalidate resources still owned by another client. Cached clients can be reattached or recreated coherently.
-- [ ] The shared lifecycle exposes cancellation and conversation reset for the later mode selector. Cancellation stops active local generation rather than merely hiding its output. Late initialization or response callbacks cannot repopulate a reset conversation.
-- [ ] An already-loaded local generation model may remain idle in memory after cancellation for reuse. Retaining the model does not retain conversation history or active subscriptions belonging to the removed chat.
-- [ ] Only one question is active per chat. Send is disabled while initializing or responding. Questions and answers render as plain text with plain loading/error indicators and no added styling or Markdown rendering.
-- [ ] A failed partial answer remains visible and is marked interrupted. Explicit Retry replaces the failed assistant attempt without duplicating the user's question. There is no automatic retry.
-- [ ] Tests through service and worker interfaces, using fake transports/model loaders and controlled callbacks, cover retrieval routing, chunk/completion ordering, cancellation, stale responses, reset, retries, and repeated attachment without duplicate listeners. Browser component tests cover submission, message rendering, and readiness/error states.
+- [x] A submitted question travels through résumé retrieval to the local language model; retrieval responses reach the service, and the view receives and renders message updates. Repair the provider context import and form submission needed for this path.
+- [x] The shared chat interface represents initialization, readiness, an active response, completion, and errors. Text chunks update one assistant message in order; the final response does not duplicate streamed text. Request identity distinguishes active responses from stale callbacks.
+- [x] Initialization and attachment are repeatable without duplicate subscriptions. Disconnection releases the caller's subscriptions; disposal does not invalidate resources still owned by another client. Cached clients can be reattached or recreated coherently.
+- [x] The shared lifecycle exposes cancellation and conversation reset for the later mode selector. Cancellation stops active local generation rather than merely hiding its output. Late initialization or response callbacks cannot repopulate a reset conversation.
+- [x] An already-loaded local generation model may remain idle in memory after cancellation for reuse. Retaining the model does not retain conversation history or active subscriptions belonging to the removed chat.
+- [x] Only one question is active per chat. Send is disabled while initializing or responding. Questions and answers render as plain text with plain loading/error indicators and no added styling or Markdown rendering.
+- [x] A failed partial answer remains visible and is marked interrupted. Explicit Retry replaces the failed assistant attempt without duplicating the user's question. There is no automatic retry.
+- [x] Tests through service and worker interfaces, using fake transports/model loaders and controlled callbacks, cover retrieval routing, chunk/completion ordering, cancellation, stale responses, reset, retries, and repeated attachment without duplicate listeners. Browser component tests cover submission, message rendering, and readiness/error states.
 
 ## Dependencies
 
@@ -34,12 +34,12 @@ Complete the existing local-model initialization ticket. Use the existing worker
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have verification evidence recorded.
-- [ ] Run focused tests, the full available suite, relevant lint/type checks, and the applicable Hugo build. Record unrelated baseline failures explicitly; this ticket does not require a repository-wide cleanup.
-- [ ] Record a real local-model/browser smoke-check result or the exact remaining verification limitation. Fake model tests do not establish real model loading, WebGPU support, or model quality.
-- [ ] Complete the repository's implementation, Standards/Spec review, and applicable blast-radius stages against the implementation snapshot; record the commands, outcomes, and reviewed commit IDs.
+- [x] All acceptance criteria have verification evidence recorded.
+- [x] Run focused tests, the full available suite, relevant lint/type checks, and the applicable Hugo build. Record unrelated baseline failures explicitly; this ticket does not require a repository-wide cleanup.
+- [x] Record a real local-model/browser smoke-check result or the exact remaining verification limitation. Fake model tests do not establish real model loading, WebGPU support, or model quality.
+- [x] Complete the repository's implementation, Standards/Spec review, and applicable blast-radius stages against the implementation snapshot; record the commands, outcomes, and reviewed commit IDs.
 
-Implementation state: stage 5, repeat Standards and Spec review. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `800636f701eac6e2f4e9974e2498d40e2d58ea5e`. Both code reviews, blast-radius review, and the final full-suite run remain pending. SSH signatures use the supplied signing key.
+Implementation state: stage 7, final tests passed; publication pending. Both prerequisite tickets are CLOSED. Branch: `feature/20261022-202009-chat-lifecycle`. Fixed review base: `a0a56ffd307aa3caacda0b372c2bbfff5955cd03`. Latest implementation snapshot: `800636f701eac6e2f4e9974e2498d40e2d58ea5e`. Both final reviews and blast-radius disposition cover `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`. The final full-suite run passed for that snapshot. SSH signatures use the supplied signing key. Next action: publish the signed branch and PR, then close this ticket and push closure to that PR.
 
 Execution mode: Autopilot. The user selected "Start implementation auto pilot" on 2026-10-28 for this ticket. Authorization covers routine implementation decisions, tests, cleanup, review fixes, in-scope documentation/comments/ticket updates, signed commits, branch pushes, PR creation/updates, and CI/review fixes through handoff. Finish with an open, unmerged PR. Merge, deployment, and live destructive operations require separate authorization.
 
@@ -66,6 +66,15 @@ Current stage: stage 5, repeat review after fixes. Review results on `6012613` a
 Affected runtime verification: [initialization recovery](evidence/initialization-recovery.json) passes on the actual page. Reset preserves `error` and Retry, and explicit Retry attempts initialization again. The GPU remains unavailable and is reported as an error. The [screenshot](evidence/initialization-recovery.png) and [runner source](evidence/runtime-recovery-runner.txt) are retained. Command: `CHAT_INIT_RECOVERY_ONLY=1 node /tmp/chat-lifecycle-runtime.mjs`. The successful CPU answer/cancel/retry/reset evidence remains applicable to the ready-worker path, which these fixes do not change. Both owned processes stopped, scratch was removed, and evidence remains. Both reviews, blast-radius review, and the final full-suite run must cover the fixed snapshot.
 
 Repeat-review finding on `9dd7fa4`: a detached client retained its initialization error after another client repaired the shared worker. The public regression reproduced `error` instead of `ready`. Explicit Retry now clears that obsolete initialization error when both workers are ready and no failed question remains. The transport fake replays readiness just as the real transport does. The focused command passes 22 tests and full lint passes. Cleanup and the Chromium component check pass. The existing CPU lifecycle and real initialization-error evidence remain applicable; the additional cross-client repair sequence is verified through the agreed public-service seam with controlled callbacks. Both prior reviews are invalidated for this fix; repeat both against its signed snapshot. The final full-suite result remains pending.
+
+### Final reviews and test gate
+
+- Standards review of `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`: zero documented-standard violations and zero actionable heuristic findings against the fixed base.
+- Spec review of the same snapshot: zero unresolved actionable findings. All three prior findings are resolved, including cached-client recovery through explicit Retry.
+- Blast-radius review of the same snapshot: not applicable to bulk/destructive operations on live records. Chat reset clears owned in-memory conversation state. Index generation writes three explicitly requested local artifacts and cleans only its own temporary browser/download directory. The helper no longer deletes the destination directory. No live account or database bulk operation was performed.
+- Final full-suite command: `npm test`, after both final reviews and blast-radius assessment, exited 0 for `7d2cf2a5d63749f460db5a5eafc47c0d9c9ef9f8`. [Retained output](evidence/tests.log): 42 tests passed, 0 failed, 0 skipped. No implementation changed after this run.
+- Full lint: `node node_modules/eslint/bin/eslint.js . --max-warnings 0`, exit 0. [Type check](evidence/types.log) retains the five existing diagnostics described above. [Hugo build](evidence/hugo-build.log) passes with the two existing layout warnings. The provider context import was already repaired at the review base; the build and live page confirm that wiring.
+- The PR body was prepared with show-me for the final reviewed diff, using the repository template, Simplified Technical English, and a small sequence diagram. It links this ticket and keeps verification evidence here. Only ticket evidence and publication metadata may change before push without another test run.
 
 ### Runtime verification and cleanup
 
