@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "dev": "hugo serve --disableFastRender --ignoreCache --noHTTPCache --gc",
     "build": "eslint-project-specifc.config.js",
-    "knip": "npx knip"
+    "knip": "npx knip",
+    "typecheck": "tsc --noEmit --pretty false"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",

@@ -2,9 +2,15 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["assets/*"]
+      "@/*": [
+        "assets/*"
+      ]
     },
-    "lib": ["es2022", "dom", "webworker"],
+    "lib": [
+      "es2022",
+      "dom",
+      "webworker"
+    ],
     "types": [],
     "target": "es2022",
     "module": "esnext",
@@ -25,7 +31,16 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "public",
+    "resources/_gen",
+    "dist",
+    "build",
+    "out"
+  ]
 }
-

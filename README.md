@@ -271,3 +271,7 @@ npx eslint . --fix
 ```bash
 npx knip
 ```
+
+## Type checking
+
+Run `npm ci`, then `npm run typecheck`. The command uses the locked TypeScript compiler. Generated Hugo output in `public/` and `resources/_gen/` is excluded; application TypeScript remains checked with strict settings. CI runs the same command for pull requests and main updates.
