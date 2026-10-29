@@ -50,9 +50,11 @@ test('configuration loading gates Send without clearing the conversation', () =>
   service.setAvailable(false);
   service.send('Must wait');
   assert.equal(service.chatMessagesSubscription.getValue().length, 2);
-  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  assert.equal(service.stateSubscription.getValue().status, 'error');
   service.setAvailable(true);
-  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.equal(service.stateSubscription.getValue().status, 'error');
+  service.retry();
+  assert.equal(service.stateSubscription.getValue().status, 'responding');
   assert.equal(service.chatMessagesSubscription.getValue()[0].content, 'Retained question');
 });
 

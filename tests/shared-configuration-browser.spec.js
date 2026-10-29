@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -12,7 +13,7 @@ test('tabs share one live owner, keep their answers separate, and hand ownership
   let browser;
   try {
     await server.listen();
-    browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH ?? '/usr/bin/chromium',
+    browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH ?? ['/usr/bin/chromium', '/usr/bin/google-chrome'].find((path) => existsSync(path)) ?? puppeteer.executablePath(),
       headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
     const first = await browser.newPage();
     const errors = [];
@@ -47,6 +48,16 @@ test('tabs share one live owner, keep their answers separate, and hand ownership
     await second.waitForFunction(() => globalThis.fixture.initializations.length === 2);
     await ready(second);
     assert.equal(await second.evaluate(() => globalThis.fixture.chat.chatMessagesSubscription.getValue().length), 4);
+    await second.bringToFront();
+    await second.type('chat-container >>> input', 'Crash worker');
+    await second.click('chat-container >>> button[type=submit]');
+    await second.waitForFunction(() => globalThis.fixture.service.stateSubscription.getValue().error, { polling: 50 });
+    assert.match(await second.$eval('assistant-configuration', (element) => element.shadowRoot.textContent), /Intentional model failure/);
+    assert.equal(await second.evaluate(() => globalThis.fixture.chat.stateSubscription.getValue().status), 'error');
+    await second.evaluate(() => [...globalThis.document.querySelector('assistant-configuration').shadowRoot.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Retry settings').click());
+    await second.waitForFunction(() => globalThis.fixture.service.stateSubscription.getValue().available, { polling: 50 });
+    assert.equal(await second.evaluate(() => globalThis.fixture.chat.stateSubscription.getValue().status), 'error');
+    assert.equal(await second.evaluate(() => globalThis.fixture.chat.chatMessagesSubscription.getValue().length), 6);
     const isolated = await browser.createBrowserContext();
     const cold = await isolated.newPage();
     await cold.evaluateOnNewDocument(() => globalThis.localStorage.setItem('assistant.preferences', JSON.stringify({ version: 1,
@@ -57,7 +68,7 @@ test('tabs share one live owner, keep their answers separate, and hand ownership
     assert.doesNotMatch(await cold.$eval('assistant-configuration', (element) => element.shadowRoot.textContent), /after this response/);
     assert.equal(await cold.evaluate(() => globalThis.fixture.chat.stateSubscription.getValue().status), 'initializing');
     await isolated.close();
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errors.filter((error) => !error.includes('Intentional model failure')), []);
   } finally {
     await browser?.close();
     await server.close();

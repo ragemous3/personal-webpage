@@ -97,3 +97,18 @@ test('a released owner engine does not forward retired worker callbacks', async 
   assert.equal(workers[3].terminated, false);
   second.dispose();
 });
+
+test('owner progress remains available to the existing progress presentation path', async () => {
+  const workers = [];
+  const published = [];
+  const runtime = new OwnedBotRuntime({ source: 'llm.js' }, { source: 'db.js' }, () => {
+    const worker = new BrowserWorker(); workers.push(worker); return worker;
+  }, (message) => published.push(message));
+  await runtime.apply(defaultAssistantSettings);
+  workers[0].dispatchEvent(new MessageEvent('message', { data: { task: 'llm:progress', payload: {
+    status: 'progress', name: 'model', file: 'weights', progress: 50, loaded: 5, total: 10,
+  } } }));
+  assert.equal(published[0].name, 'llm');
+  assert.equal(published[0].payload.progress, 50);
+  runtime.dispose();
+});

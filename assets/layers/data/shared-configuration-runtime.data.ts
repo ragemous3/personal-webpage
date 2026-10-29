@@ -2,9 +2,9 @@ import { type OwnedBotRuntime } from '@/layers/data/configuration-runtime.data';
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { type BotConfiguration, type BotEnvelope, type BotWireMessage, isBotWireMessage,type SharedBotState } from '@/layers/data/models/shared-bot.model';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type AssistantSettings, type ConfigurationRuntimeContract } from '@/layers/shared/contracts/configuration-service.contract';
+import { type AssistantSettings, type ConfigurationRuntimeContract, type ConfigurationRuntimeState } from '@/layers/shared/contracts/configuration-service.contract';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
-import { createSubscribable, type ReadonlyStatefulConnections } from '@/layers/shared/utils/subscribable';
+import { createStatefulSubscribable, createSubscribable, type ReadonlyStatefulConnections } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 export interface SharedRuntimeDependencies {
@@ -42,6 +42,8 @@ interface PendingApplication {
 export class SharedConfigurationRuntime implements ConfigurationRuntimeContract {
   readonly chat: SharedTransport;
   readonly database: SharedTransport;
+  readonly #state = createStatefulSubscribable<ConfigurationRuntimeState>({ responding: false });
+  readonly stateSubscription = { connect: this.#state.connect, getValue: this.#state.getValue };
   readonly #client = crypto.randomUUID();
   readonly #abort = new AbortController();
   #owner: OwnedBotRuntime | undefined;
@@ -65,7 +67,7 @@ export class SharedConfigurationRuntime implements ConfigurationRuntimeContract 
     private readonly model: LmConfig,
     private readonly databaseConfig: DatabaseConfig,
     private readonly dependencies: SharedRuntimeDependencies,
-    readonly stateSubscription: ReadonlyStatefulConnections<{ responding: boolean }>,
+    localState: ReadonlyStatefulConnections<{ responding: boolean }>,
     private readonly gate: (available: boolean) => void,
   ) {
     this.chat = new SharedTransport('llm', this.#dispatch);
@@ -73,11 +75,12 @@ export class SharedConfigurationRuntime implements ConfigurationRuntimeContract 
     dependencies.port.addEventListener('message', this.#receive);
     dependencies.port.start();
     this.#send({ action: 'register' });
-    this.#disconnectState = stateSubscription.connect((state) => {
+    this.#disconnectState = localState.connect((state) => {
       if (!state.responding && this.#activeRequest) {
         this.#send({ action: 'finish', message: { task: 'finish', requestId: this.#activeRequest } });
         this.#activeRequest = undefined;
       }
+      this.#state.emit({ ...this.#state.getValue(), responding: state.responding });
     });
     void dependencies.holdOwnership(this.#abort.signal, async () => {
       if (this.#disposed) return;
@@ -149,7 +152,12 @@ export class SharedConfigurationRuntime implements ConfigurationRuntimeContract 
       this.#owner = this.dependencies.createOwner(configuration);
       for (const channel of ['llm', 'vectordb'] as const) this.#ownerTransport(channel)?.onData((value) => {
         const response = value as BotEnvelope;
-        if (response.requestId) this.#send({ action: 'reply', epoch, channel, message: response });
+        if (response.requestId || response.error) this.#send({ action: 'reply', epoch, channel, message: response });
+        if (response.error && !response.requestId) {
+          const failed = this.#owner;
+          this.#owner = undefined;
+          failed?.dispose();
+        }
       });
     }
     return this.#owner;
@@ -161,12 +169,13 @@ export class SharedConfigurationRuntime implements ConfigurationRuntimeContract 
       this.chat.emit({ task: 'llm:ready' });
       this.database.emit({ task: 'vectordb:ready' });
     }
+    this.#state.emit({ responding: this.#state.getValue()?.responding ?? false, runtime: state });
     this.#updateGate();
     this.#settleApplications();
   }
 
   #updateGate(): void {
-    this.gate(Boolean(this.#requestedAvailable && this.#snapshot?.ready && !this.#snapshot.pending));
+    this.gate(Boolean(this.#requestedAvailable && this.#snapshot?.ready && !this.#snapshot.pending && areValuesEqual(this.#snapshot.active, this.#selected)));
   }
 
   #settleApplications(): void {

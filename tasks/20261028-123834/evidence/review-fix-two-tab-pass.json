@@ -1,0 +1,32 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/configuration-two-tab-evidence-55m2bS",
+  "observations": [
+    "First tab ready with real CPU pipelines",
+    "Second tab ready with zero model loads, reusing the first tab owner",
+    "Token choice propagated while tabs had independent responses",
+    "Both responses completed and tab conversations remained separate"
+  ],
+  "errors": [],
+  "initializations": [
+    [
+      {
+        "task": "llm:init",
+        "device": "wasm"
+      },
+      {
+        "task": "vectordb:init",
+        "device": "wasm"
+      }
+    ],
+    []
+  ],
+  "histories": [
+    "\n          \n                \n                                user: What experience does Rasmus have?\n                              \n              \n                \n                                assistant: Rasmus has worked at Ericsson for several years.\n                              \n              \n        ",
+    "\n          \n                \n                                user: What technologies does Rasmus use?\n                              \n              \n                \n                                assistant:     I don't have enough information in the provided documents to answer that.\n                              \n              \n        "
+  ],
+  "initializationsAfterGenerationEdit": [
+    2,
+    0
+  ]
+}

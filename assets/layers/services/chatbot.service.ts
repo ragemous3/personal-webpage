@@ -21,6 +21,7 @@ export class RagService implements ChatbotServiceContract {
   readonly #failedWorkers = new Set<'llm' | 'vectordb'>();
   #active: string | undefined;
   #question: string | undefined;
+  #responseError: string | undefined;
   #messages: ChatMessage[] = [];
 
   constructor(
@@ -74,6 +75,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   readonly #start = (): void => {
+    this.#responseError = undefined;
     this.#active = crypto.randomUUID();
     this.stateSubscription.emit({ status: 'responding' });
     this.#publish();
@@ -95,6 +97,7 @@ export class RagService implements ChatbotServiceContract {
   reset = (): void => {
     this.cancel();
     this.#question = undefined;
+    this.#responseError = undefined;
     this.#messages = [];
     this.chatModel.reset();
     this.#publish();
@@ -102,6 +105,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   retry = (): void => {
+    if (!this.#available) return;
     if (this.stateSubscription.getValue()?.status !== 'error') return;
     if (!this.#chatReady || !this.#databaseReady) {
       this.#ready();
@@ -127,8 +131,13 @@ export class RagService implements ChatbotServiceContract {
   }
 
   readonly #ready = (): void => {
+    const ready = this.#available && this.#chatReady && this.#databaseReady;
+    if (this.#responseError) {
+      this.stateSubscription.emit({ status: 'error', error: this.#responseError });
+      return;
+    }
     this.stateSubscription.emit({
-      status: this.#available && this.#chatReady && this.#databaseReady ? 'ready' : 'initializing',
+      status: ready ? 'ready' : 'initializing',
     });
   };
 
@@ -137,6 +146,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   readonly #interrupt = (error: string): void => {
+    if (this.#question !== undefined) this.#responseError = error;
     const answer = this.#messages.at(-1);
     if (answer?.role === 'assistant') answer.interrupted = true;
     this.stateSubscription.emit({ status: 'error', error });

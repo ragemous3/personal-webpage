@@ -13,7 +13,7 @@ export interface AssistantSettings {
 
 export interface ConfigurationState {
   selected: AssistantSettings;
-  active?: AssistantSettings;
+  active?: AssistantSettings | undefined;
   pending: boolean;
   loading: boolean;
   available: boolean;
@@ -23,10 +23,24 @@ export interface ConfigurationState {
 }
 
 export interface ConfigurationRuntimeContract {
-  readonly stateSubscription: ReadonlyStatefulConnections<{ responding: boolean }>;
+  readonly stateSubscription: ReadonlyStatefulConnections<ConfigurationRuntimeState>;
   setAvailable(available: boolean): void;
   select(settings: AssistantSettings): void;
   apply(settings: AssistantSettings): Promise<void>;
+}
+
+export interface RuntimeAvailability {
+  selected?: AssistantSettings;
+  active?: AssistantSettings;
+  pending: boolean;
+  loading: boolean;
+  ready: boolean;
+  error?: string | undefined;
+}
+
+export interface ConfigurationRuntimeState {
+  responding: boolean;
+  runtime?: RuntimeAvailability;
 }
 
 export interface ConfigurationServiceContract {

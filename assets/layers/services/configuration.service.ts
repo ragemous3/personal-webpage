@@ -3,8 +3,10 @@ import { type ConfigurationRepositoryContract } from '@/layers/shared/contracts/
 import {
   type AssistantSettings,
   type ConfigurationRuntimeContract,
+  type ConfigurationRuntimeState,
   type ConfigurationServiceContract,
   type ConfigurationState,
+  type RuntimeAvailability,
 } from '@/layers/shared/contracts/configuration-service.contract';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
@@ -96,12 +98,25 @@ export class ConfigurationService implements ConfigurationServiceContract {
           false,
         );
       }),
-      runtime.stateSubscription.connect((state) => {
-        this.#responding = state.responding;
-        if (!state.responding) this.#schedule();
-      }),
+      runtime.stateSubscription.connect(this.#observeRuntime),
     ];
     this.#schedule();
+  }
+
+  readonly #observeRuntime = (state: ConfigurationRuntimeState): void => {
+    this.#responding = state.responding;
+    if (state.runtime) this.#publishRuntime(state.runtime);
+    if (!state.responding) this.#schedule();
+  };
+
+  #publishRuntime(runtime: RuntimeAvailability): void {
+    const state = this.#current();
+    if (!areValuesEqual(runtime.selected, state.selected)) return;
+    this.#state.emit({ ...state, active: runtime.active ?? state.active,
+      loading: runtime.loading, pending: runtime.pending,
+      available: runtime.ready && !runtime.pending && !runtime.error,
+      error: runtime.error ? this.#failureMessage(state.selected, runtime.error) : undefined,
+      canSwitchBack: Boolean(this.#lastWorking) });
   }
 
   update(settings: AssistantSettings): boolean {
@@ -185,7 +200,9 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   switchBack(): void {
-    if (this.#lastWorking) this.#select(this.#lastWorking);
+    if (!this.#lastWorking) return;
+    if (areValuesEqual(this.#lastWorking, this.#current().selected)) this.retry();
+    else this.#select(this.#lastWorking);
   }
 
   restoreDefaults(): void {

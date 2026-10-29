@@ -1,11 +1,15 @@
 import { type TextGenerationConfig } from '@huggingface/transformers';
 
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
+import { type MessageBase } from '@/layers/data/workers/models';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import {
   type AssistantSettings,
 } from '@/layers/shared/contracts/configuration-service.contract';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
+import { isRecord } from '@/layers/shared/guards/guards';
+import { isProgressInfo } from '@/layers/shared/guards/progress.guard';
+import { type ProgressInfo } from '@/layers/shared/models/progress.model';
 import {
   createSubscribable,
 } from '@/layers/shared/utils/subscribable';
@@ -120,14 +124,23 @@ class RuntimeTransport implements StandardCommunicationContract {
 export class OwnedBotRuntime {
   readonly chat: RuntimeTransport;
   readonly database: RuntimeTransport;
+  readonly #progressDisconnects: Array<() => void>;
 
   constructor(
     private readonly modelConfig: LmConfig,
     private readonly databaseConfig: DatabaseConfig,
     createWorker: (source: string) => OwnedWorker,
+    publishProgress?: (message: MessageBase<ProgressInfo>) => void,
   ) {
     this.chat = new RuntimeTransport('llm', createWorker);
     this.database = new RuntimeTransport('vectordb', createWorker);
+    const progressId = crypto.randomUUID();
+    this.#progressDisconnects = ([['llm', this.chat], ['vectordb', this.database]] as const).map(([name, transport]) =>
+      transport.onData((message) => {
+        if (isRecord(message) && isProgressInfo(message.payload)) publishProgress?.({
+          id: progressId, name, task: `${name}:progress`, payload: message.payload,
+        });
+      }));
   }
 
   async apply(settings: AssistantSettings): Promise<void> {
@@ -154,6 +167,7 @@ export class OwnedBotRuntime {
   }
 
   dispose(): void {
+    for (const disconnect of this.#progressDisconnects) disconnect();
     this.chat.dispose();
     this.database.dispose();
   }

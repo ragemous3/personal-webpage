@@ -1,5 +1,5 @@
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
-import { type AssistantSettings } from '@/layers/shared/contracts/configuration-service.contract';
+import { type AssistantSettings, type RuntimeAvailability } from '@/layers/shared/contracts/configuration-service.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 
 export interface BotConfiguration {
@@ -15,14 +15,7 @@ export interface BotEnvelope {
   error?: unknown;
 }
 
-export interface SharedBotState {
-  selected?: AssistantSettings;
-  active?: AssistantSettings;
-  pending: boolean;
-  loading: boolean;
-  ready: boolean;
-  error?: string | undefined;
-}
+export type SharedBotState = RuntimeAvailability;
 
 export interface BotWireMessage {
   kind: 'assistant';

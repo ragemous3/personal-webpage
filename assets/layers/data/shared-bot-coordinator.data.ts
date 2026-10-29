@@ -101,13 +101,22 @@ export class SharedBotCoordinator {
   }
 
   #reply(command: BotWireMessage): void {
-    if (command.client !== this.#owner || command.epoch !== this.#epoch) return;
+    if (!this.#isOwner(command)) return;
+    if (!command.message) return;
     const { message, channel } = command;
-    if (!message?.requestId || !channel) return;
+    if (message.error && !message.requestId) {
+      this.#fault(message.error);
+      return;
+    }
+    if (!message.requestId || !channel) return;
     const request = this.#requests.get(message.requestId);
     if (!request) return;
     this.#processReply(request, channel, message);
     this.#release(message.requestId, request);
+  }
+
+  #isOwner(command: BotWireMessage): boolean {
+    return command.client === this.#owner && command.epoch === this.#epoch;
   }
 
   #processReply(request: RoutedRequest, channel: 'llm' | 'vectordb', message: BotEnvelope): void {
@@ -152,10 +161,18 @@ export class SharedBotCoordinator {
     }
   }
 
-  #failRequests(): void {
+  #fault(error: unknown): void {
+    const diagnostic = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
+    this.#loadingRevision = undefined;
+    this.#failRequests(diagnostic);
+    this.#state = { ...this.#state, ready: false, pending: true, loading: false, error: diagnostic };
+    this.#broadcast();
+  }
+
+  #failRequests(error = 'The shared bot owner closed. Retry the response explicitly after initialization.'): void {
     for (const request of this.#requests.values()) this.#send(request.client, {
       action: 'event', channel: 'llm', message: { task: 'llm:query', requestId: request.original,
-        error: { message: 'The shared bot owner closed. Retry the response explicitly after initialization.' } },
+        error: { message: error } },
     });
     this.#requests.clear();
   }

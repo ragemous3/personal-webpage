@@ -16,6 +16,7 @@ globalThis.addEventListener('message', ({ data: message }) => {
     setTimeout(() => globalThis.postMessage({ ...message, task: 'llm:cancel:response' }), 40);
   }
   if (message.task === 'llm:query') {
+    if (message.payload.message.at(-1).content.includes('Crash worker')) throw new Error('Intentional model failure');
     active.set(message.requestId, setTimeout(() => globalThis.postMessage({ ...message, task: 'llm:message:response',
       payload: { generated_text: `Answer with budget ${message.payload.generation.max_new_tokens}` } }), 300));
   }

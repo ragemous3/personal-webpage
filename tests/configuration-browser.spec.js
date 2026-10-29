@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -15,7 +16,7 @@ test('unstyled controls persist choices across tabs and show pending and failed 
   try {
     await server.listen();
     browser = await puppeteer.launch({
-      executablePath: process.env.CHROME_PATH ?? '/usr/bin/chromium',
+      executablePath: process.env.CHROME_PATH ?? ['/usr/bin/chromium', '/usr/bin/google-chrome'].find((path) => existsSync(path)) ?? puppeteer.executablePath(),
       headless: true,
       args: ['--no-sandbox', '--disable-dev-shm-usage'],
     });

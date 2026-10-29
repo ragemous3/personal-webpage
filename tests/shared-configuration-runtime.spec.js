@@ -120,3 +120,13 @@ test('edits during shared initialization coalesce and stale readiness cannot ena
   coordinator.receive(owner, command('owner', 'loaded', { epoch, revision: newest.revision }));
   assert.equal(follower.messages.at(-1).state.ready, true);
 });
+
+test('an owner worker crash fails outstanding requests and frees the configuration barrier', () => {
+  const { coordinator, owner, follower, epoch } = live();
+  coordinator.receive(follower, command('follower', 'request', { channel: 'vectordb', message: { task: 'vectordb:query', requestId: 'answer', payload: {} } }));
+  coordinator.receive(owner, command('owner', 'reply', { epoch, channel: 'llm', message: { task: 'llm:init', error: { message: 'Worker crashed' } } }));
+  assert.ok(follower.messages.some((message) => message.message?.error?.message.includes('Worker crashed')));
+  assert.equal(follower.messages.at(-1).state.error, 'Worker crashed');
+  coordinator.receive(follower, command('follower', 'configure', { configuration }));
+  assert.equal(owner.messages.filter((message) => message.action === 'load').length, 2);
+});

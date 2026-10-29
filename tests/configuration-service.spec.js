@@ -138,3 +138,16 @@ test('edits during loading serialize and stale success cannot enable Send', asyn
   await settle();
   assert.equal(service.stateSubscription.getValue().active.execution, 'wasm');
 });
+
+test('an ongoing shared runtime failure remains visible after startup apply has settled', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const selected = service.stateSubscription.getValue().selected;
+  runtime.stateSubscription.emit({ responding: false, runtime: {
+    selected, active: selected, pending: true, loading: false, ready: false, error: 'Replacement owner failed',
+  } });
+  const state = service.stateSubscription.getValue();
+  assert.equal(state.available, false);
+  assert.match(state.error, /Replacement owner failed/);
+  assert.equal(state.canSwitchBack, true);
+});
