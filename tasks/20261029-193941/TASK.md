@@ -1,12 +1,14 @@
 # Refactor bot ownership to Web Locks after auditing state-machine uses
 
 - STATUS: OPEN
-- PRIORITY: 100
+- PRIORITY: 200
 - TAGS: task, refactor, wip
 
 ## Background
 
 WIP: investigate and refine the design before implementation. The user requested this separate refactor on 2026-10-29 after reviewing the scope growth in the assistant configuration branch. The immediate deliverable is a durable record of findings and open decisions. The criteria below describe proposed future work; they are not a completed design or an instruction to start implementation.
+
+User-confirmed order on 2026-10-29: [hub removal](../20261029-193942/TASK.md) first (priority 300), this state-machine/Web Locks refactor second (priority 200), and [configuration](../20261028-123834/TASK.md) third (priority 100). Keep this ticket WIP while its design is unresolved.
 
 The configuration feature grew into a replacement worker-management and routing path. Ownership and verification should have been addressed as an explicit refactor first. Move exclusive bot ownership from the existing state machine's manual claims to the browser Web Locks API, after investigating every other use of the state-machine logic.
 
@@ -52,6 +54,7 @@ Build a repeatable test seam before restructuring production code. Keep protocol
 
 ## Prerequisites
 
+- Complete hub removal first and use its resulting worker-management path and verification baseline. Investigate other state-machine use cases before implementing this second refactor.
 - Finish the use-case audit and discuss its findings before selecting the final ownership/state design. No Guided/Autopilot implementation mode has been selected for this WIP.
 - Inventory production callers, entity names, message operations, shared contracts, readiness/progress consumers, cleanup paths, tests, and worker-build configuration on the chosen implementation base. Compare the configuration branch separately. Establish whether any non-bot resource relies on the old protocol.
 - Agree browser support and behavior when Web Locks or SharedWorker is unavailable, when a tab is suspended, and when browser profiles or storage partitions differ. A closed/crashed owner releases its lock; a suspended or hung owner may keep it. Do not silently steal ownership and create a second bot.
@@ -74,7 +77,7 @@ Build a repeatable test seam before restructuring production code. Keep protocol
 - [Shared chat lifecycle](../20261022-202009/TASK.md) and [model-worker lifecycle](../20261011-184042/TASK.md) provide the baseline behavior to preserve.
 - [Application verification work](../20261027-104746/TASK.md) overlaps the test tooling. Reassess its recorded limitations against the implementation base; do not reopen or close it as a side effect of this task.
 - The configuration branch and PR #15 provide historical evidence and candidate regression scenarios. Merging or cherry-picking that feature is not a prerequisite.
-- [Remove the hub worker](../20261029-193942/TASK.md) is a separate TATR. This ticket can retain the hub while changing ownership; agree the handoff before either implementation changes shared interfaces.
+- [Remove the hub worker](../20261029-193942/TASK.md) is the preceding task. Refresh the caller inventory after it lands. [Configuration](../20261028-123834/TASK.md) is the following task and must integrate with the resulting lifecycle contract.
 
 ## Definition of Done
 
@@ -83,4 +86,4 @@ Build a repeatable test seam before restructuring production code. Keep protocol
 - [ ] Complete the repository implementation flow: relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition, and the final full suite after reviews. Record existing baseline failures separately. Do not wait for CI unless the user changes that instruction.
 - [ ] Update the architecture explanation with labelled connections and the verified ownership/loading responsibilities. Link the configuration follow-up and hub-removal task without absorbing their implementation scope.
 
-Next action: complete the state-machine use-case audit, discuss the open decisions, and refine this WIP into an agreed refactor and verification plan.
+Next action: after hub removal, complete the state-machine use-case audit, discuss the open decisions, and refine this WIP into an agreed refactor and verification plan.

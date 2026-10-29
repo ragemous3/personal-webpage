@@ -1,7 +1,7 @@
 # Remove the hub worker and simplify worker management
 
 - STATUS: OPEN
-- PRIORITY: 100
+- PRIORITY: 300
 - TAGS: task, refactor
 
 ## Background
@@ -9,6 +9,8 @@
 Remove the dedicated hub worker and simplify the application's worker-management path. The user requested a separate TATR on 2026-10-29 because the extra forwarding worker makes the application harder to understand. This is planning work; implementation has not started.
 
 Planning branch: `docs/20261029-worker-refactor-tatrs`. Planning base: `9cbe959120ab72d56e212ea27f9405992a4d6f58` from fetched `origin/main`.
+
+User-confirmed order on 2026-10-29: (1) this hub-removal task, (2) [state-machine/Web Locks refactor](../20261029-193941/TASK.md), (3) [configuration](../20261028-123834/TASK.md). TATR sorts higher priorities first: 300, 200, 100.
 
 The current path is `Hub` / `HubAbstract` -> `HubConnection` -> `hub.worker.ts` -> `WebWorkerManager` -> generation/retrieval workers. The [hub worker](../../assets/layers/data/workers/hub.worker.ts) holds a map of managers and handles ping, host and query forwarding. The inspected code does no model inference or retrieval computation in the hub itself. Cross-tab coordination comes from the separate SharedWorker.
 
@@ -20,7 +22,7 @@ Evaluate reusing [WorkerBase](../../assets/layers/data/abstracts/worker-base.abs
 
 ## Prerequisites
 
-- Complete the linked ownership/state-machine investigation and agree the integration order. Proposed sequence: establish and verify ownership/routing first, then remove the hub thread while preserving that contract.
+- Start with this task. Inspect the state-machine interactions needed to remove the hub safely, but leave the ownership redesign and full use-case audit to the second task. Record the existing behavior and known failures as the comparison baseline.
 - Inventory hub consumers, readiness and progress delivery, worker-error handling, lifecycle cleanup, factory validation, shared contracts, tests, generated worker-name mappings and documentation on the implementation base.
 - Agree the resulting class responsibilities and test seams before changing application code. An implementation mode has not been selected for this task.
 
@@ -29,7 +31,7 @@ Evaluate reusing [WorkerBase](../../assets/layers/data/abstracts/worker-base.abs
 - [ ] Record the consumer inventory and an agreed replacement for each hub responsibility. Keep ownership policy, request routing, model work and presentation separated according to the repository layers.
 - [ ] Application startup creates no hub worker. Remove `hub.worker.ts` and its obsolete connection, configuration requirements and build references; retain or adapt ordinary classes only where a documented caller still needs them.
 - [ ] The owner tab manages the generation and retrieval workers through one lifecycle path with injected browser construction. Worker failure reaches services/UI, and replacement or shutdown terminates the affected workers and releases subscriptions without orphan resources.
-- [ ] Joining a second tab creates no extra model workers. Requests, streamed/final responses, cancellation and errors still reach only their requesting tab, with ownership handover matching the linked state-machine task.
+- [ ] Record native-browser multi-tab behavior and worker counts before and after hub removal. Add no duplicate worker loads or regressions in existing request, cancellation and cleanup behavior. The already observed follower-readiness/routing and owner-handover defects remain assigned to the second task; their repair is not a prerequisite for completing hub removal.
 - [ ] Existing readiness, initialization errors, progress bars, Retry, Reset and per-tab conversation behavior remain correct. Native-browser regressions cover progress and worker faults, including errors without a request ID.
 - [ ] Repeated initialization or replacement does not overwrite an active worker reference and leak the old worker. Preserve the agreed rule for draining active requests before replacement.
 - [ ] Tests exercise the surviving application path. Remove or rewrite obsolete hub-only fixtures/tests after their meaningful assertions are covered; do not retain a second working stack just to keep those tests passing.
@@ -37,7 +39,7 @@ Evaluate reusing [WorkerBase](../../assets/layers/data/abstracts/worker-base.abs
 
 ## Dependencies
 
-- The [Web Locks/state-machine WIP](../20261029-193941/TASK.md) provides the use-case audit, ownership/routing decisions and regression contract. Its implementation is the proposed predecessor; resolve any different order explicitly during design.
+- No dependency on completion of the [Web Locks/state-machine WIP](../20261029-193941/TASK.md). That task follows this one and consumes the simplified worker-management path and recorded baseline. [Configuration](../20261028-123834/TASK.md) follows both refactors.
 - [Shared chat lifecycle](../20261022-202009/TASK.md), [model-worker lifecycle](../20261011-184042/TASK.md), and the [application verification work](../20261027-104746/TASK.md).
 - Configuration-branch lessons are reference material. This task does not add configuration controls, persistence, new models or online inference, and does not require merging PR #15.
 
@@ -48,4 +50,4 @@ Evaluate reusing [WorkerBase](../../assets/layers/data/abstracts/worker-base.abs
 - [ ] Complete the repository implementation flow, including relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition, and the final full test suite after reviews. Record baseline failures accurately and keep generated index data and evidence PNGs ignored.
 - [ ] Check for remaining hub references and explain intentional historical references. Publish the scoped change through the repository workflow; no merge or release is part of this planning request.
 
-Next action: use the ownership investigation to agree the class layout, integration order and verification plan for hub removal.
+Next action: agree the hub-removal class layout and verification plan against the existing ownership behavior, then implement this first task through the repository workflow.
