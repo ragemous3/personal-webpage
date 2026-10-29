@@ -1,3 +1,4 @@
+import { type TextGenerationConfig } from '@huggingface/transformers';
 import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
 import { type StateMachineStatesEnum } from '@/layers/data/contants/constants';
@@ -45,6 +46,7 @@ export type WorkerMessageHub = MessageBase<MessageBase<unknown>>;
 
 export interface LlmDTO {
   message: ChatMessage[];
+  generation?: Partial<TextGenerationConfig>;
 }
 
 export type VectorDatabaseDTO = MessageBase<

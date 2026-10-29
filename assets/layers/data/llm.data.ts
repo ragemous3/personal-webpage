@@ -45,19 +45,12 @@ export class LocalLLMData {
     chatMessages: Chat,
     callback: (txt: string) => void,
     stoppingCriteria?: StoppingCriteria,
+    generation: Partial<TextGenerationConfig> = this.options,
   ): Promise<TextGenerationSingle | undefined> => {
     if (!this.guardChatMessageHandler(chatMessages)) return;
 
     const lastMessage = chatMessages.at(-1);
-
-    if (
-      !this.isChatMessage(lastMessage) ||
-      lastMessage.role === 'system' ||
-      lastMessage.role === 'assistant'
-    ) {
-      console.error(`[${SeverityLevelCodes.ERROR}] - Expected a chatMessages`);
-      return;
-    }
+    if (!lastMessage) return;
 
     const tokenTotal = this.tokenizerUtility.countTokens(lastMessage.content);
 
@@ -68,7 +61,7 @@ export class LocalLLMData {
     }
 
     const output = await this.chatWithModel(chatMessages, this.generator, {
-      ...this.options,
+      ...generation,
       streamer: this.getTextStreamer(this.generator, callback),
       stopping_criteria: stoppingCriteria,
     });
@@ -79,6 +72,8 @@ export class LocalLLMData {
     return output[0];
   };
   private readonly guardChatMessageHandler = (chatMessages: Chat): boolean => {
-    return !(!Array.isArray(chatMessages) || chatMessages.length <= 1 || !chatMessages.at(-1));
+    if (!Array.isArray(chatMessages) || chatMessages.length <= 1) return false;
+    const last = chatMessages.at(-1);
+    return this.isChatMessage(last) && last.role !== 'system' && last.role !== 'assistant';
   };
 }

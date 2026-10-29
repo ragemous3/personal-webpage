@@ -1,0 +1,83 @@
+import { spawn } from 'node:child_process';
+import { createHash, X509Certificate } from 'node:crypto';
+import fs from 'node:fs/promises';
+import puppeteer from '/workspace/personal-webpage/node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js';
+
+const evidence = await fs.mkdtemp('/tmp/configuration-two-tab-evidence-');
+const scratch = await fs.mkdtemp('/tmp/configuration-two-tab-scratch-');
+const result = { verdict: 'FAIL', evidence, observations: [], errors: [] };
+const server = spawn('/workspace/.local/bin/hugo', ['server', '--bind', '127.0.0.1', '--port', '43149', '--baseURL', 'http://127.0.0.1:43149/', '--destination', `${scratch}/public`, '--cacheDir', `${scratch}/cache`, '--noBuildLock', '--disableLiveReload'], { cwd: '/workspace/personal-webpage', env: { ...process.env, HUGO_RESOURCEDIR: `${scratch}/resources` } });
+let log = '';
+server.stdout.on('data', (data) => { log += data; });
+server.stderr.on('data', (data) => { log += data; });
+let browser;
+const chatRoot = 'chatbot-offline-provider >>> chat-container';
+const settingsRoot = 'chatbot-offline-provider >>> assistant-configuration';
+const observe = (value) => { result.observations.push(value); console.info(value); };
+try {
+  for (let i = 0; i < 100; i++) {
+    try { if ((await fetch('http://127.0.0.1:43149/')).ok) break; } catch {}
+    if (server.exitCode !== null) throw new Error(log);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  const certificate = new X509Certificate(await fs.readFile(process.env.NODE_EXTRA_CA_CERTS));
+  const trust = createHash('sha256').update(certificate.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
+  browser = await puppeteer.launch({ executablePath: '/usr/bin/chromium', headless: true, userDataDir: `${scratch}/browser`, protocolTimeout: 300000, args: ['--no-sandbox', '--disable-dev-shm-usage', `--ignore-certificate-errors-spki-list=${trust}`, `--proxy-server=${process.env.HTTPS_PROXY}`, '--proxy-bypass-list=localhost;127.0.0.1'] });
+  const first = await browser.newPage();
+  await first.evaluateOnNewDocument(() => {
+    if (!localStorage.getItem('assistant.preferences')) localStorage.setItem('assistant.preferences', JSON.stringify({ version: 1, preferences: { mode: 'local', model: 'Xenova/Qwen1.5-0.5B-Chat', execution: 'wasm', precision: 'q4', maxNewTokens: 32, sampling: false, temperature: 0.7, topP: 0.9 } }));
+  });
+  const instrument = async (page) => page.evaluateOnNewDocument(() => {
+    globalThis.workerInitializations = [];
+    const original = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function(message, ...rest) {
+      if (message?.task?.endsWith(':init')) globalThis.workerInitializations.push({ task: message.task, device: message.payload.device });
+      return original.call(this, message, ...rest);
+    };
+  });
+  await instrument(first);
+  const ready = (page) => page.waitForFunction(() => {
+    const input = globalThis.document.querySelector('chatbot-offline-provider')?.shadowRoot?.querySelector('chat-container')?.shadowRoot?.querySelector('input');
+    return Boolean(input && !input.disabled);
+  }, { timeout: 240000, polling: 100 });
+  await first.goto('http://127.0.0.1:43149/');
+  await ready(first);
+  observe('First tab ready with real CPU pipelines');
+  const second = await browser.newPage();
+  await instrument(second);
+  await second.goto('http://127.0.0.1:43149/');
+  await ready(second);
+  result.initializations = await Promise.all([first, second].map((page) => page.evaluate(() => globalThis.workerInitializations)));
+  if (result.initializations[0].length !== 2 || result.initializations[1].length !== 0) throw new Error('Second tab loaded another model');
+  observe('Second tab ready with zero model loads, reusing the first tab owner');
+  for (const [index, page] of [first, second].entries()) {
+    await page.bringToFront();
+    await page.type(`${chatRoot} >>> input`, index === 0 ? 'What experience does Rasmus have?' : 'What technologies does Rasmus use?');
+    await page.click(`${chatRoot} >>> button[type=submit]`);
+  }
+  await second.$eval(`${settingsRoot} >>> details`, (element) => { element.open = true; });
+  await second.$eval(`${settingsRoot} >>> input[name=maxNewTokens]`, (input) => { input.value = '16'; input.dispatchEvent(new Event('input', { bubbles: true })); });
+  await first.waitForFunction(() => globalThis.document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('assistant-configuration').shadowRoot.querySelector('input[name=maxNewTokens]').value === '16');
+  observe('Token choice propagated while tabs had independent responses');
+  await Promise.all([ready(first), ready(second)]);
+  result.histories = await Promise.all([first, second].map((page) => page.$eval(`${chatRoot} >>> [role=log]`, (element) => element.textContent)));
+  if (!result.histories[0].includes('What experience') || !result.histories[1].includes('What technologies')) throw new Error('Tab histories were not retained separately');
+  observe('Both responses completed and tab conversations remained separate');
+  await first.select(`${settingsRoot} >>> select[name=mode]`, 'online');
+  await second.waitForFunction(() => globalThis.document.querySelector('chatbot-offline-provider').shadowRoot.querySelector('assistant-configuration').shadowRoot.querySelector('select[name=mode]').value === 'online');
+  result.initializationsAfterGenerationEdit = await Promise.all([first, second].map((page) => page.evaluate(() => globalThis.workerInitializations.length)));
+  if (result.initializationsAfterGenerationEdit[0] !== 2 || result.initializationsAfterGenerationEdit[1] !== 0) throw new Error('Generation-only change reloaded model weights');
+  result.verdict = 'PASS';
+} catch (error) {
+  result.error = error.stack;
+  console.error(error.message);
+} finally {
+  await browser?.close();
+  const closed = new Promise((resolve) => server.once('exit', resolve));
+  server.kill('SIGTERM');
+  if (server.exitCode === null) await closed;
+  await fs.rm(scratch, { recursive: true, force: true });
+  await fs.writeFile(`${evidence}/server.log`, log);
+  await fs.writeFile(`${evidence}/result.json`, JSON.stringify(result, null, 2));
+  console.info(JSON.stringify(result, null, 2));
+}

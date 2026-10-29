@@ -1,0 +1,67 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/configuration-runtime-evidence-xl0Ofn",
+  "observations": [
+    "Waiting for clean-profile Auto startup",
+    "Auto startup ready: true",
+    "Existing progress display received owner loading events",
+    "Explicit CPU initialized",
+    "CPU answer completed; mid-response token edit applied",
+    "Local/Online round-trip preserved history",
+    "GPU failure displayed; explicit switch back restored CPU",
+    "Cancel retained Retry after reconfiguration; explicit Retry replaced the attempt; Reset rejected late callbacks",
+    "Returning profile started directly with saved CPU settings",
+    "Real application propagated Online selection to another tab"
+  ],
+  "events": [
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "removing requested execution provider \"webgpu\" from session options because it is not available: Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.",
+    "removing requested execution provider \"webgpu\" from session options because it is not available: Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed."
+  ],
+  "auto": {
+    "ready": true,
+    "initialized": [
+      {
+        "task": "llm:init",
+        "device": "auto"
+      },
+      {
+        "task": "vectordb:init",
+        "device": "auto"
+      }
+    ]
+  },
+  "progressBars": 2,
+  "answer": "\n          \n                \n                                user: What experience does Rasmus have?\n                              \n              \n                \n                                assistant: Rasmus has worked at Ericsson for several years.\n                              \n              \n        ",
+  "webgpu": "Unavailable; failure shown",
+  "afterCancelState": "error",
+  "retryMessageCount": 4,
+  "resetMessageCount": 0,
+  "returningInitializations": [
+    {
+      "task": "llm:init",
+      "device": "wasm"
+    },
+    {
+      "task": "vectordb:init",
+      "device": "wasm"
+    }
+  ]
+}

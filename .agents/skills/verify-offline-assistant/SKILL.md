@@ -7,7 +7,7 @@ description: Verify the running personal-webpage Offline assistant through its b
 
 **Draft: no successful live journey has been proved.** Track completion in [the verification ticket](../../../tasks/20261027-104746/TASK.md). The user chose to keep application fixes in their existing tickets. Use the terms in [GLOSSARY.md](../../../GLOSSARY.md).
 
-The primary surface is the Hugo home page at `/`, with Lit components inside shadow roots. There is no implemented online service or Local/Online selector. Read [the feature map](features/README.md) and select the journeys affected by the change.
+The primary surface is the Hugo home page at `/`, with Lit components inside shadow roots. The configuration component offers Local and an unavailable Online placeholder; there is no online inference service. Read [the feature map](features/README.md) and select the journeys affected by the change.
 
 ## Launch
 

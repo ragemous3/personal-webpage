@@ -43,6 +43,21 @@ const setup = () => {
   return { chat, database, service };
 };
 
+test('configuration loading gates Send without clearing the conversation', () => {
+  const { service } = setup();
+  service.send('Retained question');
+  service.cancel();
+  service.setAvailable(false);
+  service.send('Must wait');
+  assert.equal(service.chatMessagesSubscription.getValue().length, 2);
+  assert.equal(service.stateSubscription.getValue().status, 'error');
+  service.setAvailable(true);
+  assert.equal(service.stateSubscription.getValue().status, 'error');
+  service.retry();
+  assert.equal(service.stateSubscription.getValue().status, 'responding');
+  assert.equal(service.chatMessagesSubscription.getValue()[0].content, 'Retained question');
+});
+
 test('retrieved content loads and validates real JSON through the repository interface', async (context) => {
   context.mock.method(globalThis, 'fetch', async () =>
     Response.json([{ text: 'Evidence', index: 0 }]),

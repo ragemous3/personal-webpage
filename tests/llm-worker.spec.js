@@ -14,6 +14,27 @@ const config = {
 const emptyGenerator = async () => [];
 emptyGenerator.tokenizer = {};
 
+test('per-question generation choices apply without loading model weights again', async () => {
+  const received = [];
+  let loads = 0;
+  const generator = async (_prompt, options) => { received.push(options.max_new_tokens); return []; };
+  generator.tokenizer = {};
+  const handler = createLlmMessageHandler({
+    loadGeneratorPipeline: async () => { loads++; return generator; },
+    loadTokenizer: async () => ({ getMaxLength: () => 2048, countTokens: () => 1 }),
+    publish() {},
+  });
+  await handler({ data: { id: 'owner', name: 'llm', task: 'llm:init', payload: config } });
+  for (const budget of [64, 128]) {
+    await handler({ data: { id: 'owner', name: 'llm', task: 'llm:query', payload: {
+      message: [{ role: 'system', content: 'Help' }, { role: 'user', content: 'Question' }],
+      generation: { max_new_tokens: budget },
+    } } });
+  }
+  assert.deepEqual(received, [64, 128]);
+  assert.equal(loads, 1);
+});
+
 const failingGenerator = async () => {
   throw new Error('generation failed');
 };
@@ -39,12 +60,15 @@ test('cancel interrupts generation and suppresses its late chunks and final resp
   const query = handler({ data: { id: 'owner', name: 'llm', task: 'llm:query', requestId: 'answer-1',
     payload: { message: [{ role: 'system', content: 'Help' }, { role: 'user', content: 'Question' }] } } });
   await new Promise((resolve) => setImmediate(resolve));
-  await handler({ data: { id: 'owner', name: 'llm', task: 'llm:cancel', requestId: 'answer-1', payload: {} } });
+  const cancellation = handler({ data: { id: 'owner', name: 'llm', task: 'llm:cancel', requestId: 'answer-1', payload: {} } });
   assert.deepEqual(stopping([[1]], [[0]]), [true]);
+  assert.equal(messages.some(({ task }) => task === 'llm:cancel:response'), false);
   stream('Late');
   finish([{ generated_text: 'Late' }]);
   await query;
+  await cancellation;
   assert.equal(messages.filter(({ task }) => task === 'llm:stream:response' || task === 'llm:message:response').length, 0);
+  assert.equal(messages.at(-1).task, 'llm:cancel:response');
 });
 
 test('initialization loads the configured model and tokenizer before reporting ready', async () => {

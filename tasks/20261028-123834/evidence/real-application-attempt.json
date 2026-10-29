@@ -1,0 +1,63 @@
+{
+  "verdict": "FAIL",
+  "evidence": "/tmp/configuration-runtime-evidence-JiQBTY",
+  "observations": [
+    "Waiting for clean-profile Auto startup",
+    "Auto startup ready: true",
+    "Explicit CPU initialized",
+    "CPU answer completed; mid-response token edit applied",
+    "Local/Online round-trip preserved history",
+    "GPU failure displayed; explicit switch back restored CPU",
+    "Returning profile started directly with saved CPU settings"
+  ],
+  "events": [
+    "NotSupportedError: Failed to execute 'define' on 'CustomElementRegistry': the name \"assistant-configuration\" has already been used with this registry",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "removing requested execution provider \"webgpu\" from session options because it is not available: Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.",
+    "removing requested execution provider \"webgpu\" from session options because it is not available: Error: Failed to get GPU adapter. You may need to enable flag \"--enable-unsafe-webgpu\" if you are using Chrome.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed.",
+    "Unable to determine content-length from response headers. Will expand buffer when needed."
+  ],
+  "auto": {
+    "ready": true,
+    "initialized": [
+      {
+        "task": "llm:init",
+        "device": "auto"
+      },
+      {
+        "task": "vectordb:init",
+        "device": "auto"
+      }
+    ]
+  },
+  "answer": "\n          \n                \n                                user: What experience does Rasmus have?\n                              \n              \n                \n                                assistant: Rasmus has worked at Ericsson for several years.\n                              \n              \n        ",
+  "webgpu": "Unavailable; failure shown",
+  "returningInitializations": [
+    {
+      "task": "llm:init",
+      "device": "wasm"
+    },
+    {
+      "task": "vectordb:init",
+      "device": "wasm"
+    }
+  ],
+  "error": "ProtocolError: Protocol error (Runtime.callFunctionOn): Target crashed\n    at <instance_members_initializer> (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/common/CallbackRegistry.js:99:14)\n    at new Callback (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/common/CallbackRegistry.js:103:16)\n    at CallbackRegistry.create (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/common/CallbackRegistry.js:22:26)\n    at Connection._rawSend (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/Connection.js:104:26)\n    at CdpCDPSession.send (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/CdpSession.js:71:33)\n    at #evaluate (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:360:50)\n    at async ExecutionContext.evaluateHandle (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:326:16)\n    at async IsolatedWorld.evaluateHandle (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/IsolatedWorld.js:86:16)\n    at async CdpJSHandle.evaluateHandle (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/api/JSHandle.js:154:20)\n    at async CdpElementHandle.evaluateHandle (file:///workspace/personal-webpage/node_modules/puppeteer-core/lib/esm/puppeteer/api/ElementHandle.js:350:20)",
+  "page": "unavailable"
+}
