@@ -40,3 +40,13 @@ Planning branch: `docs/20261029-worker-refactor-tatrs`. Implementation has not s
 - [ ] Document the local command and any required build-time declarations. Keep unrelated type cleanup or dependency upgrades in separate work if needed.
 
 Next action: reproduce and classify the diagnostics on the implementation base, then agree the smallest fixes and source-selection rules.
+
+## Implementation evidence
+
+Mode: autopilot, explicitly approved on 2026-10-29 for scoped implementation, tests, documentation and ticket updates, signed commits, push, PR creation and CI/review fixes through handoff. Branch: `fix/20261029-195033-typescript-ci`. Fixed review base: `2a5aaaf0f9db1e9ab89d617268149edf1d087067`.
+
+Locked TypeScript 5.9.3 reproduced five baseline diagnostics. Removed unused RAGStatus with its undefined RagStates reference. Explicit pipeline task generic arguments resolve dependency union complexity without casts or runtime changes. Generated output directories are excluded while application source remains included. Existing Hugo module declarations remain unchanged.
+
+`npm run typecheck`: passes before and after Hugo 0.158.0 production build. An isolated application fixture assigning a number to string produces TS2322 and a nonzero exit; fixture removed afterward. `npm test`: 42 passed, zero failures. `npm run lint` and whitespace checks pass. Hugo production build passes with existing missing taxonomy/term template warnings. Runtime journeys and blast-radius checks are inapplicable: only type annotations, an unused interface, compiler source selection and CI change; no runtime behavior or data operations change.
+
+Stage: review and final verification. Next action: finish review, publish the scoped PR and record closure.

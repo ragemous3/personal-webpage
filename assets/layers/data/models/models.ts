@@ -27,10 +27,6 @@ export interface HNSWDBEntryMetadata {
   timestamp: string | Date;
 }
 
-export interface RAGStatus {
-  status: RagStates;
-}
-
 export type Workers<T extends string> = Record<T, string>;
 
 export interface InfraConfigurationDTO<T extends string> {

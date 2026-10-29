@@ -25,7 +25,7 @@ interface LlmWorkerDependencies {
 
 const defaultDependencies: LlmWorkerDependencies = {
   loadGeneratorPipeline: (config, progress) =>
-    pipeline('text-generation', config.model, {
+    pipeline<'text-generation'>('text-generation', config.model, {
       device: config.device,
       dtype: config.dtype,
       progress_callback: progress,

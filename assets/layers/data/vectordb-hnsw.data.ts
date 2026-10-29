@@ -112,7 +112,7 @@ export class VectorDBHNSWData {
   createEmbedder = async (
     emitProgress: (progress: ProgressInfo) => void,
   ): Promise<FeatureExtractionPipeline> =>
-    await pipeline('feature-extraction', this.config.featureExtractionModel, {
+    await pipeline<'feature-extraction'>('feature-extraction', this.config.featureExtractionModel, {
       device: 'webgpu',
       dtype: 'uint8',
       progress_callback: emitProgress,
