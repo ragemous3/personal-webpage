@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -75,12 +75,12 @@ Pass execution `auto` directly to the pipeline. Label browser `wasm` as CPU. Pas
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have evidence recorded. Keep any necessary model-quality or unavailable-backend limitation distinct from successful configuration/lifecycle behavior.
-- [ ] Before implementation tests are written, confirm the proposed public test seams and command mapping below at the implementation gate. Then run the repository's implementation, deslop, runtime verification, Standards/Spec review, and applicable blast-radius stages against a fixed review base and signed implementation snapshot.
-- [ ] Run focused tests, relevant type checks, full lint, the applicable Hugo build, and the final full test suite at the workflow's prescribed point. Record existing unrelated failures accurately instead of expanding this ticket into repository cleanup.
-- [ ] Observe the real application with a clean profile and a returning profile: saved preferences before model startup; Local Auto and explicit CPU behavior; settings changed during a response; preserved history; switching to/from unavailable Online mode; an explicit failing setting and switch-back; and two tabs adopting changes after their own responses. Record unsupported hardware as a limitation, not a successful WebGPU run. Mocks do not establish real model loading or provider fallback.
-- [ ] Follow the existing architecture and naming rules. Reuse shared contracts and the stateful subscription pattern. Add no styling and do not add an online inference implementation or additional model profiles.
-- [ ] At publication, report the PR and any CI state already available, then hand off without waiting for CI completion. The user explicitly removed the CI wait requirement on 2026-10-28. Do not merge, enable auto-merge, enqueue, or deploy without separate authorization.
+- [x] All acceptance criteria have evidence recorded. Keep any necessary model-quality or unavailable-backend limitation distinct from successful configuration/lifecycle behavior.
+- [x] Before implementation tests are written, confirm the proposed public test seams and command mapping below at the implementation gate. Then run the repository's implementation, deslop, runtime verification, Standards/Spec review, and applicable blast-radius stages against a fixed review base and signed implementation snapshot.
+- [x] Run focused tests, relevant type checks, full lint, the applicable Hugo build, and the final full test suite at the workflow's prescribed point. Record existing unrelated failures accurately instead of expanding this ticket into repository cleanup.
+- [x] Observe the real application with a clean profile and a returning profile: saved preferences before model startup; Local Auto and explicit CPU behavior; settings changed during a response; preserved history; switching to/from unavailable Online mode; an explicit failing setting and switch-back; and two tabs adopting changes after their own responses. Record unsupported hardware as a limitation, not a successful WebGPU run. Mocks do not establish real model loading or provider fallback.
+- [x] Follow the existing architecture and naming rules. Reuse shared contracts and the stateful subscription pattern. Add no styling and do not add an online inference implementation or additional model profiles.
+- [x] At publication, report the PR and any CI state already available, then hand off without waiting for CI completion. The user explicitly removed the CI wait requirement on 2026-10-28. Do not merge, enable auto-merge, enqueue, or deploy without separate authorization.
 
 ### Proposed verification mapping
 
@@ -95,7 +95,7 @@ These seams follow the confirmed architecture. The user approved this verificati
 
 Relevant checks: `node node_modules/typescript/bin/tsc --noEmit --pretty false`, `npm run lint`, the compatible Hugo build, and `git diff --check`. Final full-suite command: `npm test`. Use the real-application verification skill for the journeys above and retain source revision, overrides, actions/results, screenshots/logs, and cleanup evidence.
 
-Implementation state: design interview complete; OPEN backlog ticket. The user confirmed Mode Local/Online, separate Qwen-only model choice, pipeline-managed Auto, injected storage with persistence details in the data layer, read-only service subscriptions, unstyled components, deferred live changes without Apply, preserved conversation, unavailable Online behavior, configuration-error details and an explicit switch-back prompt, and cross-tab propagation. The final “Q1. Yes” is interpreted in context as the answer to Q11 about multiple tabs.
+Implementation state: complete and published on PR #15; the PR remains open and unmerged. The user confirmed Mode Local/Online, separate Qwen-only model choice, pipeline-managed Auto, injected storage with persistence details in the data layer, read-only service subscriptions, unstyled components, deferred live changes without Apply, preserved conversation, unavailable Online behavior, configuration-error details and an explicit switch-back prompt, and cross-tab propagation. The final “Q1. Yes” is interpreted in context as the answer to Q11 about multiple tabs.
 
 ### Implementation progress
 
@@ -178,3 +178,11 @@ Implementation state: design interview complete; OPEN backlog ticket. The user c
 - Stage 7 entered. PR explanation describes implementation snapshot `18f1cfe2e14f1e834209b2d18d1f3d1647c28b07` and reuses the diagram in the architecture document. Final full-suite command is `npm test`, after both reviews and before publication. Publication remains pending until that command passes.
 
 - Final full suite: `npm test` — **70 passed, 0 failed**, after both final reviews and before push. Tested implementation SHA: `18f1cfe2e14f1e834209b2d18d1f3d1647c28b07`. See [full output](evidence/final-tests.log). Later changes are ticket/evidence records only, so the passing result remains valid. All implementation acceptance criteria are complete; publication/closure records follow after the PR exists.
+
+### Stage 7 handoff
+
+- PR: [#15 — Add saved assistant settings with one shared bot](https://github.com/ragemous3/personal-webpage/pull/15), open and unmerged. Published branch: `feature/20261028-123834-assistant-configuration`; publication head before this closure record: `98b08316253b0a52da03e0d615a51070dd35ab2b`.
+- Read back the PR body through the GitHub API and compared it byte-for-byte with the prepared text: match. The body describes reviewed/tested implementation `18f1cfe2e14f1e834209b2d18d1f3d1647c28b07`. Auto-merge and merge-queue entry were both absent before closure push.
+- Ticket set to CLOSED only after the branch push and open PR succeeded. This closure changes documentation only. Full-suite, both review results, and blast-radius result remain valid for unchanged implementation source.
+- Handoff uses the user's explicit no-CI-wait instruction. CI is not monitored to completion; no green CI claim is made. No merge, auto-merge, queue entry, release, or deployment is authorized or performed. The PR is ready for human review.
+- Limits: five existing TypeScript diagnostics remain; successful WebGPU execution was unavailable on this host; model factual accuracy is not established; Online inference is not implemented. These are separate from the passing configuration, CPU, shared-owner, and recovery journeys.
