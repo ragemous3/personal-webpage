@@ -113,7 +113,7 @@ export class AssistantConfiguration extends LitElement {
               .value=${String(settings.temperature)} @input=${this.#edit} />
           </label>
           <label>Top-p
-            <input name="topP" type="number" min="0.000001" max="1" step="any" required
+            <input name="topP" type="number" min="0" max="1" step="any" required
               .value=${String(settings.topP)} @input=${this.#edit} />
           </label>
         ` : ''}

@@ -27,6 +27,20 @@ test('unstyled controls persist choices across tabs and show pending and failed 
     await second.goto(url);
     for (const page of [first, second])
       await page.waitForFunction(() => globalThis.fixture?.runtime.available);
+    await first.bringToFront();
+    await first.$eval('assistant-configuration >>> details', (element) => { element.open = true; });
+    await first.click('assistant-configuration >>> input[name=sampling]');
+    await first.waitForSelector('assistant-configuration >>> input[name=topP]');
+    const setTopP = (value) => first.$eval('assistant-configuration >>> input[name=topP]', (input, value) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, value);
+    await setTopP('0.0000001');
+    assert.equal(await first.evaluate(() => globalThis.fixture.service.stateSubscription.getValue().selected.topP), 0.000_000_1);
+    await setTopP('0');
+    assert.equal(await first.evaluate(() => globalThis.fixture.service.stateSubscription.getValue().selected.topP), 0.000_000_1);
+    assert.match(await first.$eval('assistant-configuration', (element) => element.shadowRoot.textContent), /topP/);
+    await setTopP('0.0000001');
     await second.evaluate(() =>
       globalThis.fixture.runtime.stateSubscription.emit({ responding: true }),
     );

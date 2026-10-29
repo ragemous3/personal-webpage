@@ -1,0 +1,12 @@
+{
+  "verdict": "PASS",
+  "evidence": "/tmp/configuration-runtime-evidence-gr8Sv0",
+  "observations": [
+    "Real UI accepted positive Top-p below 0.000001, rejected zero, and started no model in saved Online mode"
+  ],
+  "events": [],
+  "savedPositiveTopP": 1e-7,
+  "savedAfterZero": 1e-7,
+  "feedback": "\n      \n        Assistant settings\n        Mode\n          \n            Local\n            Online\n          \n        Model\n          \n            Qwen1.5 0.5B Chat\n          \n        Execution\n          \n            Auto\n            CPU\n            WebGPU\n          \n        \n      \n        Advanced\n        Precision\n          \n            Q4Auto\n          \n        \n        Maximum new tokens\n          \n        \n        Sampling\n        \n          Temperature\n            \n          \n          Top-p\n            \n          \n        \n      \n    \n      \n      \n      topP: Invalid setting\n      \n      \n      Online mode is not available yet\n      \n      Restore defaults\n    \n    ",
+  "initializations": []
+}
