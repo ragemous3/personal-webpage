@@ -1,6 +1,6 @@
 # Make TypeScript checking pass and add it to CI
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 90
 - TAGS: task, verification
 
@@ -22,11 +22,11 @@ Planning branch: `docs/20261029-worker-refactor-tatrs`. Implementation has not s
 
 ## Acceptance criteria
 
-- [ ] A documented `npm run typecheck` command uses the project-locked compiler and exits zero on the intended application sources from a clean checkout.
-- [ ] Resolve the reproduced diagnostics without disabling strictness, blanket `any` casts, broad suppression or excluding problematic application files merely to pass.
-- [ ] The source selection handles generated Hugo output and external build-time modules deliberately. Checking a clean checkout and a checkout after a production build gives consistent results.
-- [ ] CI runs the same type-check command for pull requests and main updates, alongside the existing tests and lint. A controlled type error in an isolated fixture demonstrates that the check fails.
-- [ ] Preserve runtime behavior; where a source fix changes behavior, add focused regression evidence and follow the relevant runtime verification requirements.
+- [x] A documented `npm run typecheck` command uses the project-locked compiler and exits zero on the intended application sources from a clean checkout.
+- [x] Resolve the reproduced diagnostics without disabling strictness, blanket `any` casts, broad suppression or excluding problematic application files merely to pass.
+- [x] The source selection handles generated Hugo output and external build-time modules deliberately. Checking a clean checkout and a checkout after a production build gives consistent results.
+- [x] CI runs the same type-check command for pull requests and main updates, alongside the existing tests and lint. A controlled type error in an isolated fixture demonstrates that the check fails.
+- [x] Preserve runtime behavior; where a source fix changes behavior, add focused regression evidence and follow the relevant runtime verification requirements.
 
 ## Dependencies
 
@@ -35,9 +35,9 @@ Planning branch: `docs/20261029-worker-refactor-tatrs`. Implementation has not s
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have evidence recorded against the implementation revision, including before/after diagnostics and source coverage.
-- [ ] Complete applicable repository checks, cleanup, reviews and the final full suite in the implementation flow. Confirm the CI definition invokes the locally verified command; report available CI results without waiting for CI unless requested.
-- [ ] Document the local command and any required build-time declarations. Keep unrelated type cleanup or dependency upgrades in separate work if needed.
+- [x] All acceptance criteria have evidence recorded against the implementation revision, including before/after diagnostics and source coverage.
+- [x] Complete applicable repository checks, cleanup, reviews and the final full suite in the implementation flow. Confirm the CI definition invokes the locally verified command; report available CI results without waiting for CI unless requested.
+- [x] Document the local command and any required build-time declarations. Keep unrelated type cleanup or dependency upgrades in separate work if needed.
 
 Next action: reproduce and classify the diagnostics on the implementation base, then agree the smallest fixes and source-selection rules.
 
@@ -50,3 +50,5 @@ Locked TypeScript 5.9.3 reproduced five baseline diagnostics. Removed unused RAG
 `npm run typecheck`: passes before and after Hugo 0.158.0 production build. An isolated application fixture assigning a number to string produces TS2322 and a nonzero exit; fixture removed afterward. `npm test`: 42 passed, zero failures. `npm run lint` and whitespace checks pass. Hugo production build passes with existing missing taxonomy/term template warnings. Runtime journeys and blast-radius checks are inapplicable: only type annotations, an unused interface, compiler source selection and CI change; no runtime behavior or data operations change.
 
 Stage: review and final verification. Next action: finish review, publish the scoped PR and record closure.
+
+Reviews: Standards and Spec review found no actionable code issues for implementation ab0e9ba. Requested negative-fixture and post-build evidence is recorded above. Final suite after review: 42 passed; lint, typecheck and whitespace checks pass. PR publication completed; closure records do not change implementation.
