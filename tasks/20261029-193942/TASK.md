@@ -72,4 +72,10 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 - [ ] Complete the repository implementation flow, including relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition and the final full test suite after reviews. Clean up owned test processes and record baseline failures separately.
 - [ ] Publish through the agreed implementation workflow after implementation mode is selected. This planning update authorizes no implementation, merge or release.
 
+### Planning PR verification (2026-11-01)
+
+The planning and skill changes were reviewed at signed snapshot `ffd7f460943c9aa93f9c4ab4aa932e1d5a6ae284`, against fixed base `1f2efdd54c68a7f94726e5aee6d8db2e064baab9`. Independent Standards and Spec reviews each reported zero actionable findings. The installed to-tickets skill adapts the upstream method to TATR and the already-approved four-ticket grouping; downloaded supporting files and MIT licenses match upstream revision `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d`.
+
+Checks after review: `npm test` passed 42 tests with zero failures; `npm run typecheck` and `npm run lint` exited 0. Prettier passed for authored/adapted Markdown. Local Markdown links, TATR sections, blocker order and `git diff --check` passed. Unmodified upstream files retain their original formatting. These checks cover the planning PR; no runtime implementation or three-SharedWorker production verification is claimed. No live data operations or runtime changes occur in this PR.
+
 Next action: settle the remaining transport-class boundary, failure/departure policy and verification thresholds, then select implementation mode for the combined refactor.
