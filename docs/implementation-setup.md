@@ -7,6 +7,8 @@ The [implementation flow](implementation-flow.md) owns execution order. Use this
 Read these files from the repository:
 
 - [tatr-ticket](../.agents/skills/tatr-ticket/SKILL.md): local `tasks/<HUID>/TASK.md` tickets.
+- [to-tickets](../.agents/skills/to-tickets/SKILL.md): explicitly requested ticket decomposition and refinement, adapted to the existing TATR tracker.
+- [setup-matt-pocock-skills](../.agents/skills/setup-matt-pocock-skills/SKILL.md): upstream setup guidance and templates. The existing [tracker](agents/issue-tracker.md) and [domain](agents/domain.md) configuration already select this repository's conventions.
 - [implement](../.agents/skills/implement/SKILL.md): implementation and focused checks. This replaces the global implement dependency for this project.
 - [tdd](../.agents/skills/tdd/SKILL.md): Matt Pocock's TDD method and test references.
 - [code-review](../.agents/skills/code-review/SKILL.md): Matt Pocock's parallel Standards and Spec reviews.
@@ -18,15 +20,15 @@ Read these files from the repository:
 
 Install each skill with its supporting files. Do not edit installed skill caches.
 
-| Source repository | Skill directory | Purpose |
-| --- | --- | --- |
-| `mattpocock/skills` | `skills/engineering/grill-with-docs` | Design interview and domain documentation |
-| `mattpocock/skills` | `skills/productivity/grilling` | Interview dependency |
-| `mattpocock/skills` | `skills/engineering/domain-modeling` | Glossary and ADR rules |
-| `mattpocock/skills` | `skills/engineering/codebase-design` | Interface and seam design reference |
-| `cursor/plugins` | `pstack/skills/create-verification-skill` | Runtime verification instructions when missing |
-| `kishormorol/blast-radius` | Repository root | Bulk operations on real data |
-| `humanlayer/skills` | [`plugins/show-me/skills/show-me`](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md) | PR explanation |
+| Source repository          | Skill directory                                                                                                            | Purpose                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `mattpocock/skills`        | `skills/engineering/grill-with-docs`                                                                                       | Design interview and domain documentation      |
+| `mattpocock/skills`        | `skills/productivity/grilling`                                                                                             | Interview dependency                           |
+| `mattpocock/skills`        | `skills/engineering/domain-modeling`                                                                                       | Glossary and ADR rules                         |
+| `mattpocock/skills`        | `skills/engineering/codebase-design`                                                                                       | Interface and seam design reference            |
+| `cursor/plugins`           | `pstack/skills/create-verification-skill`                                                                                  | Runtime verification instructions when missing |
+| `kishormorol/blast-radius` | Repository root                                                                                                            | Bulk operations on real data                   |
+| `humanlayer/skills`        | [`plugins/show-me/skills/show-me`](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md) | PR explanation                                 |
 
 Generate runtime verification instructions once. Maintain them when application behavior changes; do not regenerate them for each ticket. The optional Claude-specific blast-radius hook is not required.
 

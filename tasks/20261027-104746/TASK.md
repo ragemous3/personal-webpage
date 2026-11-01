@@ -1,7 +1,7 @@
 # Create and prove application verification before code review
 
 - STATUS: OPEN
-- PRIORITY: 100
+- PRIORITY: 400
 - TAGS: task
 
 ## Background
@@ -12,9 +12,19 @@ The user approved application verification only. Reassessing old work and limiti
 
 The user subsequently chose to create the verification skill as a draft and keep the existing runtime fixes as prerequisites. Deliver the draft and workflow integration now; retain the live-run acceptance criterion for promotion to a proved skill.
 
-On 2026-10-29, the user accepted extending this existing ticket with reusable multi-tab browser verification. Keep the primary order of hub removal, state-machine/Web Locks refactoring and configuration. This ticket supplies reusable verification infrastructure; product fixes remain in their own tasks.
+On 2026-10-29, the user accepted extending this existing ticket with reusable multi-tab browser verification. Following the 2026-11-01 consolidation and prioritization request, schedule [production build and CI](../20261029-195034/TASK.md) first (priority 500), this verification infrastructure second (400), the combined RuntimeCoordinator refactor third (300), and configuration fourth (100). Establish the runner and baseline before the refactor; product fixes remain in their own tasks.
 
 The discovery results below are historical. Later lifecycle work and configuration-branch CPU evidence supersede the claim that no real answer can be rendered. Refresh the tool/runtime baseline and distinguish native-browser coordination tests with controlled model responses from real-model application journeys. The original SharedWorker mock always returned `UNINITIALIZED`, hiding follower startup and ownership defects.
+
+**What to build:** a reusable native-browser runner and evidence format that demonstrate a real Offline assistant journey and reproduce lifecycle failures without concealing them behind mocks.
+
+**Demo path:** launch an isolated built site, open two tabs, ask a question, cancel or close a tab, and retain the observed results and worker counts after cleanup. Run controlled failure scenarios separately and identify which results use real inference.
+
+### Migration scenarios owned by the runtime refactor
+
+Keep scenario definitions for one coordinator plus two model SharedWorkers, stopped-worker recovery, concurrent reconnect, preserved conversations and healthy resources, no automatic question replay, and the agreed “Something went wrong” message with an unstyled “reconnect” button. The runner must support these observations; passing production results for the future architecture belong to the runtime ticket.
+
+Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base `1f2efdd54c68a7f94726e5aee6d8db2e064baab9`. The user authorized ticket refinement, repository skill installation, signed commits, branch push and PR creation. This publishes the plan only; this implementation ticket stays OPEN.
 
 ## Prerequisites
 
@@ -30,18 +40,24 @@ The discovery results below are historical. Later lifecycle work and configurati
 - [ ] Verification uses an isolated server/browser instance and preserves logs and evidence after cleanup. It reports failed or blocked journeys without substituting mocked services.
 - [ ] The skill is exercised end to end against at least one real mapped feature, including cleanup and retained evidence. Until then, label it a draft and keep this ticket OPEN.
 - [x] The implementation flow requires applicable runtime evidence after cleanup and before the signed snapshot and code review. It records exact limitations when verification cannot run.
-- [ ] A reusable harness runs the actual coordination code with native browser tabs, Worker, SharedWorker, MessagePort and Web Locks. It records initializations, terminations and live worker counts per tab, and cleans up only its own browser profiles and servers.
-- [ ] Cover sequential/simultaneous tab opening, follower requests and isolated answers, cancellation, owner close/crash, reconnect/reload and failed initialization. Record the supported way to verify suspended/background tabs and back/forward navigation; distinguish a crash from a frozen owner still holding its lock.
+- [ ] A reusable harness runs the actual coordination code with native browser tabs, SharedWorker and MessagePort. It records initializations, terminations and live worker counts per tab, and cleans up only its own browser profiles and servers.
+- [ ] Cover sequential/simultaneous tab opening, requests from multiple tabs and isolated answers, cancellation, tab close/crash, reconnect/reload and failed initialization. Record the supported way to verify suspended/background tabs and back/forward navigation; distinguish a departed tab from a frozen tab whose accepted work continues. Web Locks are not part of the selected architecture.
+- [ ] Supply reproducible worker-failure and recovery scenario definitions and exercise their observation/reporting with controlled workers. Record how failure was induced and observed; an exception alone is not proof of termination. A deliberately stale readiness state, stranded request or duplicate recovery attempt produces a recorded failure. Keep production conformance to the migration scenarios separate.
+- [ ] The runner records role, worker identity and model initialization counts across attachment, departure and recovery attempts. Count library-internal workers separately. Exercise detection of duplicate initialization in a controlled case and record the actual current topology without requiring future worker scripts.
+- [ ] Supply and exercise a real-model cache-reuse journey: load both models, close the browser, restart with the same isolated profile and origin, block model downloads, and attempt generation and retrieval. Retain observed model requests, cache evidence and pass/fail outcome. If the baseline cannot complete the journey, report the exact blocker and owning runtime criterion; do not claim cache reuse passed. Report persistence grants and eviction limitations separately from application, WASM and retrieval-asset availability.
 - [ ] Keep controlled-model coordination results separate from a real CPU application journey using compatible browser-generated retrieval data. The harness can record known baseline failures without presenting them as passing user journeys; product corrections and their assertions belong to the implementing ticket.
 - [ ] Retain reusable runner source and small evidence with source revision, exact commands, expected/actual results, worker counts and cleanup outcome. Evidence must survive loss of temporary directories. Keep generated data and evidence PNGs ignored.
 
 ## Dependencies
 
+**Blocked by:** [Production build and CI](../20261029-195034/TASK.md), which supplies the supported build/launch baseline used by this runner.
+
 - [Connect design interviews to the TATR implementation flow](../20261010-214050/TASK.md).
 - [Complete language-model worker initialization and query lifecycle](../20261011-184042/TASK.md).
 - [Complete shared chat response and cancellation lifecycle](../20261022-202009/TASK.md).
 - The installed create-verification-skill generator and the project's Puppeteer dependency.
-- [Hub removal](../20261029-193942/TASK.md), [state-machine/Web Locks refactoring](../20261029-193941/TASK.md) and [configuration](../20261028-123834/TASK.md) consume these checks. Coordinate test seams without making harness creation depend on all product fixes being complete.
+- [Production build and CI](../20261029-195034/TASK.md) establishes the supported toolchain and reproducible site build before these browser checks.
+- [RuntimeCoordinator lifecycle and recovery](../20261029-193942/TASK.md) and [configuration](../20261028-123834/TASK.md) consume these checks. Coordinate test seams without making harness creation depend on all product fixes being complete.
 
 ## Definition of Done
 
@@ -51,7 +67,7 @@ The discovery results below are historical. Later lifecycle work and configurati
 - [x] Keep unresolved application prerequisites visible; a failed launch or mocked test is not successful runtime verification.
 - [ ] Refresh historical blockers, document the native-browser harness and real-model coverage separately, and complete applicable repository checks and reviews for its implementation. Do not close product tickets as a side effect.
 
-Current planning state (2026-10-29): OPEN for refreshed verification evidence and the reusable multi-tab harness. Next action: reassess the implementation base, agree the test seams and convert the retained diagnostic journeys into reproducible checks. No harness implementation or new runtime verification is claimed by this ticket update.
+Current planning state (2026-11-01): OPEN for refreshed verification evidence and the reusable multi-tab harness. Next action: use the reproducible build baseline, agree the test seams and convert the retained diagnostic journeys into reproducible checks. A successful real mapped feature journey is required to prove the skill; known product failures and future-topology scenarios remain explicitly recorded, with passing migration evidence owned by the runtime refactor. Do not make harness completion depend on that refactor or present its acceptance criteria as already passing. No harness implementation or new runtime verification is claimed by this ticket update.
 
 Historical draft-delivery state: requested draft delivered, with live proof then blocked by the listed prerequisites. Draft included in signed snapshot 30bc55205ab186244b597a4506a99e1f2b2b13d8; Standards and Spec review both found 0 actionable issues within the approved draft scope. Those results apply only to that earlier draft. Existing product implementation tickets retain their own scope and stage.
 
