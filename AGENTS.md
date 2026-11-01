@@ -7,3 +7,7 @@ The issue tracker is the repository's `tasks/<HUID>/TASK.md` files. Use [tatr-ti
 ## Documentation and code comments
 
 Before adding or changing documentation (including AGENTS.md and README.md) or adding code comments or docstrings, ask the user and wait for explicit approval.
+
+## Ticket planning skills
+
+Use [to-tickets](.agents/skills/to-tickets/SKILL.md) when explicitly requested to divide or refine planned work. The [tracker configuration](docs/agents/issue-tracker.md) preserves TATR IDs, status and blocking relationships; the [domain rules](docs/agents/domain.md) point to the glossary and ADRs. Existing user-approved grouping and publication scope take precedence over generic skill defaults.
