@@ -1,6 +1,6 @@
 # Make the production build reproducible and check it in CI
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 500
 - TAGS: task, verification
 
@@ -87,3 +87,5 @@ Stages 4–6 passed at signed implementation snapshot `af30655f4f913c38ed2ab3486
 Final `npm test` after both reviews: **51 tests passed, 0 failed**, at that implementation SHA. `npm run lint`, `npm run typecheck`, nine focused CLI cases, authored-file Prettier and `git diff --check` passed. Retained build/install evidence is in [evidence/clean-install.log](evidence/clean-install.log), [evidence/clean-root.log](evidence/clean-root.log), [evidence/repeated.log](evidence/repeated.log) and [evidence/clean-subpath.log](evidence/clean-subpath.log). Commands and versions are in this record and the build instructions. The CI job invokes the tested commands; remote execution remains to be observed after publication and is not claimed as a local result.
 
 The PR body describes implementation snapshot `af30655f4f913c38ed2ab3486162a6277f3d1f42`, using the project template and a small build-flow diagram under show-me guidance. Only ticket evidence/status changed after the final test. Stage 7 next action: sign/push this evidence, create the PR, record its URL and close this ticket through the repository publication workflow. No merge or deployment is authorized.
+
+Stage 7 publication complete: [PR #19](https://github.com/ragemous3/personal-webpage/pull/19) is open against main. The ticket is CLOSED at PR handoff, as required by the repository workflow; this does not indicate merge or deployment. Four CI checks were queued at the initial status read, with no failures or unresolved threads. Auto-merge is disabled and no merge-queue entry exists. The prepared PR body is unchanged. Next action: hand off the open PR; reopen this ticket if CI or review finds an actionable issue. Browser verification ticket 20261027-104746 is next after this build change lands.
