@@ -108,3 +108,27 @@ for (const [name, corrupt, diagnostic] of [
     assert.match(result.stderr, diagnostic);
   });
 }
+
+test('production asset CLI resolves page-relative script URLs from their containing page', (context) => {
+  const f = fixture(context);
+  mkdirSync(path.join(f.site, 'nested'));
+  writeFileSync(
+    path.join(f.site, 'nested/index.html'),
+    '<script type="module" src="page.js"></script>',
+  );
+  writeFileSync(path.join(f.site, 'nested/page.js'), 'export const ready = true;');
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('production asset CLI rejects a missing nested script even when a root file has the same name', (context) => {
+  const f = fixture(context);
+  mkdirSync(path.join(f.site, 'nested'));
+  writeFileSync(
+    path.join(f.site, 'nested/index.html'),
+    '<script type="module" src="app.js"></script>',
+  );
+  const result = f.run();
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Missing asset.*nested\/app.js/);
+});

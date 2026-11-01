@@ -73,3 +73,9 @@ Stage 4 evidence: clean source was exported from the staged index into an isolat
 Deslop reviewed staged/unstaged changes against the fixed base; retained only build/asset validation and its tests/documentation. Product UI and inference are unchanged. Full browser/model journeys are inapplicable to this build-only ticket; static root/subpath artifact checks verify its runtime-facing contract. Blast-radius applicability: the only deletion is generated public output and this process's temporary build cache, not user or live data.
 
 Next action: sign the implementation snapshot, run independent Standards and Spec reviews, then final npm test and publish the PR through handoff.
+
+Review preparation correction: restored the base lockfile's existing optional-package libc metadata after npm 11.9 rewrote it incidentally. The only dependency additions are postcss-cli and its required transitive packages. The pending review results apply to the implementation snapshot plus this explicitly reviewed correction; final results will identify the final reviewed SHA.
+
+Build instructions: [production build](../../docs/production-build.md). The final handoff will retain compact build logs and review/check results here.
+
+Review fix: both reviewers reproduced a nested-page script URL false pass in the initial checker. Both review approvals, blast-radius disposition and final-suite results were invalidated before the fix. Added failing positive/negative nested-page CLI regressions, then retained each HTML document URL when resolving script references. Repeat focused checks, root/subpath artifact verification and both reviews against the corrected signed snapshot before publication.

@@ -90,13 +90,15 @@ try {
       .map((specifier) => new URL(specifier, new URL(file, base)).href),
   );
   for (const url of moduleUrls) assetFile(url);
-  const html = files
+  const moduleScripts = files
     .filter((file) => file.endsWith('.html'))
-    .map((file) => readFileSync(path.join(values.site, file), 'utf8'))
-    .join('\n');
-  const moduleScripts = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g)].map(
-    (match) => match[1],
-  );
+    .flatMap((file) =>
+      [
+        ...readFileSync(path.join(values.site, file), 'utf8').matchAll(
+          /<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g,
+        ),
+      ].map((match) => new URL(match[1], new URL(file, base)).href),
+    );
   requireCondition(moduleScripts.length > 0, 'No application script references');
   for (const url of moduleScripts) assetFile(url);
   console.info(
