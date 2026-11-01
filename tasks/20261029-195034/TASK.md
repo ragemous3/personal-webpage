@@ -12,7 +12,7 @@ At planning base `9cbe959120ab72d56e212ea27f9405992a4d6f58`, `npm run build` poi
 
 The [worker-build partial](../../layouts/_partials/build-js/configs/common/build-workers.html) fingerprints production worker assets. The application receives their paths through generated configuration. Removing a worker or changing its entry point needs a check of that output, not just a passing TypeScript unit test.
 
-The earlier planning branch was `docs/20261029-worker-refactor-tatrs`. Implementation has not started. This task concerns build verification, not deployment or a release.
+The earlier planning branch was `docs/20261029-worker-refactor-tatrs`. Implementation is complete through local verification and review; publication status is recorded below. This task concerns build verification, not deployment or a release.
 
 **What to build:** one reproducible production-site build that developers and CI run with the same toolchain, with checks that catch broken worker assets.
 
@@ -32,12 +32,12 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 
 ## Acceptance criteria
 
-- [ ] `npm run build` performs the documented production site build from a clean checkout using supported, reproducible tool versions and locked npm dependencies.
-- [ ] CI runs the same build and fails when it fails. A controlled missing worker entry or broken build configuration is detected by the agreed isolated check.
-- [ ] Verify the generated worker map and referenced worker assets, including production fingerprints and the supported deployment base path. Removed workers do not leave required entries or broken references.
-- [ ] Run the asset checks against the current worker topology. Isolated missing-entry, stale-reference and incorrect-base-path cases fail for the expected reason. Record the migration contract above without requiring future worker assets to exist.
-- [ ] Build inputs and outputs are explicit. Fresh and repeated builds do not depend on stale ignored `public/` assets; generated output, model caches and retrieval indices are not committed.
-- [ ] Report warnings and environmental limitations accurately. Distinguish a successful site build and asset validation from successful model loading or answers in a browser.
+- [x] `npm run build` performs the documented production site build from a clean checkout using supported, reproducible tool versions and locked npm dependencies.
+- [x] CI runs the same build and fails when it fails. A controlled missing worker entry or broken build configuration is detected by the agreed isolated check.
+- [x] Verify the generated worker map and referenced worker assets, including production fingerprints and the supported deployment base path. Removed workers do not leave required entries or broken references.
+- [x] Run the asset checks against the current worker topology. Isolated missing-entry, stale-reference and incorrect-base-path cases fail for the expected reason. Record the migration contract above without requiring future worker assets to exist.
+- [x] Build inputs and outputs are explicit. Fresh and repeated builds do not depend on stale ignored `public/` assets; generated output, model caches and retrieval indices are not committed.
+- [x] Report warnings and environmental limitations accurately. Distinguish a successful site build and asset validation from successful model loading or answers in a browser.
 
 ## Dependencies
 
@@ -48,11 +48,11 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have recorded commands, tool versions, source revision and output evidence.
-- [ ] Complete applicable repository checks, cleanup, reviews and the final full suite in the implementation flow. Report available CI results without waiting for CI unless requested.
-- [ ] Document the reproducible local/CI build. No deployment, release or model-quality claim is part of completion.
+- [x] All acceptance criteria have recorded commands, tool versions, source revision and output evidence.
+- [x] Complete applicable repository checks, cleanup, reviews and the final full suite in the implementation flow. Report available CI results without waiting for CI unless requested.
+- [x] Document the reproducible local/CI build. No deployment, release or model-quality claim is part of completion.
 
-Next action: inspect build inputs and choose the supported toolchain and production-asset checks before implementation.
+Planning-stage next action was to inspect build inputs and choose toolchain and production-asset checks; completed in the record below.
 
 ## Implementation record
 
@@ -79,3 +79,11 @@ Review preparation correction: restored the base lockfile's existing optional-pa
 Build instructions: [production build](../../docs/production-build.md). The final handoff will retain compact build logs and review/check results here.
 
 Review fix: both reviewers reproduced a nested-page script URL false pass in the initial checker. Both review approvals, blast-radius disposition and final-suite results were invalidated before the fix. Added failing positive/negative nested-page CLI regressions, then retained each HTML document URL when resolving script references. Repeat focused checks, root/subpath artifact verification and both reviews against the corrected signed snapshot before publication.
+
+### Final verification and handoff preparation
+
+Stages 4–6 passed at signed implementation snapshot `af30655f4f913c38ed2ab3486162a6277f3d1f42`, against fixed base `8ae94942540e4758ed63090659a93724f41cac6b`. Repeat Standards review: zero actionable findings. Repeat Spec review: zero actionable findings. The nested-page defect is fixed, and the base lockfile's pre-existing package records are unchanged. Deslop and the build-only runtime verification were repeated after the fix. The blast-radius skill was read; no real-data bulk/destructive operation is present, so its live-data checks do not apply.
+
+Final `npm test` after both reviews: **51 tests passed, 0 failed**, at that implementation SHA. `npm run lint`, `npm run typecheck`, nine focused CLI cases, authored-file Prettier and `git diff --check` passed. Retained build/install evidence is in [evidence/clean-install.log](evidence/clean-install.log), [evidence/clean-root.log](evidence/clean-root.log), [evidence/repeated.log](evidence/repeated.log) and [evidence/clean-subpath.log](evidence/clean-subpath.log). Commands and versions are in this record and the build instructions. The CI job invokes the tested commands; remote execution remains to be observed after publication and is not claimed as a local result.
+
+The PR body describes implementation snapshot `af30655f4f913c38ed2ab3486162a6277f3d1f42`, using the project template and a small build-flow diagram under show-me guidance. Only ticket evidence/status changed after the final test. Stage 7 next action: sign/push this evidence, create the PR, record its URL and close this ticket through the repository publication workflow. No merge or deployment is authorized.
