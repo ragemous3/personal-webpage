@@ -25,6 +25,11 @@
 {{- end -}}
 
 {{- $workerMap := hugo.Store.Get "workers" | default (dict) }}
+{{- if not hugo.IsDevelopment -}}
+  {{- $manifest := dict "baseURL" .params.SITE_PARAMS.baseURL "workers" $workerMap -}}
+  {{- $manifestResource := resources.FromString "data/workers.json" ($manifest | jsonify) -}}
+  {{- $manifestResource.Publish -}}
+{{- end -}}
 {{- $config := (dict
   "WORKER_NAMES" $workerMap
   "SITE_PARAMS" .params.SITE_PARAMS

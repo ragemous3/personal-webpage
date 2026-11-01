@@ -53,3 +53,23 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 - [ ] Document the reproducible local/CI build. No deployment, release or model-quality claim is part of completion.
 
 Next action: inspect build inputs and choose the supported toolchain and production-asset checks before implementation.
+
+## Implementation record
+
+Mode: Autopilot through PR handoff, explicitly approved 2026-11-01 for scoped implementation, tests, documentation/ticket updates, reviews, signed commits, branch push, PR creation and CI/review fixes. No merge or deployment is authorized. Branch: `build/20261029-195034-production-ci`. Fixed review base: `8ae94942540e4758ed63090659a93724f41cac6b`.
+
+Stage 2: scope is confirmed by the prepared ticket and Autopilot grant. Use Hugo Extended 0.158.0 (the recorded successful application baseline) and Node 24.19.0 with `npm ci`. Hugo was downloaded into an isolated temporary directory and verified against the official release checksum manifest. A baseline production build succeeds without generated retrieval data or model downloads; it reports existing missing taxonomy/term-layout warnings.
+
+Verification seams: `npm run build` is the end-to-end build entry; a worker asset validator CLI reads the emitted manifest and files, compares source entry points, checks fingerprints, module references and deployment paths. Focused tests run the CLI against isolated valid and corrupted sites. These are routine implementation choices within the approved Autopilot scope. Asset checks do not execute inference or prove offline availability.
+
+Criterion mapping: clean/repeated and subpath builds use `npm run build` and its base-URL override; asset failures use `node --test tests/production-assets.spec.js`; CI invokes the same build and focused checks; `npm run typecheck` and `npm run lint` cover repository compatibility. Final suite: `npm test`, after reviews. Runtime verification is the generated site's asset integrity at root and subpath; model/browser journeys belong to the next ticket.
+
+Next action: stage 3, implement the build and validator with failing CLI regression cases first.
+
+Stage 3 complete: `npm run build` now enforces pinned Node/Hugo versions, cleans public output, builds production assets with an isolated cache, and runs the asset validator. Hugo publishes a manifest from the application's own worker map. Seven public-CLI cases cover valid subpath output and corrupted maps/files/fingerprints/imports. CI installs the pinned toolchain and runs those checks plus root and subpath builds. Added locked postcss-cli: the fresh-source build exposed that Hugo's PostCSS executable was previously undeclared.
+
+Stage 4 evidence: clean source was exported from the staged index into an isolated directory with no generated retrieval data or model cache. `ONNXRUNTIME_NODE_INSTALL_CUDA=skip PUPPETEER_SKIP_DOWNLOAD=1 npm ci` installed successfully. An initial plain install attempted an irrelevant optional native CUDA download and failed at the environment's direct network boundary; the documented and CI install now explicitly skips it. Root, repeated and https://example.test/demo/ builds passed with four workers and five JavaScript assets each. A stale worker file planted in public was removed by the repeat build, and the repeat worker manifest matched byte-for-byte. Existing taxonomy/term-layout warnings remain. No models or retrieval indices were generated or downloaded.
+
+Deslop reviewed staged/unstaged changes against the fixed base; retained only build/asset validation and its tests/documentation. Product UI and inference are unchanged. Full browser/model journeys are inapplicable to this build-only ticket; static root/subpath artifact checks verify its runtime-facing contract. Blast-radius applicability: the only deletion is generated public output and this process's temporary build cache, not user or live data.
+
+Next action: sign the implementation snapshot, run independent Standards and Spec reviews, then final npm test and publish the PR through handoff.
