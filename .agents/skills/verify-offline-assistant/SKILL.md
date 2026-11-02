@@ -1,99 +1,81 @@
 ---
 name: verify-offline-assistant
-description: Verify the running personal-webpage Offline assistant through its browser UI before code review. Check prerequisites, drive mapped user journeys, retain evidence, and report blocked paths. This skill is a draft until its first successful live run.
+description: Run isolated native-browser verification of the Offline assistant, retain source-linked evidence, and distinguish controlled coordination checks from real application and model journeys.
 ---
 
 # Verify the Offline assistant
 
-**Draft: no successful live journey has been proved.** Track completion in [the verification ticket](../../../tasks/20261027-104746/TASK.md). The user chose to keep application fixes in their existing tickets. Use the terms in [GLOSSARY.md](../../../GLOSSARY.md).
+Use this skill after relevant implementation and before code review, as required by [the implementation flow](../../../docs/implementation-flow.md). Use [GLOSSARY.md](../../../GLOSSARY.md). [Its ticket](../../../tasks/20261027-104746/TASK.md) records which paths have been exercised and remaining product failures.
 
-The primary surface is the Hugo home page at `/`, with Lit components inside shadow roots. There is no implemented online service or Local/Online selector. Read [the feature map](features/README.md) and select the journeys affected by the change.
+The entry-open feature is proved on the real application in an offline initial condition. Model readiness, answer correctness and real-model cache reuse have separate requirements and are not implied by that result. Review the [feature map](features/README.md) before choosing a journey.
 
 ## Launch
 
-Run commands from the repository root. Restore dependencies from `package-lock.json` with `npm ci` when needed; this can download Puppeteer's browser. Discovery used Node 24.18.0. Hugo must support the [template system introduced in 0.146.0](https://gohugo.io/templates/new-templatesystem-overview/). This minimum does not establish that every later version builds the project.
+Use the Node/Hugo versions and dependency installation in [production-build.md](../../../docs/production-build.md). Install Chromium or set CHROME_PATH to an executable browser. The tools also detect system Chromium/Chrome or Puppeteer's downloaded browser.
 
-Run Doctor before launching. Stop and record missing prerequisites. Discovery found Hugo 0.92.2, missing dependencies, and no `static/content-data`. A question-and-answer journey also needs the model-worker and response-lifecycle tickets completed.
+Run from the repository root. Each invocation builds the current source into its own temporary directory, starts a loopback server on a free port, and owns its browser profile. It closes those resources and preserves evidence outside the temporary directory. It never attaches to an existing browser or server.
 
-The configured data files are `static/content-data/chunks.json`, `contents.bin`, and `vector-metadata.json`. They must come from the same résumé index. The generator in `scripts/create-index/` consumes `static/content-data/index.json`, produced by Hugo's JSON output. Its existing download helper removes the destination directory and uses a fixed port. Establish an isolated generation procedure before using it. Empty substitute data cannot satisfy a journey's preconditions.
-
-After prerequisites are available, use the documented dev flags with isolated output and cache directories. The launch recipe below is not yet proved. Choose a free port for each run; if binding fails, choose another rather than stopping another process.
-
-```bash
-VERIFY_PORT=43127
-VERIFY_EVIDENCE=$(mktemp -d /tmp/offline-assistant-evidence.XXXXXX)
-VERIFY_SCRATCH=$(mktemp -d /tmp/offline-assistant-runtime.XXXXXX)
-printf '%s\n' "$VERIFY_EVIDENCE"
-git rev-parse HEAD > "$VERIFY_EVIDENCE/head.txt"
-git status --short > "$VERIFY_EVIDENCE/worktree.txt"
-git diff HEAD --binary > "$VERIFY_EVIDENCE/worktree.patch"
-node .agents/skills/verify-offline-assistant/scripts/doctor.js > "$VERIFY_EVIDENCE/doctor.json"
+```sh
+npm run verify:browser -- --help
+node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey entry
+npm run verify:browser -- --mode entry --evidence /tmp/assistant-entry-unique
 ```
 
-Continue only if Doctor exits 0. Record the port, paths, and subsequent process ID.
-
-```bash
-HUGO_RESOURCEDIR="$VERIFY_SCRATCH/resources" hugo server \
-  --disableFastRender --ignoreCache --noHTTPCache \
-  --bind 127.0.0.1 --port "$VERIFY_PORT" \
-  --baseURL "http://127.0.0.1:$VERIFY_PORT/" \
-  --destination "$VERIFY_SCRATCH/public" --cacheDir "$VERIFY_SCRATCH/cache" \
-  --noBuildLock --disableLiveReload \
-  > "$VERIFY_EVIDENCE/server.log" 2>&1 &
-VERIFY_SERVER_PID=$!
-```
-
-Use a fresh browser profile per run to isolate IndexedDB, model caches, workers, and channels. Loopback HTTP supplies a secure context, but actual WebGPU availability and model loading still need a live check. First use may download configured models from Hugging Face. No paid API is part of this path.
-
-Launch completes only when the selected journey's UI is usable. An HTTP 200 or a server log line alone does not establish readiness. On a failed build, retain `server.log` and run Cleanup.
+Use a new evidence-directory name for every invocation. Existing evidence is never overwritten. Keep evidence outside generated site output. These commands build source; no deployment is performed.
 
 ## Doctor
 
-```bash
-node .agents/skills/verify-offline-assistant/scripts/doctor.js
-```
+`--journey entry` checks the toolchain, dependencies and browser required for the entry DOM journey. It reports missing résumé data as optional. `--journey answer` (the default) requires nonempty chunks.json, contents.bin and vector-metadata.json under static/content-data. A present file still needs consistency verification; only files from the same browser-compatible index can support real retrieval.
 
-This read-only prerequisite check reports Hugo compatibility, declared dependencies, PostCSS CLI availability, Puppeteer's browser executable, and résumé data files. Exit 1 means prerequisites are missing; exit 0 permits a launch attempt, not a claim that the app works. It installs nothing, starts no browser or server, and downloads no models.
-
-When an instance looks wrong, rerun Doctor, inspect the server log, and confirm the saved PID still identifies this run's Hugo command, port, and source directory. Do not attach to an unrelated server merely because it answers at the expected address.
+Doctor returns PREREQUISITES_PRESENT or BLOCKED and always sets runtimeVerified false. A prerequisite pass permits an attempt, not a feature claim. Do not invent an index or replace real models to make an application journey appear to pass.
 
 ## Drive
 
-Use Puppeteer, already declared in `package.json`. The [observation helper](scripts/observe.js) opens a fresh profile, captures the page, and optionally types or submits through the actual form. It does not inject services or invoke internal handlers.
+### Untouched application entry
 
-```bash
-node .agents/skills/verify-offline-assistant/scripts/observe.js \
-  "http://127.0.0.1:$VERIFY_PORT/" "$VERIFY_EVIDENCE/open" open
-node .agents/skills/verify-offline-assistant/scripts/observe.js \
-  "http://127.0.0.1:$VERIFY_PORT/" "$VERIFY_EVIDENCE/type" type
-node .agents/skills/verify-offline-assistant/scripts/observe.js \
-  "http://127.0.0.1:$VERIFY_PORT/" "$VERIFY_EVIDENCE/send" send
+`--mode entry` serves the production build unchanged and opens it in a fresh profile with external DNS blocked. It requires the actual question input and Send button to be visible through the production shadow roots, captures their state and a screenshot, and reports entry-open only. Disabled controls during initialization are expected. It does not type a question, claim model readiness or download model weights. This is an explicit offline initial condition, not a mocked service.
+
+### Native coordination baseline
+
+```sh
+npm run verify:browser -- --mode controlled --evidence /tmp/assistant-coordination-unique
 ```
 
-Browser execution is unproved. Each command repeats model startup in a fresh profile. Exit 0 means observations were captured, not that the feature passed. Assess the feature map's expected results. Use a persistent Puppeteer session for long model loading; wait for observed state transitions with an explicit timeout, not an assumed download duration.
+This mode serves the unmodified built hub and state SharedWorker in native browser contexts. Only generation/retrieval model workers are deterministic fixtures. The probe exercises transport and coordination directly, not RagService or the full question UI. Controlled outputs never establish real inference, retrieval quality or model cancellation performance.
+
+The cases cover first-tab requests, retrieval/generation transport, joining tabs, competing claims, cancellation transport, close/crash, freeze/resume, navigation/back, worker self-close and initialization retry. Each isolated context retains native CDP target identities/counts, model-instance/initialization events and port messages. Library/internal browser targets are distinct from application workers. An exception alone is not worker termination: the self-close case also waits for the native worker target to disappear. The crash case requires a page crash event; it does not claim that only one OS process was affected.
+
+By default, observed failures return exit 1. Add `--baseline` only when recording known current product failures. It permits completion with FAIL/BLOCKED scenarios but preserves every verdict and never permits a tool/cleanup ERROR. Do not use this option as a green product gate. Product failures belong to the runtime ticket. Future three-SharedWorker/reconnect scenarios are explicitly BLOCKED migration definitions, not passing tests of the old topology.
+
+### Real-model cache restart
+
+```sh
+node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey answer
+npm run verify:browser -- --mode cache --evidence /tmp/assistant-cache-unique
+```
+
+This mode first requires the actual retrieval files. It then attempts a question with the configured real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS is blocked on restart while the owned loopback site remains reachable. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records are labelled with their scope; DNS blocking applies to worker requests too. No model download count is inferred from page-only request events.
+
+A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
 
 ## Evidence
 
-Keep evidence separate from runtime scratch files. Record feature ID, URL, source revision and dirty/untracked changes, commands, browser/Hugo versions, preconditions, actions, expected and actual results, and verdict. Use `PASS`, `FAIL`, or `BLOCKED`; name the missing prerequisite for `BLOCKED`.
+The runner writes evidence.json with mode, source revision/worktree status, production worker hashes, build output, browser version, per-scenario verdicts and cleanup. Screenshots are retained locally; evidence PNGs stay ignored. Commit small evidence and runner source required to reproduce findings, not model caches, profiles or generated indices.
 
-Capture the action and resulting UI, console errors, failed requests, and screenshots. Compare displayed answers with résumé source content. Check required storage or other side effects separately; an input echo or download is not proof of an answer. No user credentials or seed accounts are required.
+A scenario PASS proves only its stated observation. Keep application entry, controlled coordination and real-model results separate. Read FAIL reasons and BLOCKED prerequisites before deciding whether the implementing ticket can advance. A harness can be complete with accurately reported product failures; an implementing product ticket cannot treat those failures as passes.
 
-Mocks in `tests/browser-workers.fixture.js` establish wiring behavior only. They cannot replace runtime proof. Before promoting this draft, complete one mapped journey, run Cleanup, confirm evidence still exists, and record which other journeys remain unverified.
+The public report seam can assess an explicit observation trace:
+
+```sh
+npm run verify:browser -- --assess /tmp/observations.json
+```
+
+The input contains mode and events. Request events carry client and requestId; initialization/recovery events carry role. Reports detect stranded/misrouted work, repeated initialization, stale readiness and overlapping recovery. These reports verify supplied observations, not invisible lifecycle events. Repeated initialization is assessed within one runtime observation window, not across legitimate browser restarts. Empty observations return BLOCKED. Focused tests exercise deliberately broken traces so these failures cannot silently look successful.
 
 ## Cleanup
 
-The observation helper closes only its own browser and removes only its fresh profile, including on failure. It retains the evidence directory. In the same shell session that launched Hugo, stop and wait for the saved child PID:
-
-```bash
-kill "$VERIFY_SERVER_PID"
-wait "$VERIFY_SERVER_PID"
-```
-
-If resuming elsewhere, verify process identity first; a PID can be reused. Remove only this run's `VERIFY_SCRATCH` after the server exits. Keep `VERIFY_EVIDENCE`. Check that no owned server remains and reports, logs, and screenshots still exist. Repeat cleanup after failed attempts.
+The runner closes its own browser contexts/browser and server and removes only its own temporary directory. Evidence remains outside that directory. A cleanup error makes the invocation ERROR. Inspect cleanup fields before accepting a run. If a process is interrupted externally, identify its recorded owned browser/profile/server before cleaning it up; never kill another instance based on a shared port or name.
 
 ## Helpers
 
-- `node .agents/skills/verify-offline-assistant/scripts/doctor.js`: read-only prerequisite report; validated against this blocked checkout.
-- `node .agents/skills/verify-offline-assistant/scripts/observe.js --help`: browser command usage. Browser execution awaits the recorded prerequisites.
-
-Update the map when implemented UI or selectors change, then rerun the affected journey. Upstream `/maintain-verification-skill` provides a maintenance workflow, but is not installed here and is not required by this draft.
+The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The older [observe.js](scripts/observe.js) helper captures an existing owned loopback instance for manual exploration; its exit code and brief capture window do not provide a feature verdict. Prefer the isolated runner for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.

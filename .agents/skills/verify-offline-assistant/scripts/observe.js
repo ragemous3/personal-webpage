@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -29,7 +30,15 @@ try {
   const require = createRequire(path.join(process.cwd(), 'package.json'));
   const { default: puppeteer } = await import(require.resolve('puppeteer'));
   profile = await mkdtemp(path.join(tmpdir(), 'offline-assistant-browser-'));
-  browser = await puppeteer.launch({ headless: true, userDataDir: profile });
+  browser = await puppeteer.launch({
+    headless: true,
+    userDataDir: profile,
+    executablePath:
+      process.env.CHROME_PATH ??
+      ['/usr/bin/chromium', '/usr/bin/google-chrome'].find((candidate) => existsSync(candidate)) ??
+      puppeteer.executablePath(),
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
   result.browser = await browser.version();
   page = await browser.newPage();
   page.on('console', (message) =>

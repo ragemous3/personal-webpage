@@ -1,0 +1,22 @@
+[
+  {
+    "name": "three-shared-worker-topology",
+    "requires": "RuntimeCoordinator migration",
+    "expected": "One coordinator, one generation and one retrieval application SharedWorker; joining tabs cause no duplicate initialization."
+  },
+  {
+    "name": "queued-cancellation",
+    "requires": "Shared generation queue",
+    "expected": "A cancelled queued request never starts; stopping is acknowledged accurately and later requests progress."
+  },
+  {
+    "name": "coordinator-model-failure-recovery",
+    "requires": "RuntimeCoordinator failure protocol",
+    "expected": "Observed coordinator or model termination fails affected work without stale readiness or stranded requests; healthy resources survive where possible."
+  },
+  {
+    "name": "concurrent-reconnect",
+    "requires": "Reconnect UI",
+    "expected": "Something went wrong and an unstyled reconnect button; concurrent clicks share one recovery attempt, keep history and do not replay the interrupted question."
+  }
+]
