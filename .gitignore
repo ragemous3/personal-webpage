@@ -57,7 +57,7 @@ Thumbs.db
 # Misc
 #######################################
 coverage/
-**/evidence/*.png
+**/evidence/**/*.png
 tmp/
 temp/
 .cache/

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -20,10 +20,6 @@ if (values.help) {
 }
 if (values.assess && !values.help) {
   const report = assessObservations(JSON.parse(readFileSync(values.assess, 'utf8')));
-  writeFileSync(
-    path.join(path.dirname(values.assess), 'report.json'),
-    JSON.stringify(report, null, 2),
-  );
   console.info(JSON.stringify(report));
   process.exitCode = report.verdict === 'PASS' ? 0 : 1;
 }

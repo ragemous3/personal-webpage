@@ -8,13 +8,43 @@ const recordRecovery = (state, event) => {
     state.findings.push({ code: 'overlapping-recovery', role: event.role });
   state.recovery.add(event.role);
 };
+const recordTerminal = (state, event) => {
+  const key = `${event.client}:${event.requestId}`;
+  if (!state.pending.has(key))
+    state.findings.push({
+      code: 'unexpected-response',
+      client: event.client,
+      requestId: event.requestId,
+    });
+  state.pending.delete(key);
+};
+const eventFields = {
+  accepted: ['client', 'requestId'],
+  answer: ['client', 'requestId'],
+  stopped: ['client', 'requestId'],
+  error: ['client', 'requestId'],
+  initialized: ['role'],
+  'worker-stopped': ['role'],
+  'recovery-start': ['role'],
+  'recovery-end': ['role'],
+};
+const supportedEvents = (events) =>
+  Array.isArray(events)
+    ? events.filter((event) => event && Object.hasOwn(eventFields, event.type))
+    : [];
+const validEvent = (event) =>
+  eventFields[event.type].every(
+    (field) => typeof event[field] === 'string' && event[field].trim().length > 0,
+  ) &&
+  (event.type !== 'worker-stopped' || typeof event.ready === 'boolean');
+
 const recordEvent = (state, event) => {
   const key = `${event.client}:${event.requestId}`;
   const handlers = {
     accepted: () => state.pending.set(key, event),
-    answer: () => state.pending.delete(key),
-    stopped: () => state.pending.delete(key),
-    error: () => state.pending.delete(key),
+    answer: () => recordTerminal(state, event),
+    stopped: () => recordTerminal(state, event),
+    error: () => recordTerminal(state, event),
     initialized: () => recordInitialization(state, event),
     'worker-stopped': () => {
       if (event.ready === true) state.findings.push({ code: 'stale-readiness', role: event.role });
@@ -25,15 +55,16 @@ const recordEvent = (state, event) => {
   handlers[event.type]?.();
 };
 export const assessObservations = ({ mode, events }) => {
-  if (!Array.isArray(events) || events.length === 0)
+  const observed = supportedEvents(events);
+  if (observed.length === 0 || !observed.every((event) => validEvent(event)))
     return {
       mode,
       inferenceVerified: false,
       verdict: 'BLOCKED',
-      findings: [{ code: 'no-observations' }],
+      findings: [{ code: 'unusable-observations' }],
     };
   const state = { findings: [], pending: new Map(), loads: new Map(), recovery: new Set() };
-  for (const event of events) recordEvent(state, event);
+  for (const event of observed) recordEvent(state, event);
   for (const event of state.pending.values())
     state.findings.push({
       code: 'stranded-request',

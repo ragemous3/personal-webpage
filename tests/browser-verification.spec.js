@@ -16,7 +16,7 @@ const assess = (context, observations) => {
   });
   return {
     ...result,
-    report: () => JSON.parse(readFileSync(path.join(directory, 'report.json'), 'utf8')),
+    report: () => JSON.parse(result.stdout),
   };
 };
 
@@ -93,4 +93,49 @@ test('verification CLI does not report an empty observation as a pass', (context
   const result = assess(context, { mode: 'controlled', events: [] });
   assert.equal(result.status, 1);
   assert.equal(result.report().verdict, 'BLOCKED');
+});
+
+for (const [name, events, expected] of [
+  ['unknown-only events', [{ type: 'unrecognized' }], 'BLOCKED'],
+  ['requests without identities', [{ type: 'accepted' }, { type: 'answer' }], 'BLOCKED'],
+  [
+    'delivery to both correct and wrong clients',
+    [
+      { type: 'accepted', client: 'one', requestId: 'q' },
+      { type: 'answer', client: 'one', requestId: 'q' },
+      { type: 'answer', client: 'two', requestId: 'q' },
+    ],
+    'FAIL',
+  ],
+  [
+    'duplicate terminal delivery',
+    [
+      { type: 'accepted', client: 'one', requestId: 'q' },
+      { type: 'answer', client: 'one', requestId: 'q' },
+      { type: 'answer', client: 'one', requestId: 'q' },
+    ],
+    'FAIL',
+  ],
+]) {
+  test(`verification CLI refuses to pass ${name}`, (context) => {
+    const result = assess(context, { mode: 'controlled', events });
+    assert.equal(result.status, 1);
+    assert.equal(result.report().verdict, expected);
+  });
+}
+
+test('assessment preserves its input and existing reports', (context) => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'verification-preserve-'));
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'report.json');
+  const observations = JSON.stringify({
+    mode: 'controlled',
+    events: [{ type: 'initialized', role: 'generation' }],
+  });
+  writeFileSync(input, observations);
+  const result = spawnSync(process.execPath, [cli.pathname, '--assess', input], {
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(input, 'utf8'), observations);
 });

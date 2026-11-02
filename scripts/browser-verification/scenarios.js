@@ -32,6 +32,22 @@ const message = async (page, task, channel = 'hub') => {
     { task, channel },
   );
 };
+const queryResult = async (page, requestId) => {
+  const handle = await page.waitForFunction(
+    (id) =>
+      globalThis.probe.events.find(
+        ({ data }) =>
+          (data.task === 'llm:message:response' && data.requestId === id) ||
+          (data.task === 'hub:query' && data.error && data.payload?.requestId === id),
+      ),
+    { timeout: 2000, polling: 25 },
+    requestId,
+  );
+  const event = await handle.jsonValue();
+  await handle.dispose();
+  return event.data;
+};
+
 const owner = async (context, origin) => {
   const page = await open(context, origin);
   await page.evaluate(() => globalThis.probe.check());
@@ -47,7 +63,7 @@ const definitions = [
     async ({ context, origin }) => {
       const a = await owner(context, origin);
       await a.evaluate(() => globalThis.probe.query('one', { question: 'alpha' }));
-      const answer = await message(a, 'llm:message:response');
+      const answer = await queryResult(a, 'one');
       assert.equal(answer.payload.generated_text, 'Controlled alpha');
       assert.equal(answer.requestId, 'one');
       assert.equal(answer.id, await a.evaluate(() => globalThis.probe.client));
@@ -92,18 +108,28 @@ const definitions = [
   [
     'second-tab-request-isolation',
     async ({ context, origin }) => {
-      await owner(context, origin);
+      const a = await owner(context, origin);
       const b = await open(context, origin);
       await b.evaluate(() => {
         globalThis.probe.check();
         globalThis.probe.query('second', { question: 'beta' });
       });
-      const result = await message(b, 'hub:query');
+      const result = await queryResult(b, 'second');
       assert.equal(
         result.error,
         undefined,
         'Joining tab cannot route its request to the shared model',
       );
+      assert.equal(result.task, 'llm:message:response');
+      assert.equal(result.requestId, 'second');
+      assert.equal(result.id, await b.evaluate(() => globalThis.probe.client));
+      assert.equal(result.payload.generated_text, 'Controlled beta');
+      const leaked = await a.evaluate(() =>
+        globalThis.probe.events.some(
+          ({ data }) => data.task === 'llm:message:response' && data.requestId === 'second',
+        ),
+      );
+      assert.equal(leaked, false, 'Answer leaked to another tab');
     },
   ],
   [

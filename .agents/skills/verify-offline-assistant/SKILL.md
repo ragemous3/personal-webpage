@@ -70,7 +70,7 @@ The public report seam can assess an explicit observation trace:
 npm run verify:browser -- --assess /tmp/observations.json
 ```
 
-The input contains mode and events. Request events carry client and requestId; initialization/recovery events carry role. Reports detect stranded/misrouted work, repeated initialization, stale readiness and overlapping recovery. These reports verify supplied observations, not invisible lifecycle events. Repeated initialization is assessed within one runtime observation window, not across legitimate browser restarts. Empty observations return BLOCKED. Focused tests exercise deliberately broken traces so these failures cannot silently look successful.
+The input contains mode and events. Request events carry client and requestId; initialization/recovery events carry role. Reports detect stranded/misrouted work, repeated initialization, stale readiness and overlapping recovery. These reports verify supplied observations, not invisible lifecycle events. Repeated initialization is assessed within one runtime observation window, not across legitimate browser restarts. Empty, unsupported-only or identity-less observations return BLOCKED. Unmatched or duplicate terminal delivery fails, including answers leaked after the correct client has already completed. The assessment prints JSON to stdout and never writes over an input or existing report; redirect it to a new file if needed. Focused tests exercise deliberately broken traces so these failures cannot silently look successful.
 
 ## Cleanup
 
