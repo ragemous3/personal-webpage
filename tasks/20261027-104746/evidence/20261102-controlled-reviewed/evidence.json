@@ -1,0 +1,2074 @@
+{
+  "mode": "controlled",
+  "sourceRevision": "37e73812f332f65edb5a304fdd02c58e37a7a1f7",
+  "sourceChanges": "",
+  "inferenceVerified": false,
+  "started": "2026-11-02T13:49:54.756Z",
+  "scenarios": [
+    {
+      "name": "first-tab-answer",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "PASS",
+      "targets": [
+        {
+          "targetId": "2BBFA70E7560556EFBD4ED58575416EB",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "3B54CA7E28A60B71AD3314F384A6CB7F"
+        },
+        {
+          "targetId": "8ACC727F20FDFFD0E9D38F12C12C711F",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "288336954EEAB33EE9D983516EF24EC8",
+          "canAccessOpener": false,
+          "parentFrameId": "288336954EEAB33EE9D983516EF24EC8",
+          "browserContextId": "3B54CA7E28A60B71AD3314F384A6CB7F"
+        },
+        {
+          "targetId": "25F7947B8E5F7144725185FA47F9687A",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "8ACC727F20FDFFD0E9D38F12C12C711F",
+          "canAccessOpener": false,
+          "parentFrameId": "288336954EEAB33EE9D983516EF24EC8",
+          "browserContextId": "3B54CA7E28A60B71AD3314F384A6CB7F"
+        },
+        {
+          "targetId": "288336954EEAB33EE9D983516EF24EC8",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "3B54CA7E28A60B71AD3314F384A6CB7F"
+        }
+      ],
+      "pages": [
+        {
+          "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627396643
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627396706
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627396827
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                "name": "llm",
+                "task": "llm:stream:response",
+                "requestId": "one",
+                "payload": "Controlled alpha"
+              },
+              "at": 1793627396846
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+                "name": "llm",
+                "task": "llm:message:response",
+                "requestId": "one",
+                "payload": {
+                  "generated_text": "Controlled alpha"
+                }
+              },
+              "at": 1793627396865
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+          "role": "llm.worker.ts",
+          "at": 1793627396825,
+          "type": "created"
+        },
+        {
+          "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+          "role": "llm.worker.ts",
+          "at": 1793627396826,
+          "type": "initialized",
+          "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e"
+        },
+        {
+          "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+          "role": "llm.worker.ts",
+          "at": 1793627396844,
+          "type": "accepted",
+          "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+          "requestId": "one"
+        },
+        {
+          "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+          "role": "llm.worker.ts",
+          "at": 1793627396865,
+          "type": "answer",
+          "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+          "requestId": "one"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "retrieval-generation-transport",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "PASS",
+      "targets": [
+        {
+          "targetId": "766BF7C6A412361D34E6CE16719A74D1",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "FA43AD6E50A4C7A2A4820EFD45848829"
+        },
+        {
+          "targetId": "ECBDD1074E43819F74695F187C6DA1D8",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "6E0FE751BF327BBCAD5090575E008386",
+          "canAccessOpener": false,
+          "parentFrameId": "6E0FE751BF327BBCAD5090575E008386",
+          "browserContextId": "FA43AD6E50A4C7A2A4820EFD45848829"
+        },
+        {
+          "targetId": "6D8412454D29319186D5CAAFB66CB0D2",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/vectordb.worker.1804410a834168f8df79141006edd23cceda7bac908c1b1f7422638b6fc2566b.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/vectordb.worker.1804410a834168f8df79141006edd23cceda7bac908c1b1f7422638b6fc2566b.js",
+          "attached": true,
+          "parentId": "ECBDD1074E43819F74695F187C6DA1D8",
+          "canAccessOpener": false,
+          "parentFrameId": "6E0FE751BF327BBCAD5090575E008386",
+          "browserContextId": "FA43AD6E50A4C7A2A4820EFD45848829"
+        },
+        {
+          "targetId": "E3444D4E3197FCF9AAC5C5763A79B384",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "ECBDD1074E43819F74695F187C6DA1D8",
+          "canAccessOpener": false,
+          "parentFrameId": "6E0FE751BF327BBCAD5090575E008386",
+          "browserContextId": "FA43AD6E50A4C7A2A4820EFD45848829"
+        },
+        {
+          "targetId": "6E0FE751BF327BBCAD5090575E008386",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "FA43AD6E50A4C7A2A4820EFD45848829"
+        }
+      ],
+      "pages": [
+        {
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627397327
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627397341
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627397428
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "vectordb",
+                "task": "vectordb:ready",
+                "payload": null
+              },
+              "at": 1793627397497
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "vectordb",
+                "task": "vectordb:query:response",
+                "requestId": "retrieval",
+                "payload": {
+                  "response": {
+                    "neighbors": [
+                      0
+                    ],
+                    "distances": [
+                      0.1
+                    ]
+                  },
+                  "query": "context"
+                }
+              },
+              "at": 1793627397509
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "llm",
+                "task": "llm:stream:response",
+                "requestId": "generation",
+                "payload": "Controlled context-backed"
+              },
+              "at": 1793627397523
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+                "name": "llm",
+                "task": "llm:message:response",
+                "requestId": "generation",
+                "payload": {
+                  "generated_text": "Controlled context-backed"
+                }
+              },
+              "at": 1793627397543
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+          "role": "llm.worker.ts",
+          "at": 1793627397416,
+          "type": "created"
+        },
+        {
+          "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+          "role": "llm.worker.ts",
+          "at": 1793627397424,
+          "type": "initialized",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a"
+        },
+        {
+          "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+          "role": "vectordb.worker.ts",
+          "at": 1793627397469,
+          "type": "created"
+        },
+        {
+          "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+          "role": "vectordb.worker.ts",
+          "at": 1793627397475,
+          "type": "initialized",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a"
+        },
+        {
+          "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+          "role": "vectordb.worker.ts",
+          "at": 1793627397507,
+          "type": "accepted",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+          "requestId": "retrieval"
+        },
+        {
+          "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+          "role": "vectordb.worker.ts",
+          "at": 1793627397508,
+          "type": "answer",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+          "requestId": "retrieval"
+        },
+        {
+          "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+          "role": "llm.worker.ts",
+          "at": 1793627397522,
+          "type": "accepted",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+          "requestId": "generation"
+        },
+        {
+          "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+          "role": "llm.worker.ts",
+          "at": 1793627397543,
+          "type": "answer",
+          "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+          "requestId": "generation"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 1
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 1
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "owner-renderer-crash",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Waiting failed: 2000ms exceeded",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "32D105790CD6EDE053DB4DC17F112302",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "8865470D3415B685351D1AFA69DC2CD6",
+          "canAccessOpener": false,
+          "parentFrameId": "8865470D3415B685351D1AFA69DC2CD6",
+          "browserContextId": "86B9E55988A5BD316493D8E9A26C5EF0"
+        },
+        {
+          "targetId": "8865470D3415B685351D1AFA69DC2CD6",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "86B9E55988A5BD316493D8E9A26C5EF0"
+        },
+        {
+          "targetId": "B19F347535BEBD318975CE23BDC17A4F",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "86B9E55988A5BD316493D8E9A26C5EF0"
+        }
+      ],
+      "pages": [
+        {
+          "client": "dd38a8cf-151d-412e-a756-cb35895d75da",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "dd38a8cf-151d-412e-a756-cb35895d75da",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627398228
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "eedc32dd-f3ff-4df7-9f2a-332ab13f7077",
+          "role": "llm.worker.ts",
+          "at": 1793627398004,
+          "type": "created"
+        },
+        {
+          "instance": "eedc32dd-f3ff-4df7-9f2a-332ab13f7077",
+          "role": "llm.worker.ts",
+          "at": 1793627398009,
+          "type": "initialized",
+          "client": "32f548d1-3dd3-43a9-9213-c0862a4f2615"
+        },
+        {
+          "type": "renderer-crash-observed",
+          "at": 1793627398260
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 0,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "second-tab-request-isolation",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Joining tab cannot route its request to the shared model\n+ actual - expected\n\n+ {\n+   message: '[ERROR] - Expected a defined worker!',\n+   name: '[ERROR]Error',\n+   stack: 'Error: [ERROR] - Expected a defined worker!\\n' +\n+     '    at postToWorker (http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js:117:11)\\n' +\n+     '    at onmessage (http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js:130:31)'\n+ }\n- undefined\n",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "E9906FA30E3BBD5BD1EE437B3749DE2D",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        },
+        {
+          "targetId": "49A2E5456F81644CA5B5CD185BFDC444",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "F30EB095D1280D80126E3EA273C2742B",
+          "canAccessOpener": false,
+          "parentFrameId": "0EBD5A1A8BDF03CC63D5324DF82FA037",
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        },
+        {
+          "targetId": "F30EB095D1280D80126E3EA273C2742B",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "0EBD5A1A8BDF03CC63D5324DF82FA037",
+          "canAccessOpener": false,
+          "parentFrameId": "0EBD5A1A8BDF03CC63D5324DF82FA037",
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        },
+        {
+          "targetId": "FEB5CF95A994DAAFE2E87C3C5296FE76",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "0D7DC40A4C2E5D287E40B78B3267BDC4",
+          "canAccessOpener": false,
+          "parentFrameId": "0D7DC40A4C2E5D287E40B78B3267BDC4",
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        },
+        {
+          "targetId": "0D7DC40A4C2E5D287E40B78B3267BDC4",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        },
+        {
+          "targetId": "0EBD5A1A8BDF03CC63D5324DF82FA037",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "1D77819374755407B56ECACF375EBA4A"
+        }
+      ],
+      "pages": [
+        {
+          "client": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627400552
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627400561
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627400607
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "30edb15d-4c83-44fb-8815-4481f38fe048",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                  "entity": "llm",
+                  "status": "BUSY"
+                }
+              },
+              "at": 1793627400849
+            }
+          ]
+        },
+        {
+          "client": "30edb15d-4c83-44fb-8815-4481f38fe048",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "30edb15d-4c83-44fb-8815-4481f38fe048",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627400836
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "30edb15d-4c83-44fb-8815-4481f38fe048",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "5e0e3379-8505-44bd-821d-ea3b86b2176e",
+                  "entity": "llm",
+                  "status": "BUSY"
+                }
+              },
+              "at": 1793627400849
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "30edb15d-4c83-44fb-8815-4481f38fe048",
+                "name": "hub",
+                "task": "hub:query",
+                "payload": {
+                  "id": "30edb15d-4c83-44fb-8815-4481f38fe048",
+                  "name": "llm",
+                  "task": "llm:query",
+                  "requestId": "second",
+                  "payload": {
+                    "question": "beta"
+                  }
+                },
+                "error": {
+                  "name": "[ERROR]Error",
+                  "message": "[ERROR] - Expected a defined worker!",
+                  "stack": "Error: [ERROR] - Expected a defined worker!\n    at postToWorker (http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js:117:11)\n    at onmessage (http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js:130:31)"
+                }
+              },
+              "at": 1793627400849
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "4479fce6-0f06-4159-a758-8c4e13fa9117",
+          "role": "llm.worker.ts",
+          "at": 1793627400605,
+          "type": "created"
+        },
+        {
+          "instance": "4479fce6-0f06-4159-a758-8c4e13fa9117",
+          "role": "llm.worker.ts",
+          "at": 1793627400607,
+          "type": "initialized",
+          "client": "5e0e3379-8505-44bd-821d-ea3b86b2176e"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 2,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "simultaneous-claim-routing",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "First claimant receives BUSY after another port consumes its claim\n+ actual - expected\n\n+ 'BUSY'\n- 'UNINITIALIZED'\n",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "2784CDE93352ADD6CDCF3C3886EABA17",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "40CEE91F35E63C872C4C836E95E06C1C"
+        },
+        {
+          "targetId": "0214609449DFC5DAA2123D9FD991F57A",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "806784E5F2917AB16E8492675DA3672C",
+          "canAccessOpener": false,
+          "parentFrameId": "806784E5F2917AB16E8492675DA3672C",
+          "browserContextId": "40CEE91F35E63C872C4C836E95E06C1C"
+        },
+        {
+          "targetId": "BD2A8D502FC58D61720CAA298D7F88CD",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "645FE1D9F2AC846262258E6A68D5367A",
+          "canAccessOpener": false,
+          "parentFrameId": "645FE1D9F2AC846262258E6A68D5367A",
+          "browserContextId": "40CEE91F35E63C872C4C836E95E06C1C"
+        },
+        {
+          "targetId": "806784E5F2917AB16E8492675DA3672C",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "40CEE91F35E63C872C4C836E95E06C1C"
+        },
+        {
+          "targetId": "645FE1D9F2AC846262258E6A68D5367A",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "40CEE91F35E63C872C4C836E95E06C1C"
+        }
+      ],
+      "pages": [
+        {
+          "client": "662e0b12-430b-4222-8883-a8af87c8de0f",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "662e0b12-430b-4222-8883-a8af87c8de0f",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627401331
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627401632
+            }
+          ]
+        },
+        {
+          "client": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627401630
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "0b0620ba-3b3b-4c60-a6e5-f799c9529c28",
+                  "entity": "llm",
+                  "status": "BUSY"
+                }
+              },
+              "at": 1793627401633
+            }
+          ]
+        }
+      ],
+      "events": [],
+      "workerCounts": {
+        "hub.worker.ts": 2,
+        "llm.worker.ts": 0,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 0,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "active-cancellation-transport",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "PASS",
+      "targets": [
+        {
+          "targetId": "6BD5857083829CB56A2794EEC0FFCB00",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "DF935F3F379193865A004F7F5BD119AE"
+        },
+        {
+          "targetId": "FBD1FDBB6041A00077847BA1A89CD4F0",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "7FAE2272528B129A931ADB48C9F21F0F",
+          "canAccessOpener": false,
+          "parentFrameId": "DF9A63757CC6ECBF4BAA698386C15B3D",
+          "browserContextId": "DF935F3F379193865A004F7F5BD119AE"
+        },
+        {
+          "targetId": "7FAE2272528B129A931ADB48C9F21F0F",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "DF9A63757CC6ECBF4BAA698386C15B3D",
+          "canAccessOpener": false,
+          "parentFrameId": "DF9A63757CC6ECBF4BAA698386C15B3D",
+          "browserContextId": "DF935F3F379193865A004F7F5BD119AE"
+        },
+        {
+          "targetId": "DF9A63757CC6ECBF4BAA698386C15B3D",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "DF935F3F379193865A004F7F5BD119AE"
+        }
+      ],
+      "pages": [
+        {
+          "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627402043
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627402055
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627402109
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+                "name": "llm",
+                "task": "llm:stream:response",
+                "requestId": "cancel-me",
+                "payload": "Controlled answer"
+              },
+              "at": 1793627402135
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+          "role": "llm.worker.ts",
+          "at": 1793627402107,
+          "type": "created"
+        },
+        {
+          "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+          "role": "llm.worker.ts",
+          "at": 1793627402108,
+          "type": "initialized",
+          "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38"
+        },
+        {
+          "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+          "role": "llm.worker.ts",
+          "at": 1793627402134,
+          "type": "accepted",
+          "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+          "requestId": "cancel-me"
+        },
+        {
+          "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+          "role": "llm.worker.ts",
+          "at": 1793627402148,
+          "type": "stopped",
+          "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+          "requestId": "cancel-me"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "owner-close-departure",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Closed owner leaves a stale BUSY claim\n+ actual - expected\n\n+ 'BUSY'\n- 'UNINITIALIZED'\n",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "0AB600ADD312590FB8AD5725DA40B088",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "548D98791048C03327A335761907DEE8"
+        },
+        {
+          "targetId": "A8E927DBAABAFC811DA13D1D4F400EC8",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "A24B86663DEDB592E8933B7BB101DC31",
+          "canAccessOpener": false,
+          "parentFrameId": "A24B86663DEDB592E8933B7BB101DC31",
+          "browserContextId": "548D98791048C03327A335761907DEE8"
+        },
+        {
+          "targetId": "A24B86663DEDB592E8933B7BB101DC31",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "548D98791048C03327A335761907DEE8"
+        }
+      ],
+      "pages": [
+        {
+          "client": "aa315201-5dcd-42d0-9f36-bd724331d365",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "aa315201-5dcd-42d0-9f36-bd724331d365",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627403434
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "aa315201-5dcd-42d0-9f36-bd724331d365",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "027a7917-7109-44de-a060-83888fbb97a1",
+                  "entity": "llm",
+                  "status": "BUSY"
+                }
+              },
+              "at": 1793627403451
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "64ff51e6-80e4-4fd1-837b-6175a015c29d",
+          "role": "llm.worker.ts",
+          "at": 1793627403245,
+          "type": "created"
+        },
+        {
+          "instance": "64ff51e6-80e4-4fd1-837b-6175a015c29d",
+          "role": "llm.worker.ts",
+          "at": 1793627403246,
+          "type": "initialized",
+          "client": "027a7917-7109-44de-a060-83888fbb97a1"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 0,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "freeze-retains-accepted-work",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Observation deadline exceeded (2000 ms)",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "758C22FFF4587BCCEFC637A675B3A1DD",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "2BF0037FDDE4D27BC70E1CA4515E01AC"
+        },
+        {
+          "targetId": "FCF0A2DC6B94B5ECDA839A142AAE040C",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "052255045982BF2EDCBE28B4AB1A3313",
+          "canAccessOpener": false,
+          "parentFrameId": "052255045982BF2EDCBE28B4AB1A3313",
+          "browserContextId": "2BF0037FDDE4D27BC70E1CA4515E01AC"
+        },
+        {
+          "targetId": "0C4EE1CBFC746038D988FEA04EB9E275",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "FCF0A2DC6B94B5ECDA839A142AAE040C",
+          "canAccessOpener": false,
+          "parentFrameId": "052255045982BF2EDCBE28B4AB1A3313",
+          "browserContextId": "2BF0037FDDE4D27BC70E1CA4515E01AC"
+        },
+        {
+          "targetId": "052255045982BF2EDCBE28B4AB1A3313",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "2BF0037FDDE4D27BC70E1CA4515E01AC"
+        }
+      ],
+      "pages": [
+        {
+          "client": "50ce760b-21bd-416a-8427-95438364df1d",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "50ce760b-21bd-416a-8427-95438364df1d",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627403798
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "50ce760b-21bd-416a-8427-95438364df1d",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "50ce760b-21bd-416a-8427-95438364df1d",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627403808
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "50ce760b-21bd-416a-8427-95438364df1d",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627403831
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "50ce760b-21bd-416a-8427-95438364df1d",
+                "name": "llm",
+                "task": "llm:stream:response",
+                "requestId": "frozen",
+                "payload": "Controlled answer"
+              },
+              "at": 1793627403849
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "50ce760b-21bd-416a-8427-95438364df1d",
+                "name": "llm",
+                "task": "llm:message:response",
+                "requestId": "frozen",
+                "payload": {
+                  "generated_text": "Controlled answer"
+                }
+              },
+              "at": 1793627405866
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+          "role": "llm.worker.ts",
+          "at": 1793627403827,
+          "type": "created"
+        },
+        {
+          "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+          "role": "llm.worker.ts",
+          "at": 1793627403828,
+          "type": "initialized",
+          "client": "50ce760b-21bd-416a-8427-95438364df1d"
+        },
+        {
+          "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+          "role": "llm.worker.ts",
+          "at": 1793627403848,
+          "type": "accepted",
+          "client": "50ce760b-21bd-416a-8427-95438364df1d",
+          "requestId": "frozen"
+        },
+        {
+          "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+          "role": "llm.worker.ts",
+          "at": 1793627405866,
+          "type": "answer",
+          "client": "50ce760b-21bd-416a-8427-95438364df1d",
+          "requestId": "frozen"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "navigation-back-attachment",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "PASS",
+      "targets": [
+        {
+          "targetId": "72BAC50B813BDDF65531FBB263360395",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "F832B443FCD74634A03CBFE4C8A3B9F0"
+        },
+        {
+          "targetId": "A4FC61636BC6B721A242999A5FBA2243",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": false,
+          "parentId": "614C76E4A13FA9116A87B2A072C00280",
+          "canAccessOpener": false,
+          "parentFrameId": "FE04EA57AABA081FB97D28CE48EB8C9B",
+          "browserContextId": "F832B443FCD74634A03CBFE4C8A3B9F0"
+        },
+        {
+          "targetId": "614C76E4A13FA9116A87B2A072C00280",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": false,
+          "parentId": "FE04EA57AABA081FB97D28CE48EB8C9B",
+          "canAccessOpener": false,
+          "parentFrameId": "FE04EA57AABA081FB97D28CE48EB8C9B",
+          "browserContextId": "F832B443FCD74634A03CBFE4C8A3B9F0"
+        },
+        {
+          "targetId": "FE04EA57AABA081FB97D28CE48EB8C9B",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "F832B443FCD74634A03CBFE4C8A3B9F0"
+        }
+      ],
+      "pages": [
+        {
+          "client": "e3926a27-e257-41ab-b4b4-d543101dca64",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627406155
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627406205
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627406237
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                "name": "llm",
+                "task": "llm:stream:response",
+                "requestId": "after-back",
+                "payload": "Controlled back"
+              },
+              "at": 1793627406510
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "e3926a27-e257-41ab-b4b4-d543101dca64",
+                "name": "llm",
+                "task": "llm:message:response",
+                "requestId": "after-back",
+                "payload": {
+                  "generated_text": "Controlled back"
+                }
+              },
+              "at": 1793627406531
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+          "role": "llm.worker.ts",
+          "at": 1793627406229,
+          "type": "created"
+        },
+        {
+          "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+          "role": "llm.worker.ts",
+          "at": 1793627406233,
+          "type": "initialized",
+          "client": "e3926a27-e257-41ab-b4b4-d543101dca64"
+        },
+        {
+          "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+          "role": "llm.worker.ts",
+          "at": 1793627406509,
+          "type": "accepted",
+          "client": "e3926a27-e257-41ab-b4b4-d543101dca64",
+          "requestId": "after-back"
+        },
+        {
+          "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+          "role": "llm.worker.ts",
+          "at": 1793627406531,
+          "type": "answer",
+          "client": "e3926a27-e257-41ab-b4b4-d543101dca64",
+          "requestId": "after-back"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "model-worker-stop-observation",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Worker closed but the pending request receives no terminal failure",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "28E19E4EABC90385F3E85C845003ABD0",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "9674BB5776560FA7E831D2E8967E3FA4"
+        },
+        {
+          "targetId": "4EA0A5CB58E49491201F3DF277EDC89B",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "AD9AD3469866F3E47DC9B0C03B8294B4",
+          "canAccessOpener": false,
+          "parentFrameId": "AD9AD3469866F3E47DC9B0C03B8294B4",
+          "browserContextId": "9674BB5776560FA7E831D2E8967E3FA4"
+        },
+        {
+          "targetId": "AD9AD3469866F3E47DC9B0C03B8294B4",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "9674BB5776560FA7E831D2E8967E3FA4"
+        }
+      ],
+      "pages": [
+        {
+          "client": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627406833
+            },
+            {
+              "channel": "state",
+              "data": {
+                "id": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+                "name": "llm",
+                "task": "llm:check",
+                "payload": {
+                  "initiator": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+                  "entity": "llm",
+                  "status": "UNINITIALIZED"
+                }
+              },
+              "at": 1793627406847
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627406869
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+          "role": "llm.worker.ts",
+          "at": 1793627406864,
+          "type": "created"
+        },
+        {
+          "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+          "role": "llm.worker.ts",
+          "at": 1793627406867,
+          "type": "initialized",
+          "client": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c"
+        },
+        {
+          "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+          "role": "llm.worker.ts",
+          "at": 1793627406903,
+          "type": "accepted",
+          "client": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+          "requestId": "stopped-model"
+        },
+        {
+          "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+          "role": "llm.worker.ts",
+          "at": 1793627406904,
+          "type": "closing"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 0,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "coordinator-target-close-observation",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Waiting failed: 2000ms exceeded",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "A5DE1D0F138E8FD894695A68516AEDED",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "5CAD27FDADFFE4C36F2680A0B1C68D25",
+          "canAccessOpener": false,
+          "parentFrameId": "4B0AAC45BF3CCBD5D5BF03BFEC09C5BD",
+          "browserContextId": "D23C55A9247A00F6EADAA729B6270ADE"
+        },
+        {
+          "targetId": "5CAD27FDADFFE4C36F2680A0B1C68D25",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "4B0AAC45BF3CCBD5D5BF03BFEC09C5BD",
+          "canAccessOpener": false,
+          "parentFrameId": "4B0AAC45BF3CCBD5D5BF03BFEC09C5BD",
+          "browserContextId": "D23C55A9247A00F6EADAA729B6270ADE"
+        },
+        {
+          "targetId": "4B0AAC45BF3CCBD5D5BF03BFEC09C5BD",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "D23C55A9247A00F6EADAA729B6270ADE"
+        }
+      ],
+      "pages": [
+        {
+          "client": "df7b051a-58c4-41c5-a97b-b0b4735e0fe9",
+          "events": []
+        }
+      ],
+      "events": [
+        {
+          "instance": "ebde56ea-7b3d-4111-ba48-0f6d66446f4f",
+          "role": "llm.worker.ts",
+          "at": 1793627407264,
+          "type": "created"
+        },
+        {
+          "instance": "ebde56ea-7b3d-4111-ba48-0f6d66446f4f",
+          "role": "llm.worker.ts",
+          "at": 1793627407266,
+          "type": "initialized",
+          "client": "df7b051a-58c4-41c5-a97b-b0b4735e0fe9"
+        },
+        {
+          "type": "coordinator-close-request",
+          "targetId": "D8E7A483FE5022C11453D0AC8AB788CB",
+          "response": {
+            "success": true
+          }
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 1,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "failed-initialization-retry-cleanup",
+      "kind": "native-production-coordination-controlled-models",
+      "verdict": "FAIL",
+      "reason": "Retry leaves the failed model worker alive\n\n2 !== 1\n",
+      "ownerTicket": "20261029-193942",
+      "targets": [
+        {
+          "targetId": "2E6D452D970FE3859B1F8E63FB493CEF",
+          "type": "shared_worker",
+          "title": "",
+          "url": "http://127.0.0.1:38609/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "1D8FBAAA471B3F308F6CC601E8BEEEA6"
+        },
+        {
+          "targetId": "F1774FA02CF03A2A1CCA51717D465F45",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "456418F0D948F56132753B8D734F6B9A",
+          "canAccessOpener": false,
+          "parentFrameId": "F282D4FE348C8C2615416CB624266358",
+          "browserContextId": "1D8FBAAA471B3F308F6CC601E8BEEEA6"
+        },
+        {
+          "targetId": "54BCB577FBB28E8CC970FE06F897FAE9",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+          "attached": true,
+          "parentId": "456418F0D948F56132753B8D734F6B9A",
+          "canAccessOpener": false,
+          "parentFrameId": "F282D4FE348C8C2615416CB624266358",
+          "browserContextId": "1D8FBAAA471B3F308F6CC601E8BEEEA6"
+        },
+        {
+          "targetId": "456418F0D948F56132753B8D734F6B9A",
+          "type": "worker",
+          "title": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "url": "http://127.0.0.1:38609/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+          "attached": true,
+          "parentId": "F282D4FE348C8C2615416CB624266358",
+          "canAccessOpener": false,
+          "parentFrameId": "F282D4FE348C8C2615416CB624266358",
+          "browserContextId": "1D8FBAAA471B3F308F6CC601E8BEEEA6"
+        },
+        {
+          "targetId": "F282D4FE348C8C2615416CB624266358",
+          "type": "page",
+          "title": "Native coordination verification",
+          "url": "http://127.0.0.1:38609/__verify/probe",
+          "attached": true,
+          "canAccessOpener": false,
+          "browserContextId": "1D8FBAAA471B3F308F6CC601E8BEEEA6"
+        }
+      ],
+      "pages": [
+        {
+          "client": "2856e314-de61-4048-89dd-e28701f34ec9",
+          "events": [
+            {
+              "channel": "hub",
+              "data": {
+                "id": "2856e314-de61-4048-89dd-e28701f34ec9",
+                "name": "hub",
+                "task": "hub:ping",
+                "payload": null
+              },
+              "at": 1793627410150
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "2856e314-de61-4048-89dd-e28701f34ec9",
+                "name": "llm",
+                "task": "llm:init",
+                "payload": {
+                  "source": "/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+                  "fail": true
+                },
+                "error": {
+                  "message": "Controlled initialization failure"
+                }
+              },
+              "at": 1793627410237
+            },
+            {
+              "channel": "hub",
+              "data": {
+                "id": "2856e314-de61-4048-89dd-e28701f34ec9",
+                "name": "llm",
+                "task": "llm:ready",
+                "payload": null
+              },
+              "at": 1793627410326
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "instance": "61cf15f7-2291-403a-9695-8825a57c7e96",
+          "role": "llm.worker.ts",
+          "at": 1793627410227,
+          "type": "created"
+        },
+        {
+          "instance": "61cf15f7-2291-403a-9695-8825a57c7e96",
+          "role": "llm.worker.ts",
+          "at": 1793627410235,
+          "type": "initialized",
+          "client": "2856e314-de61-4048-89dd-e28701f34ec9"
+        },
+        {
+          "instance": "fffb01b7-f01b-427c-a639-b1166a46b768",
+          "role": "llm.worker.ts",
+          "at": 1793627410310,
+          "type": "created"
+        },
+        {
+          "instance": "fffb01b7-f01b-427c-a639-b1166a46b768",
+          "role": "llm.worker.ts",
+          "at": 1793627410321,
+          "type": "initialized",
+          "client": "2856e314-de61-4048-89dd-e28701f34ec9"
+        }
+      ],
+      "workerCounts": {
+        "hub.worker.ts": 1,
+        "llm.worker.ts": 2,
+        "state-machine.shared-worker.ts": 1,
+        "vectordb.worker.ts": 0
+      },
+      "initializationCounts": {
+        "hub.worker.ts": 0,
+        "llm.worker.ts": 2,
+        "state-machine.shared-worker.ts": 0,
+        "vectordb.worker.ts": 0
+      },
+      "cleanup": "Owned browser context closed"
+    }
+  ],
+  "events": [
+    {
+      "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+      "role": "llm.worker.ts",
+      "at": 1793627396825,
+      "type": "created"
+    },
+    {
+      "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+      "role": "llm.worker.ts",
+      "at": 1793627396826,
+      "type": "initialized",
+      "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e"
+    },
+    {
+      "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+      "role": "llm.worker.ts",
+      "at": 1793627396844,
+      "type": "accepted",
+      "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+      "requestId": "one"
+    },
+    {
+      "instance": "ae714bfd-7547-46b6-bf39-def625229212",
+      "role": "llm.worker.ts",
+      "at": 1793627396865,
+      "type": "answer",
+      "client": "a7074f68-5360-4328-a7d5-1b26463bdf5e",
+      "requestId": "one"
+    },
+    {
+      "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+      "role": "llm.worker.ts",
+      "at": 1793627397416,
+      "type": "created"
+    },
+    {
+      "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+      "role": "llm.worker.ts",
+      "at": 1793627397424,
+      "type": "initialized",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a"
+    },
+    {
+      "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+      "role": "vectordb.worker.ts",
+      "at": 1793627397469,
+      "type": "created"
+    },
+    {
+      "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+      "role": "vectordb.worker.ts",
+      "at": 1793627397475,
+      "type": "initialized",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a"
+    },
+    {
+      "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+      "role": "vectordb.worker.ts",
+      "at": 1793627397507,
+      "type": "accepted",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+      "requestId": "retrieval"
+    },
+    {
+      "instance": "92cf1a24-ca0d-4b71-a77d-b70ef17e65ae",
+      "role": "vectordb.worker.ts",
+      "at": 1793627397508,
+      "type": "answer",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+      "requestId": "retrieval"
+    },
+    {
+      "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+      "role": "llm.worker.ts",
+      "at": 1793627397522,
+      "type": "accepted",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+      "requestId": "generation"
+    },
+    {
+      "instance": "e92df97b-a98b-4e41-8b54-d47cd4574b5f",
+      "role": "llm.worker.ts",
+      "at": 1793627397543,
+      "type": "answer",
+      "client": "1bfa2d9a-4a18-4039-ae39-88b50d76e51a",
+      "requestId": "generation"
+    },
+    {
+      "instance": "eedc32dd-f3ff-4df7-9f2a-332ab13f7077",
+      "role": "llm.worker.ts",
+      "at": 1793627398004,
+      "type": "created"
+    },
+    {
+      "instance": "eedc32dd-f3ff-4df7-9f2a-332ab13f7077",
+      "role": "llm.worker.ts",
+      "at": 1793627398009,
+      "type": "initialized",
+      "client": "32f548d1-3dd3-43a9-9213-c0862a4f2615"
+    },
+    {
+      "type": "renderer-crash-observed",
+      "at": 1793627398260
+    },
+    {
+      "instance": "4479fce6-0f06-4159-a758-8c4e13fa9117",
+      "role": "llm.worker.ts",
+      "at": 1793627400605,
+      "type": "created"
+    },
+    {
+      "instance": "4479fce6-0f06-4159-a758-8c4e13fa9117",
+      "role": "llm.worker.ts",
+      "at": 1793627400607,
+      "type": "initialized",
+      "client": "5e0e3379-8505-44bd-821d-ea3b86b2176e"
+    },
+    {
+      "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+      "role": "llm.worker.ts",
+      "at": 1793627402107,
+      "type": "created"
+    },
+    {
+      "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+      "role": "llm.worker.ts",
+      "at": 1793627402108,
+      "type": "initialized",
+      "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38"
+    },
+    {
+      "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+      "role": "llm.worker.ts",
+      "at": 1793627402134,
+      "type": "accepted",
+      "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+      "requestId": "cancel-me"
+    },
+    {
+      "instance": "11e5ca47-5227-4650-97eb-ceb288be2f10",
+      "role": "llm.worker.ts",
+      "at": 1793627402148,
+      "type": "stopped",
+      "client": "ae5142a7-86c5-4e23-8cd3-0f165151de38",
+      "requestId": "cancel-me"
+    },
+    {
+      "instance": "64ff51e6-80e4-4fd1-837b-6175a015c29d",
+      "role": "llm.worker.ts",
+      "at": 1793627403245,
+      "type": "created"
+    },
+    {
+      "instance": "64ff51e6-80e4-4fd1-837b-6175a015c29d",
+      "role": "llm.worker.ts",
+      "at": 1793627403246,
+      "type": "initialized",
+      "client": "027a7917-7109-44de-a060-83888fbb97a1"
+    },
+    {
+      "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+      "role": "llm.worker.ts",
+      "at": 1793627403827,
+      "type": "created"
+    },
+    {
+      "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+      "role": "llm.worker.ts",
+      "at": 1793627403828,
+      "type": "initialized",
+      "client": "50ce760b-21bd-416a-8427-95438364df1d"
+    },
+    {
+      "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+      "role": "llm.worker.ts",
+      "at": 1793627403848,
+      "type": "accepted",
+      "client": "50ce760b-21bd-416a-8427-95438364df1d",
+      "requestId": "frozen"
+    },
+    {
+      "instance": "a2bf2ace-6e13-4283-b108-e79f682192fb",
+      "role": "llm.worker.ts",
+      "at": 1793627405866,
+      "type": "answer",
+      "client": "50ce760b-21bd-416a-8427-95438364df1d",
+      "requestId": "frozen"
+    },
+    {
+      "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+      "role": "llm.worker.ts",
+      "at": 1793627406229,
+      "type": "created"
+    },
+    {
+      "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+      "role": "llm.worker.ts",
+      "at": 1793627406233,
+      "type": "initialized",
+      "client": "e3926a27-e257-41ab-b4b4-d543101dca64"
+    },
+    {
+      "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+      "role": "llm.worker.ts",
+      "at": 1793627406509,
+      "type": "accepted",
+      "client": "e3926a27-e257-41ab-b4b4-d543101dca64",
+      "requestId": "after-back"
+    },
+    {
+      "instance": "411ccd0a-c52d-4559-93e8-114d84d90201",
+      "role": "llm.worker.ts",
+      "at": 1793627406531,
+      "type": "answer",
+      "client": "e3926a27-e257-41ab-b4b4-d543101dca64",
+      "requestId": "after-back"
+    },
+    {
+      "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+      "role": "llm.worker.ts",
+      "at": 1793627406864,
+      "type": "created"
+    },
+    {
+      "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+      "role": "llm.worker.ts",
+      "at": 1793627406867,
+      "type": "initialized",
+      "client": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c"
+    },
+    {
+      "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+      "role": "llm.worker.ts",
+      "at": 1793627406903,
+      "type": "accepted",
+      "client": "b5278c5a-4257-4b10-a4d8-1a663ac7aa1c",
+      "requestId": "stopped-model"
+    },
+    {
+      "instance": "d84591b9-a4d4-4578-8b00-fe171dddaa5a",
+      "role": "llm.worker.ts",
+      "at": 1793627406904,
+      "type": "closing"
+    },
+    {
+      "instance": "ebde56ea-7b3d-4111-ba48-0f6d66446f4f",
+      "role": "llm.worker.ts",
+      "at": 1793627407264,
+      "type": "created"
+    },
+    {
+      "instance": "ebde56ea-7b3d-4111-ba48-0f6d66446f4f",
+      "role": "llm.worker.ts",
+      "at": 1793627407266,
+      "type": "initialized",
+      "client": "df7b051a-58c4-41c5-a97b-b0b4735e0fe9"
+    },
+    {
+      "type": "coordinator-close-request",
+      "targetId": "D8E7A483FE5022C11453D0AC8AB788CB",
+      "response": {
+        "success": true
+      }
+    },
+    {
+      "instance": "61cf15f7-2291-403a-9695-8825a57c7e96",
+      "role": "llm.worker.ts",
+      "at": 1793627410227,
+      "type": "created"
+    },
+    {
+      "instance": "61cf15f7-2291-403a-9695-8825a57c7e96",
+      "role": "llm.worker.ts",
+      "at": 1793627410235,
+      "type": "initialized",
+      "client": "2856e314-de61-4048-89dd-e28701f34ec9"
+    },
+    {
+      "instance": "fffb01b7-f01b-427c-a639-b1166a46b768",
+      "role": "llm.worker.ts",
+      "at": 1793627410310,
+      "type": "created"
+    },
+    {
+      "instance": "fffb01b7-f01b-427c-a639-b1166a46b768",
+      "role": "llm.worker.ts",
+      "at": 1793627410321,
+      "type": "initialized",
+      "client": "2856e314-de61-4048-89dd-e28701f34ec9"
+    }
+  ],
+  "build": {
+    "status": 0,
+    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  0 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 896 ms\n",
+    "stderr": "WARN  found no layout file for \"html\" for kind \"taxonomy\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\nWARN  found no layout file for \"html\" for kind \"term\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\n"
+  },
+  "workerMap": {
+    "hub.worker.ts": "/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+    "llm.worker.ts": "/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+    "state-machine.shared-worker.ts": "/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+    "vectordb.worker.ts": "/layers/data/workers/vectordb.worker.1804410a834168f8df79141006edd23cceda7bac908c1b1f7422638b6fc2566b.js"
+  },
+  "origin": "http://127.0.0.1:38609",
+  "sourceHashes": {
+    "hub.worker.ts": "92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef",
+    "state-machine.shared-worker.ts": "1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5"
+  },
+  "migrationScenarios": [
+    {
+      "name": "three-shared-worker-topology",
+      "requires": "RuntimeCoordinator migration",
+      "expected": "One coordinator, one generation and one retrieval application SharedWorker; joining tabs cause no duplicate initialization.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "queued-cancellation",
+      "requires": "Shared generation queue",
+      "expected": "A cancelled queued request never starts; stopping is acknowledged accurately and later requests progress.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "coordinator-model-failure-recovery",
+      "requires": "RuntimeCoordinator failure protocol",
+      "expected": "Observed coordinator or model termination fails affected work without stale readiness or stranded requests; healthy resources survive where possible.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "concurrent-reconnect",
+      "requires": "Reconnect UI",
+      "expected": "Something went wrong and an unstyled reconnect button; concurrent clicks share one recovery attempt, keep history and do not replay the interrupted question.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    }
+  ],
+  "browser": "Chrome/154.0.8037.57",
+  "cleanup": {
+    "browserCreated": true,
+    "serverCreated": true,
+    "errors": [],
+    "scratchRemoved": true,
+    "browserClosed": true,
+    "browserProcess": {
+      "pid": 5852,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    "serverClosed": true,
+    "evidenceRetained": true
+  },
+  "finished": "2026-11-02T13:50:10.826Z",
+  "verdict": "FAIL"
+}

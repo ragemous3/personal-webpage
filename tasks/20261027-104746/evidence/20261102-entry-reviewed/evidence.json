@@ -1,0 +1,94 @@
+{
+  "mode": "entry",
+  "sourceRevision": "37e73812f332f65edb5a304fdd02c58e37a7a1f7",
+  "sourceChanges": "",
+  "inferenceVerified": false,
+  "started": "2026-11-02T13:50:09.258Z",
+  "scenarios": [
+    {
+      "name": "entry-open-offline",
+      "kind": "untouched-application",
+      "initialCondition": "Fresh profile; external DNS blocked to avoid model downloads",
+      "events": [],
+      "verdict": "PASS",
+      "state": {
+        "title": "Rasmus Moberg",
+        "inputDisabled": true,
+        "status": "initializing",
+        "controls": [
+          "Send",
+          "Cancel",
+          "Reset"
+        ]
+      }
+    }
+  ],
+  "events": [],
+  "build": {
+    "status": 0,
+    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  0 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 2689 ms\n",
+    "stderr": "WARN  found no layout file for \"html\" for kind \"taxonomy\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\nWARN  found no layout file for \"html\" for kind \"term\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\n"
+  },
+  "workerMap": {
+    "hub.worker.ts": "/layers/data/workers/hub.worker.92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef.js",
+    "llm.worker.ts": "/layers/data/workers/llm.worker.7ef79bfc52c1eb2568ea5d85c571c1a6f9fc5e9c5c82fc5860bcc4d8eaa9cbc5.js",
+    "state-machine.shared-worker.ts": "/layers/data/workers/state-machine.shared-worker.1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5.js",
+    "vectordb.worker.ts": "/layers/data/workers/vectordb.worker.1804410a834168f8df79141006edd23cceda7bac908c1b1f7422638b6fc2566b.js"
+  },
+  "origin": "http://127.0.0.1:40129",
+  "sourceHashes": {
+    "hub.worker.ts": "92de4154500db46fd3a022bcf54349fca1191607951b3a9af6c617d27b0f95ef",
+    "state-machine.shared-worker.ts": "1a0fe9eda9e55ec775ddcef94bda9e51bb905c53dfe82bfdada138ea875ae0f5"
+  },
+  "migrationScenarios": [
+    {
+      "name": "three-shared-worker-topology",
+      "requires": "RuntimeCoordinator migration",
+      "expected": "One coordinator, one generation and one retrieval application SharedWorker; joining tabs cause no duplicate initialization.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "queued-cancellation",
+      "requires": "Shared generation queue",
+      "expected": "A cancelled queued request never starts; stopping is acknowledged accurately and later requests progress.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "coordinator-model-failure-recovery",
+      "requires": "RuntimeCoordinator failure protocol",
+      "expected": "Observed coordinator or model termination fails affected work without stale readiness or stranded requests; healthy resources survive where possible.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    },
+    {
+      "name": "concurrent-reconnect",
+      "requires": "Reconnect UI",
+      "expected": "Something went wrong and an unstyled reconnect button; concurrent clicks share one recovery attempt, keep history and do not replay the interrupted question.",
+      "verdict": "BLOCKED",
+      "ownerTicket": "20261029-193942",
+      "reason": "Future architecture is not implemented on this revision"
+    }
+  ],
+  "browser": "Chrome/154.0.8037.57",
+  "cleanup": {
+    "browserCreated": true,
+    "serverCreated": true,
+    "errors": [],
+    "scratchRemoved": true,
+    "browserClosed": true,
+    "browserProcess": {
+      "pid": 6576,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    "serverClosed": true,
+    "evidenceRetained": true
+  },
+  "finished": "2026-11-02T13:50:14.006Z",
+  "verdict": "PASS"
+}
