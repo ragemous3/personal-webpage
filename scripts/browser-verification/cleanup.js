@@ -1,5 +1,12 @@
 import { rm } from 'node:fs/promises';
 
+const processState = (browser, errors) => {
+  const child = browser?.process();
+  if (child && child.exitCode === null && child.signalCode === null)
+    errors.push('Owned browser process has not exited');
+  return child ? { pid: child.pid, exitCode: child.exitCode, signalCode: child.signalCode } : null;
+};
+
 export const closeResources = async (state) => {
   const cleanup = {
     browserCreated: Boolean(state.browser),
@@ -23,13 +30,7 @@ export const closeResources = async (state) => {
     cleanup.errors.push(`scratch: ${error.message}`);
   }
   cleanup.browserClosed = !state.browser?.connected;
-  cleanup.browserProcess = state.browser?.process()
-    ? {
-        pid: state.browser.process().pid,
-        exitCode: state.browser.process().exitCode,
-        signalCode: state.browser.process().signalCode,
-      }
-    : null;
+  cleanup.browserProcess = processState(state.browser, cleanup.errors);
   cleanup.serverClosed = !state.site?.server.listening;
   cleanup.evidenceRetained = true;
   return cleanup;
