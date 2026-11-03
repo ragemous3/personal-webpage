@@ -16,11 +16,11 @@ The approved proposal covers documentation, ignored artifact paths, post-teardow
 
 ## Acceptance criteria
 
-- [ ] Skills/workflow distinguish reusable assets and approved baselines from routine run evidence, with an explicit migration/audit exception and no automatic promotion via --baseline.
-- [ ] Browser verification defaults to a unique gitignored artifacts/verification/<run-id>/ directory; explicit output overrides and assessment behavior remain supported.
-- [ ] Required run files and the JSON report are checked after application teardown; missing/empty expected evidence produces ERROR and evidenceRetained false. Reports preserve source identity, command, results and blocked/skipped checks.
-- [ ] Test CI uploads execution output even after failure with 90-day retention. A manual workflow runs entry/controlled verification and publishes all resulting evidence with run/mode identity and links.
-- [ ] Local-only evidence is identified as such in the instructions; ticket summaries use accessible links and retention, while historical migration records remain unchanged.
+- [x] Skills/workflow distinguish reusable assets and approved baselines from routine run evidence, with an explicit migration/audit exception and no automatic promotion via --baseline.
+- [x] Browser verification defaults to a unique gitignored artifacts/verification/<run-id>/ directory; explicit output overrides and assessment behavior remain supported.
+- [x] Required run files and the JSON report are checked after application teardown; missing/empty expected evidence produces ERROR and evidenceRetained false. Reports preserve source identity, command, results and blocked/skipped checks.
+- [x] Test CI uploads execution output even after failure with 90-day retention. A manual workflow runs entry/controlled verification and publishes all resulting evidence with run/mode identity and links.
+- [x] Local-only evidence is identified as such in the instructions; ticket summaries use accessible links and retention, while historical migration records remain unchanged.
 
 ## Dependencies
 
@@ -29,9 +29,9 @@ The approved proposal covers documentation, ignored artifact paths, post-teardow
 
 ## Definition of Done
 
-- [ ] Focused file-finalization and CLI checks, lint/type checks, native entry/controlled artifact-retention checks and full post-review suite pass. Product-scenario failures remain visible and are reported separately.
-- [ ] Required Standards and Spec reviews pass; blast-radius disposition recorded.
-- [ ] Signed local commits are created. No push, PR, merge or deployment is requested for this follow-up.
+- [x] Focused file-finalization and CLI checks, lint/type checks, native entry/controlled artifact-retention checks and full post-review suite pass. Product-scenario failures remain visible and are reported separately.
+- [x] Required Standards and Spec reviews pass; blast-radius disposition recorded.
+- [x] Signed local commits are created. No push, PR, merge or deployment is requested for this follow-up.
 
 ### Execution record
 
@@ -52,3 +52,13 @@ Signed stage 4 implementation snapshot: b7553648ebaaa13d025718f02fe0fe8da765bdcf
 The Standards review of 4954ef2f614da532513d2b213f2b023f53c4a6d0 passed. Spec review found one P2: an early entry assertion failure did not declare or capture its required screenshot. Both reviews and later checks were invalidated before the fix. Two focused regressions first failed; entry now declares the screenshot before opening the page and attempts capture before closing on both success and failure. A missing screenshot yields ERROR and evidenceRetained false; an available failure screenshot preserves the product FAIL result. Cache screenshots remain conditional on reaching the returning-session observation; prerequisite-blocked runs require their report only.
 
 Stage 3/4 repeat: focused artifact/assessment checks 21 passed; ESLint, TypeScript and Actionlint exit 0. Native entry command: PATH=/workspace/tools/hugo-0.158.0:$PATH node scripts/browser-verification/run.js --mode entry. Result PASS with screenshot/report retained after teardown; local-only output artifacts/verification/entry-2026-11-03T13-34-03-438Z-765c7f65-dc4d-4bf0-8197-881371beeff1/. Cleanup review found no further changes needed. Next: both read-only reviews of the signed fix snapshot, then blast-radius disposition and full suite. No application runtime source changed.
+
+### Final local handoff
+
+Stage 5: Standards and Spec independently reviewed implementation SHA 33a7651af71d86c8972c36fa1a7c533a02447fd8 against fixed base c31ab566b46c1df0b0b153ac702c544ef632a59e. Both report zero remaining actionable findings. The Spec screenshot finding is resolved and covered by regressions.
+
+Stage 6: blast-radius assessment is not applicable: this follow-up changes local verification output and workflow configuration, with no bulk writes, account changes, live data deletion or deployment. Existing curated migration evidence is preserved.
+
+Stage 7: npm test ran after both reviews against 33a7651af71d86c8972c36fa1a7c533a02447fd8: 92 tests passed, zero failed/skipped. Focused checks, lint, typecheck, workflow syntax and native entry checks passed as recorded above. Controlled worker-recovery failures remain separately reported baseline observations; real-model cache/performance checks and hosted uploads were not run for this storage-only follow-up. Routine output remains ignored and local-only until optional publication. These summary/status edits do not change the reviewed implementation.
+
+The requested local-commit handoff is complete. Publication, CI artifact links and PR creation remain outside the user's request; no push, merge or deployment occurred. Ticket remains OPEN under the repository's publication-based closure rule, with no unfinished authorized implementation work. Next action, only if separately requested: publish this branch, attach retained evidence, and complete PR handoff.
