@@ -17,8 +17,15 @@ export class LocalLLMData {
     private readonly generator: TextGenerationPipeline,
     private readonly tokenizerUtility: TokenizerUtility,
     private readonly modelMaxTokens = 0,
-    private readonly options: Partial<TextGenerationConfig>,
+    private options: Partial<TextGenerationConfig>,
   ) {}
+
+  configure = (options: Partial<TextGenerationConfig>): void => {
+    this.options = options;
+  };
+  dispose = async (): Promise<void> => {
+    await this.generator.dispose();
+  };
 
   chatWithModel = async (
     prompt: Chat,

@@ -20,7 +20,7 @@ export class VectorDBHNSWData {
   private readonly key: string;
 
   private lib: Nullable<HnswlibModule> = null;
-  private index?: HierarchicalNSW;
+  private index: HierarchicalNSW | undefined;
   private embedder: FeatureExtractionPipeline | undefined;
 
   constructor(
@@ -82,10 +82,12 @@ export class VectorDBHNSWData {
       const exists = this.lib.EmscriptenFileSystemManager.checkFileExists('data.dat');
 
       if (exists && this.lib.EmscriptenFileSystemManager.isSynced()) {
-        await this.index.readIndex('data.dat', this.config.dim);
-        this.index.setEfSearch(200);
-      }
+        await this.index.readIndex('data.dat', this.config.maxEls);
 
+        this.index.setEfSearch(200);
+      } else throw new Error('Retrieval index was not synchronized');
+
+      if (this.index.getCurrentCount() === 0) throw new Error('Retrieval index is empty');
       this.embedder = await this.createEmbedder(emitProgress);
       emitProgress({
         name: 'vectordb',
@@ -106,6 +108,7 @@ export class VectorDBHNSWData {
           },
         );
       }
+      throw error;
     }
   };
 
@@ -113,7 +116,7 @@ export class VectorDBHNSWData {
     emitProgress: (progress: ProgressInfo) => void,
   ): Promise<FeatureExtractionPipeline> =>
     await pipeline<'feature-extraction'>('feature-extraction', this.config.featureExtractionModel, {
-      device: 'webgpu',
+      device: this.config.device ?? 'webgpu',
       dtype: 'uint8',
       progress_callback: emitProgress,
     });
@@ -135,6 +138,14 @@ export class VectorDBHNSWData {
     return this.index.searchKnn(vector, topK, () => true);
   };
 
+  dispose = async (): Promise<void> => {
+    await this.embedder?.dispose();
+    this.embedder = undefined;
+    const index = this.index as (HierarchicalNSW & { delete?: () => void }) | undefined;
+    index?.delete?.();
+    this.index = undefined;
+    this.lib = null;
+  };
   private readonly guardHSNWEntryMetadata = (data: unknown): data is HNSWDBEntryMetadata =>
     typeof data === 'object' && data !== null && 'timestamp' in data && 'mode' in data
       ? true
@@ -197,9 +208,8 @@ export class VectorDBHNSWData {
   };
 
   private readonly fetchAndStore = async (): Promise<void> => {
+    const database = await this.store.openStore('FILE_DATA');
     try {
-      const database = await this.store.openStore(this.config.indexStoreName);
-
       const metadata = await this.apiBase.loadJSON<HNSWDBEntryMetadata>(
         this.config.metadataPath,
         this.parseMetadata,
@@ -226,19 +236,12 @@ export class VectorDBHNSWData {
       throw new Error(`[${SeverityLevelCodes.FATAL}] - Failed to fetch and store HNSW database`, {
         cause: error,
       });
+    } finally {
+      database.close();
     }
   };
   private readonly readExternalFile = async (): Promise<void> => {
-    try {
-      await this.fetchAndStore();
-      await syncFileSystem('read');
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(`[${SeverityLevelCodes.ERROR}] - Failed to read external index`, error);
-      }
-      console.error(
-        `[${SeverityLevelCodes.ERROR}] - Expected caught Error to be instanceof Error!`,
-      );
-    }
+    await this.fetchAndStore();
+    await syncFileSystem('read');
   };
 }

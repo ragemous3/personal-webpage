@@ -1,10 +1,5 @@
-export enum StateMachineStatesEnum {
-  UNINITIALIZED = 'UNINITIALIZED',
-  BUSY = 'BUSY',
-}
 export enum WorkerKeys {
-  STATE_MACHINE = 'statemachine',
-  HUB = 'hub',
+  COORDINATOR = 'coordinator',
   LLM = 'llm',
   VECTORDB = 'vectordb',
 }
@@ -13,8 +8,13 @@ export enum BroadcastKeys {
   VECTORDB = 'vectordb',
 }
 export const WorkerFileNames = {
-  stateMachine: 'state-machine.shared-worker.ts',
-  hub: 'hub.worker.ts',
-  llm: 'llm.worker.ts',
-  vectordb: 'vectordb.worker.ts',
+  coordinator: 'runtime-coordinator.shared-worker.ts',
+  llm: 'llm.shared-worker.ts',
+  vectordb: 'vectordb.shared-worker.ts',
+} as const;
+
+export const SharedWorkerNames = {
+  coordinator: 'RuntimeCoordinator',
+  llm: 'Runtime-llm',
+  vectordb: 'Runtime-vectordb',
 } as const;

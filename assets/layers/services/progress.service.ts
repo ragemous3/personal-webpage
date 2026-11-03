@@ -1,7 +1,6 @@
-import { type MessageBase } from '@/layers/data/workers/models';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type BroadcastContract } from '@/layers/shared/contracts/broadcast-port.contract';
 import { type ProgressServiceContract } from '@/layers/shared/contracts/progress-service.contract';
+import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isProgressInfo } from '@/layers/shared/guards/progress.guard';
 import { type ProgressInfo } from '@/layers/shared/models/progress.model';
 import {
@@ -16,14 +15,15 @@ export class ProgressService implements ProgressServiceContract<Map<string, Prog
   unsubs: Unsubscribeable[] = [];
   progressInfo = new Map<string, ProgressInfo>();
 
-  constructor(
-    protected broadcasts: Array<BroadcastContract<MessageBase<unknown>, MessageBase<unknown>>>,
-  ) {
+  constructor(protected coordinator: Pick<RuntimeCoordinatorContract, 'onData'>) {
     this.#init();
   }
 
-  connect = (callback: (message: Map<string, ProgressInfo>) => void): Unsubscribeable =>
-    this.#$data.connect(callback);
+  connect = (callback: (message: Map<string, ProgressInfo>) => void): Unsubscribeable => {
+    const disconnect = this.#$data.connect(callback);
+    callback(this.progressInfo);
+    return disconnect;
+  };
 
   readonly #handleProgressStatus = (name: string, data: ProgressInfo): void => {
     this.progressInfo.set(name, data);
@@ -35,14 +35,19 @@ export class ProgressService implements ProgressServiceContract<Map<string, Prog
       console.error(`[${SeverityLevelCodes.WARNING}] - Init was called twice..`);
     }
     this.#initialized = true;
-    for (const broadcast of this.broadcasts) {
-      this.unsubs.push(
-        broadcast.listen((data: MessageBase<unknown>) => {
-          if (typeof data === 'object' && data.payload && isProgressInfo(data.payload))
-            this.#handleProgressStatus(data.name, data.payload);
-        }),
-      );
-    }
+    this.unsubs.push(
+      this.coordinator.onData((data) => {
+        if (
+          typeof data === 'object' &&
+          data &&
+          'payload' in data &&
+          'name' in data &&
+          typeof data.name === 'string' &&
+          isProgressInfo(data.payload)
+        )
+          this.#handleProgressStatus(data.name, data.payload);
+      }),
+    );
   };
 
   dispose = (): void => {

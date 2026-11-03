@@ -7,3 +7,5 @@ Use [tatr-ticket](../../.agents/skills/tatr-ticket/SKILL.md) for the format and 
 Status is OPEN or CLOSED. Reuse existing tags such as task, refactor and verification. No triage skill or ready-for-agent labels are configured. An OPEN ticket can still have design decisions to settle; record those under Prerequisites. Publishing a planning PR does not close the implementation tickets it describes.
 
 Follow [the implementation flow](../implementation-flow.md) for later product work, including implementation-mode selection. Reuse approval already given for ticket updates and publication; ask only about changes outside that approved scope. Keep user-approved merged tickets together unless the user approves a new split.
+
+Execution evidence follows [the storage policy](../verification-evidence.md). Routine run files are artifact links in the ticket; curated migration/audit attachments need an explicit rationale. Generic TATR attachment support does not require committing reports.

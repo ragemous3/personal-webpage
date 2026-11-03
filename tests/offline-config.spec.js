@@ -74,10 +74,10 @@ test('invalid site settings are rejected before creating any resources', (contex
       config.SITE_PARAMS.baseURL = '';
     },
     (config) => {
-      config.WORKER_NAMES['hub.worker.ts'] = undefined;
+      config.WORKER_NAMES['runtime-coordinator.shared-worker.ts'] = undefined;
     },
     (config) => {
-      config.WORKER_NAMES['llm.worker.ts'] = '';
+      config.WORKER_NAMES['llm.shared-worker.ts'] = '';
     },
     (config) => {
       config.WORKER_NAMES = null;
@@ -132,13 +132,23 @@ test('invalid numeric generation options are rejected before allocating resource
 test('valid normalized site params produce configured model and database startup messages', () => {
   const service = buildChatbotOfflineDeps(siteConfig());
   assert.ok(service);
-  const hub = workers.find((worker) => worker.source.pathname === '/workers/hub.js');
-  assert.ok(hub);
-  const startup = hub.messages
-    .filter((message) => message.task === 'hub:host')
+  const coordinator = workers.find(
+    (worker) => worker.source.pathname === '/workers/coordinator.js',
+  );
+  assert.ok(coordinator);
+  const startup = coordinator.messages
+    .filter((message) => message.task === 'runtime:host')
     .map(({ payload: { name, task, payload } }) => ({ name, task, payload }));
   assert.deepEqual(startup, [
     { name: 'llm', task: 'llm:init', payload: modelConfig },
     { name: 'vectordb', task: 'vectordb:init', payload: databaseConfig },
   ]);
+});
+
+test('model infrastructure settings reject malformed URLs and unsupported retrieval devices', () => {
+  assert.equal(isDatabaseConfig({ ...databaseConfig, device: 'unsupported' }), false);
+  for (const overrides of [{ modelBaseUrl: 42 }, { wasmBaseUrl: {} }, { modelBaseUrl: '' }]) {
+    assert.equal(isDatabaseConfig({ ...databaseConfig, ...overrides }), false);
+    assert.equal(isLmConfig({ ...modelConfig, ...overrides }), false);
+  }
 });

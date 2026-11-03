@@ -299,6 +299,7 @@ export default defineConfig([
     'dist/**',
     'build/**',
     'coverage/**',
+    'artifacts/verification/**',
     '.next/**',
     '.turbo/**',
     '.cache/**',

@@ -7,6 +7,7 @@ import {
 } from '@/layers/shared/contracts/chatbot-service.contract';
 import { type ContentRepositoryContract } from '@/layers/shared/contracts/content-repository.contract';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
+import { type RuntimeLifecycleContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
@@ -21,17 +22,27 @@ export class RagService implements ChatbotServiceContract {
   #active: string | undefined;
   #question: string | undefined;
   #messages: ChatMessage[] = [];
+  #recovery: Promise<void> | undefined;
+  #runtimeFailed = false;
+  #configuring = false;
 
   constructor(
     private readonly chat: StandardCommunicationContract,
     private readonly database: StandardCommunicationContract,
     private readonly repo: ContentRepositoryContract,
     private readonly chatModel: ChatMessageModelContract,
+    private readonly runtime?: RuntimeLifecycleContract,
   ) {}
 
   init = (): void => {
     if (this.#transportUnsubscribers.length > 0) return;
+    const status = this.runtime?.onData?.((data) => {
+      if (!isRecord(data) || data.task !== 'runtime:state' || !isRecord(data.payload)) return;
+      this.#configuring = data.payload.configuring === true;
+      if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
+    });
     this.#transportUnsubscribers = [
+      ...(status ? [status] : []),
       this.database.onData((data) => {
         const requestId = this.#active;
         void this.#handleDatabase(data).catch((error: unknown) => {
@@ -72,7 +83,22 @@ export class RagService implements ChatbotServiceContract {
     this.stateSubscription.emit({ status: 'responding' });
     this.#publish();
     try {
-      this.database.send({ query: this.#question }, this.#active);
+      const requestId = this.#active;
+      if (this.runtime)
+        void this.runtime
+          .begin(requestId)
+          .then(() => {
+            if (this.#active === requestId)
+              this.database.send({ query: this.#question }, requestId);
+            else this.runtime?.finish(requestId);
+          })
+          .catch((error: unknown) => {
+            if (this.#active === requestId) {
+              this.#runtimeFailed = true;
+              this.#fail(error);
+            }
+          });
+      else this.database.send({ query: this.#question }, requestId);
     } catch (error) {
       this.#fail(error);
     }
@@ -82,7 +108,7 @@ export class RagService implements ChatbotServiceContract {
     if (!this.#active) return;
     const requestId = this.#active;
     this.#active = undefined;
-    this.chat.send({}, requestId, 'cancel');
+    this.#cancelWork(requestId);
     this.#interrupt('Response interrupted.');
   };
 
@@ -92,11 +118,15 @@ export class RagService implements ChatbotServiceContract {
     this.#messages = [];
     this.chatModel.reset();
     this.#publish();
-    if (this.#chatReady && this.#databaseReady) this.#ready();
+    if (this.#chatReady && this.#databaseReady && !this.#runtimeFailed) this.#ready();
   };
 
   retry = (): void => {
     if (this.stateSubscription.getValue()?.status !== 'error') return;
+    if (this.#runtimeFailed) {
+      void this.reconnect();
+      return;
+    }
     if (!this.#chatReady || !this.#databaseReady) {
       this.#ready();
       this.#retryFailedWorkers();
@@ -111,6 +141,43 @@ export class RagService implements ChatbotServiceContract {
     this.#start();
   };
 
+  reconnect = (): Promise<void> => {
+    this.#recovery ??= this.#reconnect().finally(() => {
+      this.#recovery = undefined;
+    });
+    return this.#recovery;
+  };
+
+  readonly #reconnect = async (): Promise<void> => {
+    if (!this.runtime) {
+      this.retry();
+      return;
+    }
+    try {
+      await this.runtime.reconnect();
+      this.#runtimeFailed = false;
+      this.#failedWorkers.clear();
+      this.#ready();
+    } catch {
+      this.#runtimeFailed = true;
+      this.#interrupt('Something went wrong');
+    }
+  };
+
+  readonly #cancelWork = (requestId: string): void => {
+    try {
+      this.chat.send({}, requestId, 'cancel');
+    } catch {
+      /* Transport failure is already reported. */
+    }
+    try {
+      this.database.send({}, requestId, 'cancel');
+    } catch {
+      /* Transport failure is already reported. */
+    }
+    this.runtime?.finish(requestId);
+  };
+
   #retryFailedWorkers(): void {
     const failed = [...this.#failedWorkers];
     this.#failedWorkers.clear();
@@ -122,7 +189,8 @@ export class RagService implements ChatbotServiceContract {
 
   readonly #ready = (): void => {
     this.stateSubscription.emit({
-      status: this.#chatReady && this.#databaseReady ? 'ready' : 'initializing',
+      status:
+        this.#chatReady && this.#databaseReady && !this.#configuring ? 'ready' : 'initializing',
     });
   };
 
@@ -133,27 +201,49 @@ export class RagService implements ChatbotServiceContract {
   readonly #interrupt = (error: string): void => {
     const answer = this.#messages.at(-1);
     if (answer?.role === 'assistant') answer.interrupted = true;
-    this.stateSubscription.emit({ status: 'error', error });
+    this.stateSubscription.emit({
+      status: 'error',
+      error,
+      ...(this.#runtimeFailed ? { runtimeFailure: true } : {}),
+    });
     this.#publish();
   };
 
   readonly #fail = (error: unknown): void => {
+    const active = this.#active;
     this.#active = undefined;
+    if (active) this.#cancelWork(active);
     const message =
       isRecord(error) && typeof error.message === 'string' ? error.message : String(error);
-    this.#interrupt(message);
+    this.#interrupt(this.#runtimeFailed ? 'Something went wrong' : message);
   };
 
   #accept(data: unknown): data is Record<string, unknown> {
     if (!isRecord(data)) return false;
+    if (this.#handleLoading(data.task)) return false;
+    this.#observeRuntimeFailure(data);
     if (this.#handleReady(data.task)) return false;
     if (this.#handleInitializationError(data)) return false;
     const current = Boolean(this.#active) && data.requestId === this.#active;
-    if (data.error && (current || !data.requestId)) {
-      this.#fail(data.error);
-      return false;
-    }
+    if (this.#handleResponseError(data, current)) return false;
     return current;
+  }
+
+  #observeRuntimeFailure(data: Record<string, unknown>): void {
+    if (data.runtimeFailure === true && data.error) this.#runtimeFailed = true;
+  }
+  #handleResponseError(data: Record<string, unknown>, current: boolean): boolean {
+    if (!data.error || (!current && data.requestId)) return false;
+    this.#fail(data.error);
+    return true;
+  }
+
+  #handleLoading(task: unknown): boolean {
+    if (task !== 'llm:loading' && task !== 'vectordb:loading') return false;
+    if (task === 'llm:loading') this.#chatReady = false;
+    else this.#databaseReady = false;
+    if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
+    return true;
   }
 
   #handleInitializationError(data: Record<string, unknown>): boolean {
@@ -208,10 +298,15 @@ export class RagService implements ChatbotServiceContract {
     if (data.task === 'llm:message:response') {
       const text = this.#finalText(data.payload);
       if (text !== undefined) answer.content = text;
+      this.#finishResponse();
       this.#active = undefined;
       this.#ready();
     }
     this.#publish();
+  };
+
+  readonly #finishResponse = (): void => {
+    if (this.#active) this.runtime?.finish(this.#active);
   };
 
   #finalText(payload: unknown): string | undefined {

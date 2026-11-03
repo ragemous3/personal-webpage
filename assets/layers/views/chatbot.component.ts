@@ -58,12 +58,11 @@ export class ChatContainer extends LitElement {
       <div class="chat-container">
         <div role="log" aria-live="polite">
           ${this.messages.map(
-            (message) =>
-              html`
-                <p>
-                                ${message.role}: ${message.content}${message.interrupted ? ' (interrupted)' : ''}
-                              </p>
-              `,
+            (message) => html`
+              <p>
+                ${message.role}: ${message.content}${message.interrupted ? ' (interrupted)' : ''}
+              </p>
+            `,
           )}
         </div>
         <p role="status">${this.lifecycle.status}</p>
@@ -91,12 +90,17 @@ export class ChatContainer extends LitElement {
           Cancel
         </button>
         <button @click=${() => this.chatbotService?.reset()}>Reset</button>
-        ${this.lifecycle.status === 'error'
-          ? html`<button @click=${() => this.chatbotService?.retry()}>Retry</button>`
-          : ''}
+        ${this.#recoveryControl()}
       </div>
     `;
   }
+
+  readonly #recoveryControl = (): TemplateResult | string => {
+    if (this.lifecycle.status !== 'error') return '';
+    if (this.lifecycle.runtimeFailure)
+      return html`<button @click=${() => this.chatbotService?.reconnect()}>reconnect</button>`;
+    return html`<button @click=${() => this.chatbotService?.retry()}>Retry</button>`;
+  };
 
   protected updated(_changed: PropertyValues): void {
     this.#bind();

@@ -27,6 +27,7 @@ Hugo, typescript, lit3.0 and CSS.
 ## Task tracking
 
 Project tasks live in [`tasks/`](tasks/) and follow [TATR](https://github.com/tsoding/tatr)'s Markdown format. On Linux, follow the [TATR setup and quick start](tasks/README.md), then use `tatr new` to create a task and `tatr ls` to list open tasks from this repository.
+
 ## Infrastructure
 
 The infrastructure is aiming to follow SOLID principles and is built on OO (Object oriented) foundation.
@@ -238,10 +239,10 @@ api-base.service.ts
   Constant file
 
 - **worker**  
-  Web Worker used to offload heavy calculations from the main thread.
+  Entry point for a dedicated Web Worker, running separately from the main thread.
 
 - **shared-worker**  
-  Shared Worker used as a state machine in this project, so data is not reloaded when a user opens a new tab.
+  Entry point for a SharedWorker, which multiple tabs or windows from the same origin can connect to.
 
 - **provider**  
   Web component that provisions dependencies to the underlying trees. A provider may also switch dependencies at runtime, but should not contain logic unrelated to dependency provisioning.

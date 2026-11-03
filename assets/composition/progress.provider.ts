@@ -1,4 +1,6 @@
 import { ContextProvider } from '@lit/context';
+//@ts-expect-error - Comes from Hugo
+import * as config from '@params/config';
 import { html, LitElement, type TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
@@ -10,7 +12,7 @@ import { progressFactory } from './factories/progress.factory';
 export class ProgressProvider extends LitElement {
   readonly _provide = new ContextProvider(this, {
     context: progressContext,
-    initialValue: progressFactory(),
+    initialValue: progressFactory(config),
   });
 
   render(): TemplateResult<1> {

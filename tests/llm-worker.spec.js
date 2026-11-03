@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { createLlmMessageHandler } from '@/layers/data/workers/llm.worker';
+import { createLlmMessageHandler } from '@/layers/data/workers/llm.shared-worker';
 
 const config = {
   source: '/workers/llm.js',
@@ -13,6 +13,7 @@ const config = {
 
 const emptyGenerator = async () => [];
 emptyGenerator.tokenizer = {};
+emptyGenerator.dispose = async () => {};
 
 const failingGenerator = async () => {
   throw new Error('generation failed');
@@ -27,7 +28,9 @@ test('cancel interrupts generation and suppresses its late chunks and final resp
   const generator = async (_prompt, options) => {
     stopping = options.stopping_criteria;
     stream = options.streamer.callback_function;
-    return await new Promise((resolve) => { finish = resolve; });
+    return await new Promise((resolve) => {
+      finish = resolve;
+    });
   };
   generator.tokenizer = {};
   const handler = createLlmMessageHandler({
@@ -36,15 +39,33 @@ test('cancel interrupts generation and suppresses its late chunks and final resp
     publish: (message) => messages.push(message),
   });
   await handler({ data: { id: 'owner', name: 'llm', task: 'llm:init', payload: config } });
-  const query = handler({ data: { id: 'owner', name: 'llm', task: 'llm:query', requestId: 'answer-1',
-    payload: { message: [{ role: 'system', content: 'Help' }, { role: 'user', content: 'Question' }] } } });
+  const query = handler({
+    data: {
+      id: 'owner',
+      name: 'llm',
+      task: 'llm:query',
+      requestId: 'answer-1',
+      payload: {
+        message: [
+          { role: 'system', content: 'Help' },
+          { role: 'user', content: 'Question' },
+        ],
+      },
+    },
+  });
   await new Promise((resolve) => setImmediate(resolve));
-  await handler({ data: { id: 'owner', name: 'llm', task: 'llm:cancel', requestId: 'answer-1', payload: {} } });
+  await handler({
+    data: { id: 'owner', name: 'llm', task: 'llm:cancel', requestId: 'answer-1', payload: {} },
+  });
   assert.deepEqual(stopping([[1]], [[0]]), [true]);
   stream('Late');
   finish([{ generated_text: 'Late' }]);
   await query;
-  assert.equal(messages.filter(({ task }) => task === 'llm:stream:response' || task === 'llm:message:response').length, 0);
+  assert.equal(
+    messages.filter(({ task }) => task === 'llm:stream:response' || task === 'llm:message:response')
+      .length,
+    0,
+  );
 });
 
 test('initialization loads the configured model and tokenizer before reporting ready', async () => {
@@ -318,4 +339,51 @@ test('an asynchronous query failure reports an error for the query', async () =>
   assert.equal(messages[1].id, 'query-3');
   assert.equal(messages[1].task, 'llm:query');
   assert.match(messages[1].error.message, /generation failed/);
+});
+
+test('generation settings change after draining without loading weights again', async () => {
+  let loads = 0;
+  const observed = [];
+  const generator = async (_prompt, options) => {
+    observed.push(options.max_new_tokens);
+    return [{ generated_text: 'Answer' }];
+  };
+  generator.tokenizer = {};
+  const messages = [];
+  const handler = createLlmMessageHandler({
+    loadGeneratorPipeline: async () => {
+      loads++;
+      return generator;
+    },
+    loadTokenizer: async () => ({ getMaxLength: () => 2048, countTokens: () => 1 }),
+    publish: (message) => messages.push(message),
+  });
+  await handler({ data: { id: 'init', name: 'llm', task: 'llm:init', payload: config } });
+  await handler({
+    data: {
+      id: 'init',
+      name: 'llm',
+      task: 'llm:init',
+      payload: { ...config, generation: { max_new_tokens: 8 } },
+    },
+  });
+  await handler({
+    data: {
+      id: 'query',
+      name: 'llm',
+      task: 'llm:query',
+      payload: {
+        message: [
+          { role: 'system', content: 'Help' },
+          { role: 'user', content: 'Hello' },
+        ],
+      },
+    },
+  });
+  assert.equal(loads, 1);
+  assert.deepEqual(observed, [8]);
+  assert.equal(
+    messages.some((message) => message.error),
+    false,
+  );
 });

@@ -1,97 +1,58 @@
-import { StateMachineStatesEnum } from '@/layers/data/contants/constants';
-import { isMessageBase } from '@/layers/data/guards/is-message-base.guard';
-import { type MessageBase, type StateMachineStatusLog } from '@/layers/data/workers/models';
-import { type BroadcastContract } from '@/layers/shared/contracts/broadcast-port.contract';
-import { type HubContract } from '@/layers/shared/contracts/hub-port.contract';
-import { type StateMachineConnectionContract } from '@/layers/shared/contracts/message-connection.contract';
-import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
+import { isRuntimeMessage } from '@/layers/data/guards/is-runtime-message.guard';
+import { type MessageBase } from '@/layers/data/workers/models';
+import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
-import { createSubscribable, type WritableConnections } from '@/layers/shared/utils/subscribable';
+import { createSubscribable } from '@/layers/shared/utils/subscribable';
 
 import { StandardCommunicationBaseAbstract } from './standard-communication-base.abstract';
 
-export abstract class StandardCommunication
-  extends StandardCommunicationBaseAbstract
-  implements StandardCommunicationContract
-{
-  readonly #$data: WritableConnections<unknown> = createSubscribable();
-  #readyMessage?: MessageBase<unknown>;
-
+export abstract class StandardCommunication<
+  TConfig = unknown,
+> extends StandardCommunicationBaseAbstract {
+  readonly #data = createSubscribable<unknown>();
+  #status: MessageBase<unknown> | undefined;
   constructor(
-    protected hub: HubContract,
-    protected stateMachine: StateMachineConnectionContract<
-      MessageBase<unknown>,
-      MessageBase<unknown>
-    >,
-    protected broadcast: BroadcastContract<MessageBase<unknown>, MessageBase<unknown>>,
-    public configuration: RagConfigBase<unknown>,
+    protected readonly coordinator: RuntimeCoordinatorContract,
+    readonly configuration: RagConfigBase<TConfig>,
   ) {
-    super(stateMachine, configuration.name);
-    this.stateMachine.listen(this.handleStateMachineData);
-    this.broadcast.listen(this.handleBroadcast);
+    super(configuration.name);
     this.connections.push(
-      this.hub.$isReady.connect((isReady: boolean): void =>
-        isReady ? this.checkAvailability() : undefined,
-      ),
+      coordinator.onData((data) => {
+        if (!isRuntimeMessage(data) || data.id !== this.channelId) return;
+        if (
+          data.task.endsWith(':ready') ||
+          data.task.endsWith(':loading') ||
+          (data.error && !data.requestId)
+        )
+          this.#status = data;
+        this.#data.emit(data);
+      }),
     );
+    this.initialize();
   }
-
   onData = (listener: (data: unknown) => void): (() => void) => {
-    const disconnect = this.#$data.connect(listener);
-    if (this.#readyMessage) listener(this.#readyMessage);
+    const disconnect = this.#data.connect(listener);
+    if (this.#status) listener(this.#status);
     return disconnect;
   };
-
-  initialize = (): void => {
-    this.hub.host({
+  initialize = (): void =>
+    this.coordinator.host({
       id: this.channelId,
       name: this.name,
       task: `${this.name}:init`,
       payload: this.configuration.payload,
     });
-  };
-
-  send = (payload: unknown, requestId?: string, action: 'query' | 'cancel' = 'query'): void => {
-    this.hub.send({
+  send = (payload: unknown, requestId?: string, action: 'query' | 'cancel' = 'query'): void =>
+    this.coordinator.send({
       id: this.channelId,
       name: this.name,
       task: `${this.name}:${action}`,
-      ...(requestId === undefined ? {} : { requestId }),
       payload,
+      ...(requestId ? { requestId } : {}),
     });
-  };
-
   dispose = (): void => {
     super.dispose();
-    this.#$data.disconnect();
-  };
-
-  protected handleStateMachineLogs = (data: StateMachineStatusLog): void => {
-    if (data.initiator !== this.channelId && data.initiator !== 'announcement') return;
-    if (data.status === StateMachineStatesEnum.BUSY) {
-      console.info(`${data.entity} is ${StateMachineStatesEnum.BUSY}`);
-      return;
-    }
-    // For now check is not necessary but might be in the future.
-    this.initialize();
-  };
-
-  protected handleBroadcast = (data: MessageBase<unknown>): void => {
-    const { id, task } = data;
-    if (id !== this.channelId) return;
-    if (task.endsWith(':ready')) this.#readyMessage = data;
-    this.#$data.emit(data);
-  };
-
-  protected handleStateMachineData = (data: MessageBase<unknown>): void => {
-    const { payload } = data;
-    if (this.isStateMachineStatusLog(payload)) {
-      this.handleStateMachineLogs(payload);
-      return;
-    }
-  };
-
-  protected recieveBroadcastMessage = (data: MessageBase<unknown>): void => {
-    if (isMessageBase(data, (_payload): _payload is unknown => true)) this.handleBroadcast(data);
+    this.coordinator.release(this.channelId, this.name);
+    this.#data.disconnect();
   };
 }

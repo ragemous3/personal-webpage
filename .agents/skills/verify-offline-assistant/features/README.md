@@ -6,7 +6,7 @@ This map describes the existing home-page surface. Entry-open has been exercised
 
 - Follow Launch and Doctor in [the skill](../SKILL.md).
 - Use a unique loopback port, disposable browser profile, and runtime directory.
-- Retain evidence separately and record the source revision.
+- Save routine evidence under the ignored `artifacts/verification/<run-id>/` directory, publish an accessible artifact/archive link with retention, and record the source revision.
 - The configured models and matching résumé data must load for answer verification. There are no accounts to seed.
 
 ## Features
@@ -19,7 +19,7 @@ This map describes the existing home-page surface. Entry-open has been exercised
 
 ## Driving conventions
 
-The form is inside `chatbot-offline-provider` then `chat-container`, each with an open shadow root. Use Puppeteer's `>>>` selectors to cross them. The input has accessible label `Question`. The submit button is `Send`. Observe `[role="status"]`, `[role="alert"]`, and `[role="log"]` within the chat shadow root. `Cancel` interrupts a response; `Reset` clears the conversation. `Retry` appears after an error and requires an explicit click.
+The form is inside `chatbot-offline-provider` then `chat-container`, each with an open shadow root. Use Puppeteer's `>>>` selectors to cross them. The input has accessible label `Question`. The submit button is `Send`. Observe `[role="status"]`, `[role="alert"]`, and `[role="log"]` within the chat shadow root. `Cancel` interrupts a response; `Reset` clears the conversation. `reconnect` appears after a runtime failure and preserves history without resending a question. `Retry` remains for explicit response retries. Both require a click.
 
 Report each entry point separately. A typing check does not verify submission, retrieval, generation, or answers. A skipped path is not covered by another passing path.
 

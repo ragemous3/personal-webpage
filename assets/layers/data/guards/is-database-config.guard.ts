@@ -2,12 +2,20 @@ import {
   databaseNumberKeys,
   databaseStringKeys,
 } from '@/layers/data/contants/local-database.constants';
+import { lmDevices } from '@/layers/data/contants/local-lm.constants';
 import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
 import { hasNumberProperties, hasStringProperties, isRecord } from '@/layers/shared/guards/guards';
+
+import { isInitConfigBase } from './is-init-config-base.guard';
+
+const isDevice = (value: unknown): boolean =>
+  value === undefined || (typeof value === 'string' && lmDevices.includes(value));
 
 export const isDatabaseConfig = (value: unknown): value is DatabaseConfig => {
   if (
     !isRecord(value) ||
+    !isDevice(value.device) ||
+    !isInitConfigBase(value) ||
     !hasStringProperties(value, databaseStringKeys) ||
     !hasNumberProperties(value, databaseNumberKeys)
   ) {

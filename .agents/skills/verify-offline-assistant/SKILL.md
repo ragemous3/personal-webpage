@@ -18,10 +18,10 @@ Run from the repository root. Each invocation builds the current source into its
 ```sh
 npm run verify:browser -- --help
 node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey entry
-npm run verify:browser -- --mode entry --evidence /tmp/assistant-entry-unique
+npm run verify:browser -- --mode entry
 ```
 
-Use a new evidence-directory name for every invocation. Existing evidence is never overwritten. Keep evidence outside generated site output. These commands build source; no deployment is performed.
+Output defaults to a unique gitignored `artifacts/verification/<run-id>/` directory. Use `--evidence <new-directory>` to override it; existing directories are never overwritten. Keep evidence outside generated site output and disposable application/profile directories. These commands build source; no deployment is performed.
 
 ## Doctor
 
@@ -38,29 +38,37 @@ Doctor returns PREREQUISITES_PRESENT or BLOCKED and always sets runtimeVerified 
 ### Native coordination baseline
 
 ```sh
-npm run verify:browser -- --mode controlled --evidence /tmp/assistant-coordination-unique
+npm run verify:browser -- --mode controlled
 ```
 
-This mode serves the unmodified built hub and state SharedWorker in native browser contexts. Only generation/retrieval model workers are deterministic fixtures. The probe exercises transport and coordination directly, not RagService or the full question UI. Controlled outputs never establish real inference, retrieval quality or model cancellation performance.
+This mode serves the built RuntimeCoordinator and all three native application SharedWorkers in native browser contexts. Only generation/retrieval model drivers are deterministic fixtures; their SharedModelRuntime adapter is production code. The application reconnect scenario uses a labelled chunk fixture. The probe exercises transport and coordination directly, not RagService or the full question UI. Controlled outputs never establish real inference, retrieval quality or model cancellation performance.
 
-The cases cover first-tab requests, retrieval/generation transport, joining tabs, competing claims, cancellation transport, close/crash, freeze/resume, navigation/back, worker self-close and initialization retry. Each isolated context retains native CDP target identities/counts, model-instance/initialization events and port messages. Library/internal browser targets are distinct from application workers. An exception alone is not worker termination: the self-close case also waits for the native worker target to disappear. The crash case requires a page crash event; it does not claim that only one OS process was affected.
+The cases cover first-tab requests, retrieval/generation transport, joining tabs, simultaneous attachment, cancellation transport, close/crash, freeze/resume, navigation/back, worker self-close and initialization retry. Each isolated context retains native CDP target identities/counts, model-instance/initialization events and port messages. Library/internal browser targets are distinct from application workers. An exception alone is not worker termination: the self-close case also waits for the native worker target to disappear. The crash case requires a page crash event; it does not claim that only one OS process was affected.
 
-By default, observed failures return exit 1. Add `--baseline` only when recording known current product failures. It permits completion with FAIL/BLOCKED scenarios but preserves every verdict and never permits a tool/cleanup ERROR. Do not use this option as a green product gate. Product failures belong to the runtime ticket. Future three-SharedWorker/reconnect scenarios are explicitly BLOCKED migration definitions, not passing tests of the old topology.
+By default, observed failures return exit 1. Add `--baseline` only when recording known current product failures. It permits completion with FAIL/BLOCKED scenarios but preserves every verdict and never permits a tool/cleanup ERROR. Do not use this option as a green product gate. It does not create an approved screenshot/test baseline or authorize committing run output. Product failures belong to the runtime ticket. The three-SharedWorker, queued-cancellation, recovery and reconnect scenarios now run against this architecture. A missing observation is not a pass.
 
 ### Real-model cache restart
 
 ```sh
 node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey answer
-npm run verify:browser -- --mode cache --evidence /tmp/assistant-cache-unique
+npm run verify:browser -- --mode cache
 ```
 
-This mode first requires the actual retrieval files. It then attempts a question with the configured real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS is blocked on restart while the owned loopback site remains reachable. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records are labelled with their scope; DNS blocking applies to worker requests too. No model download count is inferred from page-only request events.
+This mode first requires the actual retrieval files. It then attempts a question with the real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS and the local model-download route are blocked on restart while application, WASM and retrieval assets remain served. The local model endpoint records worker downloads; a returning answer must make zero model requests. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records remain labelled with their scope. The local endpoint count covers worker fetches as well.
 
-A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
+A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. Set RUNTIME_MODEL_DIR to a local model mirror for isolated WASM/one-thread/32-token deterministic configuration; production defaults remain unchanged. The cache journey also checks real answers in two tabs, continued work after closing one, Cancel and Reset. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
+
+## CPU cancellation and throughput
+
+```sh
+RUNTIME_MODEL_DIR=/path/to/model-mirror npm run verify:browser -- --mode performance
+```
+
+This compares the production shared generation path with the same handler, actual Qwen model, prompt, backend and generation settings in a dedicated Worker without cooperative task yields. It checks identical outputs, retains one warm-up plus three measured answers per topology and measures actual cancellation stop acknowledgment. Report sample variation; do not turn CPU measurements into a hardware-wide or WebGPU guarantee. See [the runtime explanation](../../../docs/runtime-coordinator.md) for mirror layout and reproducible browser-compatible retrieval data preparation.
 
 ## Evidence
 
-The runner writes evidence.json with mode, source revision/worktree status, production worker hashes, build output, browser version, per-scenario verdicts and cleanup. Screenshots are retained locally; evidence PNGs stay ignored. Commit small evidence and runner source required to reproduce findings, not model caches, profiles or generated indices.
+The runner writes evidence.json with mode, source revision/worktree status, production worker hashes, build output, browser version, per-scenario verdicts and cleanup. Commit the skill, feature map, helper scripts, tests, fixtures and approved test baselines. Routine screenshots, videos, traces, logs and reports belong in run artifacts. Follow [the evidence storage policy](../../../docs/verification-evidence.md): publish accessible PR/CI artifact or durable archive links, with the tested SHA, commands, outcomes, skipped checks and retention. Workspace-only output is local-only evidence, not shared review evidence. Historical reports are linked at immutable Git revisions; they are not retained in the current tree.
 
 A scenario PASS proves only its stated observation. Keep application entry, controlled coordination and real-model results separate. Read FAIL reasons and BLOCKED prerequisites before deciding whether the implementing ticket can advance. A harness can be complete with accurately reported product failures; an implementing product ticket cannot treat those failures as passes.
 
@@ -74,7 +82,11 @@ The input contains mode and events. Request events carry client and requestId; i
 
 ## Cleanup
 
-The runner closes its own browser contexts/browser and server and removes only its own temporary directory. Evidence remains outside that directory. A cleanup error makes the invocation ERROR. Inspect cleanup fields before accepting a run. If a process is interrupted externally, identify its recorded owned browser/profile/server before cleaning it up; never kill another instance based on a shared port or name.
+The runner closes its own browser contexts/browser and server and removes only its own temporary directory. Evidence remains outside that directory. After teardown, finalization checks the report and every declared artifact for readability and nonempty file contents. `evidenceRetained` becomes true only after those checks; missing evidence or a cleanup error makes the invocation ERROR. Inspect cleanup fields before accepting a run. If a process is interrupted externally, identify its recorded owned browser/profile/server before cleaning it up; never kill another instance based on a shared port or name.
+
+## Publishing routine runs
+
+The manual Browser verification workflow publishes entry/controlled reports and screenshots with 90-day retention; ordinary CI uploads test execution output even after test failure. Artifact links are included in the workflow summary. Real-model cache/performance runs need their existing local prerequisites and a separately published artifact/archive link. Record results and skipped/unattempted checks concisely in the ticket; do not commit routine reports or scratch notes. Approved baselines stay under reviewed test assets, outside the ignored artifact directory.
 
 ## Helpers
 

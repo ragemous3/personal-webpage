@@ -1,18 +1,18 @@
 # Introduce three SharedWorkers with RuntimeCoordinator lifecycle and recovery
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 300
 - TAGS: task, refactor
 
 ## Background
 
-On 2026-11-01, the user selected a three-SharedWorker architecture and requested folding the runtime lifecycle and recovery work from ticket 20261029-193941 into this ticket, removing that separate ticket and excluding Web Locks. This replaces the earlier hub-removal and owner-tab election plan. This is a planning update; production implementation has not started.
+On 2026-11-01, the user selected a three-SharedWorker architecture and requested folding the runtime lifecycle and recovery work from ticket 20261029-193941 into this ticket, removing that separate ticket and excluding Web Locks. This replaces the earlier hub-removal and owner-tab election plan. The original update was planning only. The implementation record below tracks the authorized work.
 
 One RuntimeCoordinator SharedWorker owns runtime state and request routing. One generation SharedWorker holds the language model; one retrieval SharedWorker holds the embedding model and vector index. Tabs share these resources within the supported same-origin browser context. No tab owns the model runtime, and switching tabs does not transfer a lock or reload models. Web Locks and heartbeat mechanisms are outside this scope.
 
 RagService retains per-tab conversation history and the retrieval, context/prompt construction and generation business flow. RuntimeCoordinator manages resource readiness, progress, request lifecycle and recovery. Model workers report their actual initialization, readiness, execution and failure state. Browser model caching uses the model framework's existing support; cached weights and live in-memory model instances have different lifetimes.
 
-Rename Hub to RuntimeCoordinator, HubAbstract to RuntimeCoordinatorAbstract and HubConnection to RuntimeCoordinatorConnection. Follow the existing file conventions with runtime-coordinator.data.ts, runtime-coordinator.abstract.ts, runtime-coordinator.connection.ts and runtime-coordinator.shared-worker.ts. Preserve and adapt StandardCommunication, its base, Chat and DB where their consumers still need them. Whether SharedWorkerManager remains a separate dependency or folds into RuntimeCoordinatorConnection is still open; audit WorkerBase consumers before removing any shared abstraction.
+Rename Hub to RuntimeCoordinator, HubAbstract to RuntimeCoordinatorAbstract and HubConnection to RuntimeCoordinatorConnection. Follow the existing file conventions with runtime-coordinator.data.ts, runtime-coordinator.abstract.ts, runtime-coordinator.connection.ts and runtime-coordinator.shared-worker.ts. Preserve and adapt StandardCommunication, its base, Chat and DB where their consumers still need them. The implementation audit retains SharedWorkerManager as a separate transport dependency; audit WorkerBase consumers before removing any shared abstraction.
 
 Following the user's prioritization request, schedule [production build and CI](../20261029-195034/TASK.md) (priority 500), then [application verification infrastructure](../20261027-104746/TASK.md) (400), this combined refactor (300), and [assistant configuration](../20261028-123834/TASK.md) (100). The supporting tickets establish checks against the current implementation; this refactor updates and passes their three-SharedWorker migration scenarios. Configuration UI and persistence remain separate work.
 
@@ -30,7 +30,7 @@ Following the user's prioritization request, schedule [production build and CI](
 
 **Demo path:** open two tabs together, obtain separate answers without duplicate model initialization, cancel one request, close its tab and continue in the other. Stop a worker, reconnect without losing the conversation or replaying the interrupted question, then restart the browser and demonstrate cached-model reuse.
 
-Keep this as the combined runtime ticket requested by the user. Work through the complete multi-tab answer path, cancellation/departure path, and failure/reconnect path as verification checkpoints within this ticket; do not split it into transport, state-machine and model-worker layer tickets. Its remaining design gates below must be settled before implementation. Ticket preparation does not claim that this entire refactor fits one uninterrupted session.
+Keep this as the combined runtime ticket requested by the user. Work through the complete multi-tab answer path, cancellation/departure path, and failure/reconnect path as verification checkpoints within this ticket; do not split it into transport, state-machine and model-worker layer tickets. Its original design gates are resolved in the implementation record below. Ticket preparation does not claim that this entire refactor fits one uninterrupted session.
 
 Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base `1f2efdd54c68a7f94726e5aee6d8db2e064baab9`. The user authorized ticket refinement, repository skill installation, signed commits, branch push and PR creation. This publishes the plan only; this implementation ticket stays OPEN.
 
@@ -43,17 +43,17 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 
 ## Acceptance criteria
 
-- [ ] Sequential and simultaneous tab openings share one RuntimeCoordinator, one generation and one retrieval application SharedWorker per supported sharing context. Model initialization is deduplicated; late joiners receive current readiness, progress or failure. Record any library-internal workers separately.
-- [ ] Apply the agreed RuntimeCoordinator class/base/connection and file naming. Replace the old dedicated hub and separate ownership-state worker with one coordinator path. Update composition and worker asset mappings, removing obsolete paths only after the consumer audit.
-- [ ] Keep RagService responsible for conversation and business orchestration. Preserve useful communication abstractions and per-tab conversation isolation. Opening, switching or closing a tab does not reload models still used by other tabs.
-- [ ] Route queries, streamed/final responses, cancellation and failures by client and request identity. Generation runs one request at a time in arrival order. Repeated attachment/initialization does not leak workers, ports or subscriptions.
-- [ ] Model workers report actual lifecycle state; RuntimeCoordinator maintains authoritative shared runtime state. Reject stale initialization and responses using runtime/configuration identities. Errors without request IDs reach affected services/UI, and readiness updates do not hide failures.
-- [ ] Cancel queued and active work without unloading a healthy model. Distinguish cancellation receipt from completion, acknowledge stopping accurately, suppress chunks after cancellation, and ensure cancelled queued work never starts. Verify cancellation before generation and measure active cancellation latency and throughput impact against an agreed baseline.
-- [ ] Explicit departure on close/navigation/refresh detaches that client and cancels its work without stopping other clients' resources. Hidden or frozen tabs retain accepted work. When departure is uncertain, accepted work may finish within the agreed bounded policy. Test navigation/back restoration and distinguish observed departure from undetectable silent loss; use neither Web Locks nor heartbeats.
-- [ ] Runtime failure shows “Something went wrong” and an unstyled “reconnect” button. Reconnect preserves the tab's conversation and healthy resources where possible, repairs stale connections/readiness, and coalesces concurrent recovery attempts. Interrupted questions are not replayed automatically; requests cannot remain pending indefinitely.
-- [ ] Drain the entire accepted response, including retrieval-to-generation gaps, before planned model replacement. Provide the lifecycle contract needed by the later configuration ticket; generation-only settings must not require weight reloads. Do not add configuration controls or preference persistence here.
-- [ ] Preserve model-framework browser caching for both models. Verify reuse across browser sessions with model downloads blocked and report cache eviction/persistence limitations. Distinguish cached models from availability of application, WASM and retrieval assets.
-- [ ] Preserve readiness, progress, Reset and per-tab response behavior, adapting failure recovery to the agreed reconnect UI. Remove obsolete tests only after their meaningful assertions cover the surviving path.
+- [x] Sequential and simultaneous tab openings share one RuntimeCoordinator, one generation and one retrieval application SharedWorker per supported sharing context. Model initialization is deduplicated; late joiners receive current readiness, progress or failure. Record any library-internal workers separately.
+- [x] Apply the agreed RuntimeCoordinator class/base/connection and file naming. Replace the old dedicated hub and separate ownership-state worker with one coordinator path. Update composition and worker asset mappings, removing obsolete paths only after the consumer audit.
+- [x] Keep RagService responsible for conversation and business orchestration. Preserve useful communication abstractions and per-tab conversation isolation. Opening, switching or closing a tab does not reload models still used by other tabs.
+- [x] Route queries, streamed/final responses, cancellation and failures by client and request identity. Generation runs one request at a time in arrival order. Repeated attachment/initialization does not leak workers, ports or subscriptions.
+- [x] Model workers report actual lifecycle state; RuntimeCoordinator maintains authoritative shared runtime state. Reject stale initialization and responses using runtime/configuration identities. Errors without request IDs reach affected services/UI, and readiness updates do not hide failures.
+- [x] Cancel queued and active work without unloading a healthy model. Distinguish cancellation receipt from completion, acknowledge stopping accurately, suppress chunks after cancellation, and ensure cancelled queued work never starts. Verify cancellation before generation and measure active cancellation latency and throughput impact against an agreed baseline.
+- [x] Explicit departure on close/navigation/refresh detaches that client and cancels its work without stopping other clients' resources. Hidden or frozen tabs retain accepted work. When departure is uncertain, accepted work may finish within the agreed bounded policy. Test navigation/back restoration and distinguish observed departure from undetectable silent loss; use neither Web Locks nor heartbeats.
+- [x] Runtime failure shows “Something went wrong” and an unstyled “reconnect” button. Reconnect preserves the tab's conversation and healthy resources where possible, repairs stale connections/readiness, and coalesces concurrent recovery attempts. Interrupted questions are not replayed automatically; requests cannot remain pending indefinitely.
+- [x] Drain the entire accepted response, including retrieval-to-generation gaps, before planned model replacement. Provide the lifecycle contract needed by the later configuration ticket; generation-only settings must not require weight reloads. Do not add configuration controls or preference persistence here.
+- [x] Preserve model-framework browser caching for both models. Verify reuse across browser sessions with model downloads blocked and report cache eviction/persistence limitations. Distinguish cached models from availability of application, WASM and retrieval assets.
+- [x] Preserve readiness, progress, Reset and per-tab response behavior, adapting failure recovery to the agreed reconnect UI. Remove obsolete tests only after their meaningful assertions cover the surviving path.
 
 ## Dependencies
 
@@ -66,11 +66,11 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 
 ## Definition of Done
 
-- [ ] All acceptance criteria have evidence tied to the implemented revision. Retain commands and small evidence in the repository; keep generated indices, model caches and evidence PNGs ignored.
-- [ ] Run focused protocol/lifecycle checks, native multi-tab browser checks and a real CPU application journey. Cover simultaneous attachment, isolated requests, cancellation, departure/background behavior, failed initialization, worker failure, repeated reconnect and cache reuse. Report controlled versus real-model coverage, latency measurements and remaining limitations accurately.
-- [ ] Update the architecture explanation with labelled connections, layer responsibilities and verified worker counts. Record classes retained, renamed, refactored or removed, and explain intentional historical hub references.
-- [ ] Complete the repository implementation flow, including relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition and the final full test suite after reviews. Clean up owned test processes and record baseline failures separately.
-- [ ] Publish through the agreed implementation workflow after implementation mode is selected. This planning update authorizes no implementation, merge or release.
+- [x] All acceptance criteria have evidence tied to the implemented revision. Retain commands and small evidence in the repository; keep generated indices, model caches and evidence PNGs ignored.
+- [x] Run focused protocol/lifecycle checks, native multi-tab browser checks and a real CPU application journey. Cover simultaneous attachment, isolated requests, cancellation, departure/background behavior, failed initialization, worker failure, repeated reconnect and cache reuse. Report controlled versus real-model coverage, latency measurements and remaining limitations accurately.
+- [x] Update the architecture explanation with labelled connections, layer responsibilities and verified worker counts. Record classes retained, renamed, refactored or removed, and explain intentional historical hub references.
+- [x] Complete the repository implementation flow, including relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition and the final full test suite after reviews. Clean up owned test processes and record baseline failures separately.
+- [x] Publish through the agreed implementation workflow after implementation mode is selected. The recorded Autopilot grant authorizes implementation and PR handoff. Merge and release need separate explicit approval.
 
 ### Planning PR verification (2026-11-01)
 
@@ -79,3 +79,118 @@ The planning and skill changes were reviewed at signed snapshot `ffd7f460943c9aa
 Checks after review: `npm test` passed 42 tests with zero failures; `npm run typecheck` and `npm run lint` exited 0. Prettier passed for authored/adapted Markdown. Local Markdown links, TATR sections, blocker order and `git diff --check` passed. Unmodified upstream files retain their original formatting. These checks cover the planning PR; no runtime implementation or three-SharedWorker production verification is claimed. No live data operations or runtime changes occur in this PR.
 
 Next action: settle the remaining transport-class boundary, failure/departure policy and verification thresholds, then select implementation mode for the combined refactor.
+
+## Implementation record (2026-11-03)
+
+Mode: Autopilot through PR handoff, explicitly approved for this ticket's scoped implementation and routine design choices, tests/data preparation, documentation, reviews, signed commits, push, PR and CI/review fixes. No merge/deployment is authorized. Branch: `refactor/20261029-193942-runtime-coordinator`. Fixed review base: `32c82a41721d20ae85de18b054b0ab096255af25` (merged PR #20; four CI checks passed).
+
+Stage 1 audit: no non-chatbot production consumer or sender of the old set/transfer ownership protocol exists. Dedicated Worker managers serve only the old hub and model children; the duplicate abstract manager is test-only. WorkerBase remains consumed by SharedWorkerManager. The latter has generic port transport behavior and will be retained for the coordinator and both model connections, with its misleading state-specific filename/contracts removed and fault/listener/reference ownership corrected. StandardCommunication/base and Chat/DB remain useful virtual-client interfaces. Progress must replay late-join state; it will consume coordinator events. RagService retains all retrieval/history/prompt/generation business orchestration and gains only lifecycle begin/finish/reconnect calls.
+
+The agreed architecture and Autopilot grant settle routine transport/test choices: the coordinator SharedWorker owns one runtime state machine, resource-instance/attachment epochs, request records and the generation FIFO. Tabs compose all three worker connections and transfer model ports; duplicate registrations close surplus ports. Model workers own pipelines and report their actual loading/ready/busy/stopped/failure state. Root/model SharedWorker references and native error listeners are retained. Recovery reattaches the same named worker resources, cancels and awaits stale work before rebinding, and never creates a second model to escape an unverified timeout. A still-hung worker can remain unavailable until it responds or the browser terminates it; failed bounded recovery remains visible rather than claiming success or overlapping inference.
+
+Operation-specific deadlines replace no ownership mechanism: connection/start acknowledgment 10 seconds, initialization 10 minutes, request/accepted-RAG lease 15 minutes, active generation silence 2 minutes and cancellation stop 30 seconds. They are configurable infrastructure policy for supported environments and short deterministic test runs, not periodic idle heartbeats. A timeout rejects affected work and quarantines an unconfirmed active model until a stop or recovery handshake; it never authorizes another inference concurrently. Hidden/frozen clients are not inferred departed. Explicit pagehide detaches/cancels; pageshow reattaches without question replay. Full accepted-work leases cover retrieval-to-generation gaps and expire conservatively if a silently lost client cannot finish.
+
+Public verification seams: native MessagePort coordinator protocol (including queues, cancellation, epoch rejection, errors, recovery and full-work drain); model-worker protocol with dependency-injected real handler tests; tab communication/RagService public contracts; and the existing native-browser verification CLI upgraded to the three-worker topology. Focused commands will be `node --import ./scripts/typescript-test.loader.js --test tests/runtime-coordinator.spec.js`, existing transport/lifecycle/model/factory cases, and `npm run verify:browser` native scenarios. The unchanged production asset checker validates root/subpath builds with renamed entries. Lint/typecheck remain required; final suite `npm test` follows both reviews.
+
+Real-data investigation: local genuine Qwen q4 and MiniLM uint8 assets are available outside the repository. Generate the matching HNSW index in a browser from the six actual CV source pages, preserve source content and validate count/labels/neighbors before use. Generated files and caches stay ignored. Retrieval currently hardcodes WebGPU and swallows external-index errors; these must be corrected for valid lifecycle/CPU verification. The real app will be exercised with explicitly recorded CPU/test token-budget configuration and actual models/index. Local model/WASM asset locations are infrastructure dependencies; the cache-restart test must deny localhost model downloads as well as external DNS. Timing comparisons use the same model/backend/options and report sample limitations.
+
+Next action: stage 3, add one failing coordinator-port behavioral case, then implement the shared runtime in vertical paths: shared answer, cancellation/departure, failure/reconnect, drain/reconfiguration, and real-model/cache/performance evidence. Do not mark any former failing verification as passing by removing its user-facing invariant.
+
+### Stage 3 completion and stage 4 entry
+
+Implementation now uses only the three application SharedWorkers. RuntimeCoordinator/base/connection, the retained generic SharedWorkerManager and typed StandardCommunication/Chat/DB path replace the audited hub/ownership stack. RagService retains business orchestration and uses whole-response leases. Progress uses coordinator replay; generic broadcast utilities remain independent. Failed model references are released in every connected tab; recovery and native port errors retain healthy resources and conversation history. Disposal failure quarantines uncertain resources.
+
+Focused red/green cases cover FIFO and isolation, real-stop cancellation, stop deadlines, departure, stale epochs/failure replay, retrieval-to-generation drain, blocking new leases while configuration waits, rejection of late work after lease expiry, failed disposal, generation settings without weight reload, infrastructure validation and service recovery without question replay. Existing factory, message, browser UI and verification-report assertions were migrated with their behavior preserved. Focused checks passed 65 cases before the final infrastructure validation case; that additional case also passed with its affected factory/model checks. Lint and TypeScript checks exit 0. Final focused/runtime checks follow cleanup.
+
+Earlier native runs passed all 17 current controlled scenarios, including the actual reconnect UI. The real WASM application answered from genuine résumé data, answered in two tabs, continued after the first closed, cancelled and reset through visible controls, and answered after a new browser process with model downloads blocked. Returning model requests were zero; browser persistence was false. Initial CPU timing measured actual stop at 656 ms and three equal-output answers per topology; variation prevents a general performance claim. Final evidence will bind these checks to the complete source digest and signed review snapshot.
+
+Supported verification environment: Chromium 154.0.8037.57 on Linux with WASM CPU inference, one thread. Production WebGPU defaults remain unchanged; GPU hardware and other browsers are not verified here. SharedWorker availability and browser storage partitions define separate supported sharing contexts. Unsupported connections fail visibly; no per-tab inference fallback is added.
+
+Stage 4 cleanup removed obsolete WorkerBase members, stale transport names and duplicate paths, and kept the remaining abstractions aligned with their consumers. Architecture and policy are recorded in [the runtime explanation](../../docs/runtime-coordinator.md) and [ADR 2](../../docs/adr/0002-share-assistant-resources-through-runtimecoordinator-and-two-model-sharedworkers.md). Next action: final focused checks, root/subpath asset builds, native controlled/entry/real cache/performance journeys, then signed snapshot and two read-only reviews. Reviews, blast-radius review and the post-review full suite are not yet complete.
+
+### Final checks in progress
+
+Stage 4 focused checks: 66 tests passed, zero failures. TypeScript and ESLint exit 0. Clean production builds passed at `/` and `/resume/`, each verifying three worker entries and four JavaScript assets. The final native run passed all 17 controlled scenarios and untouched offline entry. The controlled set includes the application reconnect UI, both single- and multi-tab worker recovery, the former ownership/claim invariants, queued and active cancellation, freeze, departure and whole-response drain. These are controlled model-driver checks, not real-inference claims.
+
+Final real-data/cache/performance runs are executing sequentially against the same complete source digest, with no competing verification browser during timing. The retained source snapshot hashes existing application, script, test and configuration files so worktree evidence can be matched to the later signed commit. Next action: retain those final results, create the stage 4 signed snapshot and run Standards/Spec reviews. The final full suite remains scheduled after reviews.
+
+### Stage 4 completion
+
+Cleanup and final affected checks pass. The focused command (the runtime, model, service, transport, factory, guard, report and browser test files listed above) passed **67 tests, zero failures**. `npm run lint`, `npm run typecheck` and `git diff --check` exit 0. `npm run build` and `npm run build -- --base-url https://example.test/resume/` each report **Verified 3 workers and 4 JavaScript assets**.
+
+The strengthened navigation/back check first failed when explicit repair was removed, then passed after automatic channel rehosting was added. Idle departure now detaches without manufacturing a runtime error; accepted work is interrupted. Progress-provider recreation reuses one subscription service (new focused red/green case). A failed transport cannot send a departure/fault message through a missing port. The final 17-case controlled run passes after these changes.
+
+Retained evidence:
+
+- [Native controlled runtime](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261029-193942/evidence/controlled.json): all 17 scenarios PASS, including automatic back restoration, multi-tab coordinator/model recovery and actual reconnect controls. Model drivers and labelled UI chunks are controlled; production coordinator, transport, state machine, SharedModelRuntime and application UI/service run natively.
+- [Untouched offline entry](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261029-193942/evidence/entry.json): input and Send visible in a fresh profile with external DNS blocked; no inference claim.
+- [Real résumé index](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261029-193942/evidence/retrieval-index.json): six source pages, 29 genuine MiniLM embeddings, 384 finite dimensions, HNSW count/label/neighbor checks, 48,796-byte browser binary, valid ISO timestamp and artifact hashes. The retained `scripts/prepare-retrieval-data.js` command reproduced it with no errors. Source CV content remains unchanged; generated files stay ignored.
+- [Real application and cache](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261029-193942/evidence/cache.json): actual Qwen q4/MiniLM uint8 WASM answers, two tabs sharing three workers, surviving-tab answer after close, visible Cancel and Reset, and another answer in a new browser process using the same profile/origin. Both model weight sets are cached. External DNS and local model downloads are blocked on restart; returning model requests: **0**. Storage persistence: **false**. Application, WASM and retrieval assets remain served.
+- [CPU performance and actual stopping](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261029-193942/evidence/performance.json): one warm-up and three measured identical-output answers per topology. Shared/dedicated median duration ratio **0.997** (approximately equal within observed variation); actual shared-model stop acknowledgment **638 ms**. Dedicated baseline uses the same handler/model/backend/prompt/settings without cooperative task yields. CPU-only, small samples, scheduling/cache variation; no general performance guarantee or GPU claim.
+
+Evidence preserves per-run source snapshots and built worker hashes. The final controlled source digest binds the current implementation. Entry, index and performance checks were run earlier in this fix pass; later changes concern channel restoration, progress-provider reuse and missing-port departure handling, not their measured paths. The generation worker's built SHA-256 is identical in final native, real-cache and performance runs (`16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0`). The latest real-cache run includes restoration and progress reuse; the final missing-port guard is covered by the subsequent native run and focused checks. All owned browsers/servers exited and scratch directories were removed.
+
+Next action: create the signed implementation snapshot, record its SHA, then run both read-only Standards and Spec reviews against the fixed base. Final full-suite result remains invalid until those reviews and blast-radius review pass.
+
+Stage 4 signed implementation snapshot: `5c4006ea6e27a5e66ef51688e92a227b360c69c0`. The committed source digest matches the final controlled run. Stage 5 entry: Standards and Spec review of the next metadata snapshot against fixed base `32c82a41721d20ae85de18b054b0ab096255af25`; no review result is yet claimed.
+
+### Review fix pass: service disposal
+
+Standards review of `74d874f55f6bf75b8308bdd1a561f037dc0bbd73` confirmed that RagService.dispose added a runtime subscription instead of clearing its unsubscribe list. A later attach then skipped chat/database re-subscription. Existing remount tests omitted the runtime dependency, which hid this defect. Both code-review results, blast-radius result and final full-suite result are invalidated before the fix. Return to stage 3: add a runtime-aware detach/remount regression, remove the new subscription from dispose, rerun affected checks/cleanup/runtime verification and repeat both read-only reviews. The in-progress reviewers continue against their pinned snapshot.
+
+### First review results and fixes
+
+Standards review of `74d874f55f6bf75b8308bdd1a561f037dc0bbd73`: one grouped documented naming violation (README responsibility suffixes). The five helpers now use `offline-configuration.factory.ts`, `model-environment.data.ts`, `runtime-coordinator-state-machine.data.ts`, `shared-model-runtime.data.ts` and `shared-worker-manager.data.ts`. The reviewer also confirmed the service-disposal lifecycle defect described above; it is corrected with a runtime-aware subscription/remount regression and a native application remount assertion.
+
+Spec review of the same SHA: one confirmed P1 recovery race. SharedModelRuntime previously awaited initialization/query work but did not track an in-flight driver disposal. A new binding could report unloaded and accept initialization while the old disposal still ran. The new regression first failed with an early runtime:bound. Disposal is now tracked as a shared promise; rebinding and shutdown await it, driver replacement completes independently of the old binding, and initialization/query entry is blocked during disposal. Disposal errors retain quarantine.
+
+Both new behavioral regressions pass with their affected suites (17 focused cases). ESLint and TypeScript pass. These results replace neither required review: both reviewers must rerun against the updated signed snapshot. Stage 3 fix implementation is complete; stage 4 cleanup/runtime verification is being repeated. Prior full-suite/review completion remains invalid. Next action: native UI/protocol checks, root/subpath builds, real cache and CPU stopping/throughput verification, then a new signed snapshot and both reviews.
+
+Additional verification fix in this pass: a failed coordinator resource retained its stale model port while waiting for replacement registration. Failure now cancels, invalidates the epoch and releases that port immediately. A new native MessagePort regression verifies peer closure before any replacement arrives; the complete browser recovery/remount journey passes after this change. This releases the failed connection, not the healthy retrieval resource; new model bindings still wait for actual work/disposal to settle.
+
+Stage 4 repeat results: all 17 native controlled scenarios PASS, including automatic back restoration and actual runtime-backed UI remount after reconnect. Untouched offline entry PASS. Genuine CPU application/cache journey PASS again with two-tab use, surviving-tab answer, visible Cancel/Reset, zero returning model requests and persistence false. Final performance repeat: actual stop acknowledgment **518 ms**; three identical-output measured answers per topology, shared/dedicated median duration ratio **0.890**. The small sample shows no slowdown in this environment; it does not establish a speedup or general hardware guarantee. These four native/real runs share source digest `1b58a3c39afc51580f94e1f34748872ce1fb76244b06508f3e5343e7684543af`. The retained evidence files will be refreshed with this fix pass before signing. Initial review reports remain superseded and both reviewers must review the new snapshot.
+
+Stage 4 fix-pass completion: **70 focused tests passed, zero failures**. Root/subpath production builds each verify three workers and four JavaScript assets. ESLint, TypeScript and diff whitespace checks pass. The browser index preparation reproduced all 29 chunks and neighbor checks with no errors. All five refreshed evidence files now carry the same source digest. Owned browser/server cleanup is successful. Next action: signed fix snapshot, then both fresh Standards and Spec reviews; the final full suite remains scheduled after reviews.
+
+Stage 4 signed fix implementation snapshot: `3aee22587c2ff802d5513edfba2b985fe8a677ec`. Stage 5 re-entry: both read-only reviews must assess the next metadata snapshot against the unchanged fixed base; first-pass findings are resolved but no new review pass is yet claimed.
+
+### Stages 5–6 completion and stage 7 entry
+
+Latest implementation snapshot: `3aee22587c2ff802d5513edfba2b985fe8a677ec`. Both independent, read-only reviews assessed full diff `32c82a41721d20ae85de18b054b0ab096255af25...af2aec77717d263a95485d534f64d1492849800f` after the review fixes.
+
+**Standards:** zero unresolved documented-rule findings and zero actionable heuristic smells outside tooling. Helper filenames satisfy the repository convention; retained abstractions follow ADR 2. The runtime-backed remount defect is corrected and covered.
+
+**Spec:** zero actionable findings. The reviewer rechecked cancellation, epochs, isolation, departure/restoration, full-response drain, concurrent recovery, healthy-resource retention and tracked disposal. Its focused coordinator/model/service checks passed 27 cases. All five retained proof digests match the implemented source. Recorded CPU/browser/cache limitations remain explicit.
+
+Blast-radius disposition for reviewed SHA `af2aec77717d263a95485d534f64d1492849800f`: no live bulk-data/account operation applies. Résumé sources were read, not edited or deleted. Index preparation writes only ignored generated artifacts and disposable browser IndexedDB; verification owns its profiles, contexts and servers. Code removal is limited to audited obsolete paths and is tracked in Git. No live deployment or external destructive data action occurred. No applicable unresolved finding remains.
+
+Stage 7 entry: PR text is prepared from the final diff with the required template and a small labelled three-worker diagram. Its described snapshot is `af2aec77717d263a95485d534f64d1492849800f`. Next action: run `npm test` once after both reviews, record the tested SHA/result, then sign/push, open the PR and close this TATR at handoff. No full-suite pass or publication is yet claimed.
+
+### Final full-suite result and publication preparation
+
+After both passing reviews and blast-radius review, `npm test` passed on reviewed snapshot `af2aec77717d263a95485d534f64d1492849800f` (only ticket records changed in the worktree). Tested implementation remains `3aee22587c2ff802d5513edfba2b985fe8a677ec`, source digest `1b58a3c39afc51580f94e1f34748872ce1fb76244b06508f3e5343e7684543af`.
+
+```text
+npm test
+ℹ tests 84
+ℹ suites 0
+ℹ pass 84
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+
+npm run build
+Verified 3 workers and 4 JavaScript assets at /
+
+npm run build -- --base-url https://example.test/resume/
+Verified 3 workers and 4 JavaScript assets at /resume/
+```
+
+ESLint and TypeScript exit 0; native/real checks and review findings are recorded above and in retained evidence. PR body is prepared for the reviewed final implementation; ticket-only status/evidence changes do not alter that description. Next action: publication under the existing Autopilot grant, then CLOSED status and PR link in a signed closure push. No merge or deployment is authorized.
+
+### PR handoff and ticket closure
+
+PR: https://github.com/ragemous3/personal-webpage/pull/21. The signed branch is pushed and the open PR targets main at the fixed base. Its body was read back and matches the prepared description. Both reviews remain valid for implementation `3aee22587c2ff802d5513edfba2b985fe8a677ec` / reviewed snapshot `af2aec77717d263a95485d534f64d1492849800f`; publication commits contain only ticket evidence/status updates. The post-review full suite passed all 84 tests.
+
+Ticket status is CLOSED at PR handoff under the repository workflow. Before this closure push, the existing git-workflow status tool reported auto-merge disabled, no active merge queue/entry, no unsigned commits, no unresolved threads or unanswered comments, and four CI checks pending with zero failures. The closure push will be followed by the same status tool on its new head. No merge or deployment occurred. Implementation, review and verification are complete; CI state will be reported separately from human review readiness.

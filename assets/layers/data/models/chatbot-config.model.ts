@@ -7,10 +7,13 @@ import { type SpaceName } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
 export interface InitConfigBase {
   source: string;
+  modelBaseUrl?: string;
+  wasmBaseUrl?: string;
 }
 
 export interface DatabaseConfig extends InitConfigBase {
   baseUrl: string;
+  device?: DeviceType;
   featureExtractionModel: string;
   vectorsPath: string;
   metadataPath: string;
