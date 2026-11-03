@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { RuntimeCoordinatorStateMachine } from '@/layers/data/workers/runtime-coordinator-state-machine';
+import { RuntimeCoordinatorStateMachine } from '@/layers/data/workers/runtime-coordinator-state-machine.data';
 
 const client = (runtime, context) => {
   const { port1, port2 } = new MessageChannel();
@@ -379,4 +379,30 @@ test('an expired whole-response lease cannot start late inference after another 
     ),
   );
   assert.equal(model.queries.length, 0);
+});
+
+test('resource failure releases the stale model port before a replacement can register', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine();
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  const { port1, port2 } = new MessageChannel();
+  const instanceId = crypto.randomUUID();
+  let closed = false;
+  port2.addEventListener('close', () => {
+    closed = true;
+  });
+  port2.addEventListener('message', ({ data }) => {
+    if (data.task === 'runtime:bind')
+      port2.postMessage({ ...data, task: 'runtime:bound', payload: { instanceId, loaded: false } });
+  });
+  port2.start();
+  context.after(() => port2.close());
+  a.send('runtime:register', { role: 'llm', instanceId, port: port1 });
+  await waitFor(() =>
+    a.messages.some((message) =>
+      message.payload?.resources?.some((resource) => resource.instanceId === instanceId),
+    ),
+  );
+  a.send('runtime:failed', { role: 'llm', instanceId, reason: 'Stopped worker' });
+  await waitFor(() => closed);
 });

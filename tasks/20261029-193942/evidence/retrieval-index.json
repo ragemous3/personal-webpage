@@ -1,10 +1,10 @@
 {
-  "started": "2026-11-03T09:13:25.321Z",
+  "started": "2026-11-03T09:49:45.359Z",
   "errors": [],
   "sourceSnapshot": {
     "algorithm": "SHA-256 of sorted path/content-hash pairs for existing assets, scripts, tests, config and toolchain configuration",
     "files": 136,
-    "digest": "eeb4b70022ba98dba5aa773674890b0dc780b3f2055ce51fe768d5bb04299945"
+    "digest": "1b58a3c39afc51580f94e1f34748872ce1fb76244b06508f3e5343e7684543af"
   },
   "pages": [
     {
@@ -35,7 +35,7 @@
   "artifacts": {
     "chunks.json": "ffd79bf8e27cbf7c58329e80a6c9e53e316b178de240031fb7d777270ab0a2c5",
     "contents.bin": "8bb5b43b64169fdd1b45896b03ddecf67d944f8e2f171ec21914228ceff360fe",
-    "vector-metadata.json": "45465277ae66d00ad7c7c1bdd42c152752cf85d401d1331f140e6014689f37bb"
+    "vector-metadata.json": "a84309291600b26d41ac71140a583b7a093bf1726106ca0a53c7b0d2e081dd50"
   },
   "count": 29,
   "neighbors": {
@@ -48,6 +48,6 @@
   "selected": 0,
   "bytes": 48796,
   "verdict": "PASS",
-  "finished": "2026-11-03T09:13:30.211Z",
+  "finished": "2026-11-03T09:49:50.586Z",
   "cleanup": "Owned browser/server closed and scratch removed"
 }

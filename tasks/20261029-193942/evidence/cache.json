@@ -1,23 +1,24 @@
 {
+  "sourceState": "Working tree; the sourceSnapshot digest identifies the tested implementation independently of its recorded parent revision. See the ticket snapshot mapping.",
   "kind": "cache",
   "verdict": "PASS",
-  "sourceRevision": "32c82a41721d20ae85de18b054b0ab096255af25",
+  "sourceRevision": "74d874f55f6bf75b8308bdd1a561f037dc0bbd73",
   "sourceSnapshot": {
     "algorithm": "SHA-256 of sorted path/content-hash pairs for existing assets, scripts, tests, config and toolchain configuration",
     "files": 136,
-    "digest": "0538e6a0365e241aa65bd72212082886e899f120ac5c45c1d128d9484e03b18b"
+    "digest": "1b58a3c39afc51580f94e1f34748872ce1fb76244b06508f3e5343e7684543af"
   },
   "sourceHashes": {
-    "llm.shared-worker.ts": "16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0",
-    "runtime-coordinator.shared-worker.ts": "06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9",
-    "vectordb.shared-worker.ts": "b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec"
+    "llm.shared-worker.ts": "cf810c45e31fc5d41ca75cdb01fcb0610df84aca16c6ef43e7743abbf7355d3b",
+    "runtime-coordinator.shared-worker.ts": "215a1adbb14cbb588c118ecfa48987ce0549228babc6936bddf153a765713f12",
+    "vectordb.shared-worker.ts": "bb95ba24fe456064c324ac3721caa472dc10b72a9b9a298b88ce884832fb968b"
   },
   "browser": "Chrome/154.0.8037.57",
-  "started": "2026-11-03T09:22:30.989Z",
-  "finished": "2026-11-03T09:24:26.119Z",
+  "started": "2026-11-03T09:43:55.344Z",
+  "finished": "2026-11-03T09:45:51.664Z",
   "build": {
     "status": 0,
-    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  3 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 764 ms\n",
+    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  3 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 758 ms\n",
     "stderr": "WARN  found no layout file for \"html\" for kind \"taxonomy\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\nWARN  found no layout file for \"html\" for kind \"term\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\n"
   },
   "cleanup": {
@@ -27,7 +28,7 @@
     "scratchRemoved": true,
     "browserClosed": true,
     "browserProcess": {
-      "pid": 17910,
+      "pid": 23005,
       "exitCode": 0,
       "signalCode": null
     },
@@ -48,47 +49,47 @@
     {
       "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
       "blocked": false,
-      "at": 1793697752736
+      "at": 1793699037241
     },
     {
       "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
       "blocked": false,
-      "at": 1793697752739
+      "at": 1793699037242
     },
     {
       "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
       "blocked": false,
-      "at": 1793697752740
+      "at": 1793699037246
     },
     {
       "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx",
       "blocked": false,
-      "at": 1793697752784
+      "at": 1793699037287
     },
     {
       "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
       "blocked": false,
-      "at": 1793697752786
+      "at": 1793699037291
     },
     {
       "path": "/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
       "blocked": false,
-      "at": 1793697752953
+      "at": 1793699037473
     },
     {
       "path": "/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json",
       "blocked": false,
-      "at": 1793697752953
+      "at": 1793699037475
     },
     {
       "path": "/models/Xenova/all-MiniLM-L6-v2/resolve/main/config.json",
       "blocked": false,
-      "at": 1793697752953
+      "at": 1793699037476
     },
     {
       "path": "/models/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_uint8.onnx",
       "blocked": false,
-      "at": 1793697752983
+      "at": 1793699037547
     }
   ],
   "scenarios": [
@@ -106,15 +107,15 @@
             {
               "name": "transformers-cache",
               "urls": [
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/config.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_uint8.onnx",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx"
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/config.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_uint8.onnx",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx"
               ]
             }
           ],
@@ -122,31 +123,31 @@
         },
         "pageRequests": [
           {
-            "url": "http://127.0.0.1:42857/",
+            "url": "http://127.0.0.1:42291/",
             "type": "document"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/views/styles/global.style.min.8bc327e4d5e141118ca18d4a56c8d7e0b025883ec3062d85dd45d73c14277535.css",
+            "url": "http://127.0.0.1:42291/layers/views/styles/global.style.min.8bc327e4d5e141118ca18d4a56c8d7e0b025883ec3062d85dd45d73c14277535.css",
             "type": "stylesheet"
           },
           {
-            "url": "http://127.0.0.1:42857/js/batch/main.4e6f7a8a9b284b3afda08f781f55e7e774ba64c97ef2d12133c699af65b3063e.js",
+            "url": "http://127.0.0.1:42291/js/batch/main.dbb7d572374db8226890feed608b5ddb4a34a93417f6e4ff01e38e80fbf5596a.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/runtime-coordinator.shared-worker.06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/runtime-coordinator.shared-worker.215a1adbb14cbb588c118ecfa48987ce0549228babc6936bddf153a765713f12.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/llm.shared-worker.16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/llm.shared-worker.cf810c45e31fc5d41ca75cdb01fcb0610df84aca16c6ef43e7743abbf7355d3b.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/vectordb.shared-worker.b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/vectordb.shared-worker.bb95ba24fe456064c324ac3721caa472dc10b72a9b9a298b88ce884832fb968b.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/content-data/chunks.json",
+            "url": "http://127.0.0.1:42291/content-data/chunks.json",
             "type": "fetch"
           }
         ],
@@ -159,11 +160,11 @@
         },
         {
           "type": "other",
-          "url": "chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html"
+          "url": "chrome://omnibox-popup.top-chrome/"
         },
         {
           "type": "other",
-          "url": "chrome://omnibox-popup.top-chrome/"
+          "url": "chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html"
         },
         {
           "type": "page",
@@ -171,28 +172,28 @@
         },
         {
           "type": "page",
-          "url": "http://127.0.0.1:42857/"
+          "url": "http://127.0.0.1:42291/"
         },
         {
           "type": "shared_worker",
-          "url": "http://127.0.0.1:42857/layers/data/workers/runtime-coordinator.shared-worker.06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9.js"
+          "url": "http://127.0.0.1:42291/layers/data/workers/runtime-coordinator.shared-worker.215a1adbb14cbb588c118ecfa48987ce0549228babc6936bddf153a765713f12.js"
         },
         {
           "type": "shared_worker",
-          "url": "http://127.0.0.1:42857/layers/data/workers/llm.shared-worker.16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0.js"
+          "url": "http://127.0.0.1:42291/layers/data/workers/llm.shared-worker.cf810c45e31fc5d41ca75cdb01fcb0610df84aca16c6ef43e7743abbf7355d3b.js"
         },
         {
           "type": "shared_worker",
-          "url": "http://127.0.0.1:42857/layers/data/workers/vectordb.shared-worker.b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec.js"
+          "url": "http://127.0.0.1:42291/layers/data/workers/vectordb.shared-worker.bb95ba24fe456064c324ac3721caa472dc10b72a9b9a298b88ce884832fb968b.js"
         }
       ],
       "multitab": {
         "secondAnswer": "assistant: Rasmus has worked at Ericsson for several years.",
         "survivingAnswer": "assistant: Rasmus has worked at Ericsson for several years.",
         "sharedWorkerUrls": [
-          "http://127.0.0.1:42857/layers/data/workers/llm.shared-worker.16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0.js",
-          "http://127.0.0.1:42857/layers/data/workers/runtime-coordinator.shared-worker.06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9.js",
-          "http://127.0.0.1:42857/layers/data/workers/vectordb.shared-worker.b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec.js"
+          "http://127.0.0.1:42291/layers/data/workers/llm.shared-worker.cf810c45e31fc5d41ca75cdb01fcb0610df84aca16c6ef43e7743abbf7355d3b.js",
+          "http://127.0.0.1:42291/layers/data/workers/runtime-coordinator.shared-worker.215a1adbb14cbb588c118ecfa48987ce0549228babc6936bddf153a765713f12.js",
+          "http://127.0.0.1:42291/layers/data/workers/vectordb.shared-worker.bb95ba24fe456064c324ac3721caa472dc10b72a9b9a298b88ce884832fb968b.js"
         ],
         "additionalModelDownloads": 0,
         "cancellation": "Real streamed answer interrupted using the visible Cancel button",
@@ -206,15 +207,15 @@
             {
               "name": "transformers-cache",
               "urls": [
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/config.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
-                "http://127.0.0.1:42857/models/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_uint8.onnx",
-                "http://127.0.0.1:42857/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx"
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/config.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
+                "http://127.0.0.1:42291/models/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_uint8.onnx",
+                "http://127.0.0.1:42291/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx"
               ]
             }
           ],
@@ -222,31 +223,31 @@
         },
         "pageRequests": [
           {
-            "url": "http://127.0.0.1:42857/",
+            "url": "http://127.0.0.1:42291/",
             "type": "document"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/views/styles/global.style.min.8bc327e4d5e141118ca18d4a56c8d7e0b025883ec3062d85dd45d73c14277535.css",
+            "url": "http://127.0.0.1:42291/layers/views/styles/global.style.min.8bc327e4d5e141118ca18d4a56c8d7e0b025883ec3062d85dd45d73c14277535.css",
             "type": "stylesheet"
           },
           {
-            "url": "http://127.0.0.1:42857/js/batch/main.4e6f7a8a9b284b3afda08f781f55e7e774ba64c97ef2d12133c699af65b3063e.js",
+            "url": "http://127.0.0.1:42291/js/batch/main.dbb7d572374db8226890feed608b5ddb4a34a93417f6e4ff01e38e80fbf5596a.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/runtime-coordinator.shared-worker.06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/runtime-coordinator.shared-worker.215a1adbb14cbb588c118ecfa48987ce0549228babc6936bddf153a765713f12.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/llm.shared-worker.16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/llm.shared-worker.cf810c45e31fc5d41ca75cdb01fcb0610df84aca16c6ef43e7743abbf7355d3b.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/layers/data/workers/vectordb.shared-worker.b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec.js",
+            "url": "http://127.0.0.1:42291/layers/data/workers/vectordb.shared-worker.bb95ba24fe456064c324ac3721caa472dc10b72a9b9a298b88ce884832fb968b.js",
             "type": "script"
           },
           {
-            "url": "http://127.0.0.1:42857/content-data/chunks.json",
+            "url": "http://127.0.0.1:42291/content-data/chunks.json",
             "type": "fetch"
           }
         ],

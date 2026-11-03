@@ -7,8 +7,8 @@ import { isRecord } from '@/layers/shared/guards/guards';
 import { type RuntimeMessage } from '@/layers/shared/models/runtime.model';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
-import { configureModelEnvironment } from './model-environment';
-import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime';
+import { configureModelEnvironment } from './model-environment.data';
+import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime.data';
 
 interface RetrievalDependencies {
   create(config: DatabaseConfig): Pick<VectorDBHNSWData, 'init' | 'query' | 'dispose'>;

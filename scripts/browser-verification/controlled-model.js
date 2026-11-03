@@ -1,4 +1,4 @@
-import { SharedModelRuntime } from '@/layers/data/workers/shared-model-runtime';
+import { SharedModelRuntime } from '@/layers/data/workers/shared-model-runtime.data';
 
 const pending = new Map();
 let attempts = 0;

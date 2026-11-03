@@ -6,7 +6,7 @@ import {
   isMessageBase,
   isVectorDbResponse as isVectorDatabaseResponse,
 } from '@/layers/data/guards/is-message-base.guard';
-import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager';
+import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager.data';
 import { isProgressStatusInfo } from '@/layers/shared/guards/progress.guard';
 
 const message = { id: 'request', name: 'llm', task: 'llm:query', payload: 'question' };

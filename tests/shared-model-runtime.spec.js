@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { SharedModelRuntime } from '@/layers/data/workers/shared-model-runtime';
+import { SharedModelRuntime } from '@/layers/data/workers/shared-model-runtime.data';
 
 const until = async (predicate) => {
   const end = Date.now() + 1500;
@@ -199,4 +199,72 @@ test('failed disposal cannot advertise a partially disposed pipeline as ready on
   const recovery = messages.find((message) => message.runtimeEpoch === 'third');
   assert.match(recovery.error?.message ?? '', /disposal failed/);
   assert.notEqual(recovery.task, 'runtime:bound');
+});
+
+test('recovery binding waits for in-flight disposal before any new initialization', async (context) => {
+  let finishDisposal;
+  let loads = 0;
+  let disposed = false;
+  let disposals = 0;
+  const runtime = new SharedModelRuntime('llm', (publish) => ({
+    handle: async ({ data }) => {
+      if (data.task === 'llm:init') {
+        loads++;
+        publish({ ...data, task: 'llm:ready' });
+      }
+    },
+    dispose: async () => {
+      if (++disposals === 1)
+        await new Promise((resolve) => {
+          finishDisposal = () => {
+            disposed = true;
+            resolve();
+          };
+        });
+    },
+  }));
+  const connect = () => {
+    const { port1, port2 } = new MessageChannel();
+    const messages = [];
+    port2.addEventListener('message', ({ data }) => messages.push(data));
+    port2.start();
+    runtime.connect(port1);
+    context.after(() => port2.close());
+    return {
+      messages,
+      send: (task, runtimeEpoch) =>
+        port2.postMessage({
+          id: crypto.randomUUID(),
+          name: 'llm',
+          task,
+          runtimeEpoch,
+          payload: {},
+        }),
+    };
+  };
+  context.after(async () => {
+    finishDisposal?.();
+    await runtime.close();
+  });
+  const a = connect();
+  a.send('runtime:bind', 'first');
+  await until(() => a.messages.some((message) => message.task === 'runtime:bound'));
+  a.send('llm:init', 'first');
+  await until(() => loads === 1);
+  a.send('runtime:dispose', 'replacement');
+  await until(() => finishDisposal);
+  const b = connect();
+  b.send('runtime:bind', 'recovery');
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  assert.equal(
+    b.messages.some((message) => message.task === 'runtime:bound'),
+    false,
+  );
+  assert.equal(loads, 1);
+  assert.equal(disposed, false);
+  finishDisposal();
+  await until(() => b.messages.some((message) => message.task === 'runtime:bound'));
+  b.send('llm:init', 'recovery');
+  await until(() => loads === 2);
+  assert.equal(disposed, true);
 });

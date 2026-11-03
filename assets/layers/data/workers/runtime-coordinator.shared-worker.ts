@@ -1,4 +1,4 @@
-import { RuntimeCoordinatorStateMachine } from '@/layers/data/workers/runtime-coordinator-state-machine';
+import { RuntimeCoordinatorStateMachine } from '@/layers/data/workers/runtime-coordinator-state-machine.data';
 
 const runtime = new RuntimeCoordinatorStateMachine();
 globalThis.addEventListener('connect', (event: Event) => {

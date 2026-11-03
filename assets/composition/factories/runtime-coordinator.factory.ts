@@ -1,7 +1,7 @@
 import { RuntimeCoordinatorConnection } from '@/layers/data/runtime-coordinator.connection';
 import { RuntimeCoordinator } from '@/layers/data/runtime-coordinator.data';
 
-import { getOfflineConfiguration } from './offline-configuration';
+import { getOfflineConfiguration } from './offline-configuration.factory';
 
 let runtime: RuntimeCoordinator | undefined;
 export const getRuntimeCoordinator = (cfg: unknown): RuntimeCoordinator => {

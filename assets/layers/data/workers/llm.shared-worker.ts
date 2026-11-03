@@ -12,9 +12,9 @@ import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
-import { configureModelEnvironment } from './model-environment';
+import { configureModelEnvironment } from './model-environment.data';
 import { type LlmDTO, type MessageBase } from './models';
-import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime';
+import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime.data';
 
 interface LlmWorkerDependencies {
   loadGeneratorPipeline: (

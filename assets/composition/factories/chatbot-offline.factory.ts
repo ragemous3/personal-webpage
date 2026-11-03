@@ -5,7 +5,7 @@ import { SeverityLevelCodes } from '@/layers/shared/constants';
 
 import { getLocalChatBot } from './local-chat-bot.factory';
 import { getVectorDatabase } from './local-vector-database.factory';
-import { getOfflineConfiguration } from './offline-configuration';
+import { getOfflineConfiguration } from './offline-configuration.factory';
 import { getRuntimeCoordinator } from './runtime-coordinator.factory';
 
 export const buildChatbotOfflineDeps = (cfg: unknown): RagService | undefined => {

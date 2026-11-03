@@ -35,6 +35,7 @@ export class SharedModelRuntime {
   #epoch: string | undefined;
   #loaded = false;
   #disposalFailure: string | undefined;
+  #disposal: Promise<void> | undefined;
   #configuration: unknown;
 
   constructor(
@@ -68,6 +69,7 @@ export class SharedModelRuntime {
   close = async (): Promise<void> => {
     this.#binding++;
     await this.#stopAll();
+    await this.#disposal;
     await this.#driver.dispose();
     for (const port of this.#ports) this.#drop(port);
     this.#ports.clear();
@@ -121,6 +123,7 @@ export class SharedModelRuntime {
   };
   readonly #receiveTask = async (port: MessagePort, message: RuntimeMessage): Promise<void> => {
     if (message.runtimeEpoch !== this.#epoch || message.name !== this.role) return;
+    if (this.#disposal) throw new Error('Model disposal is still in progress');
     if (message.task === `${this.role}:cancel`) await this.#cancel(message);
     else if (message.task === `${this.role}:init` || message.task === `${this.role}:query`)
       this.#start(port, message);
@@ -134,6 +137,7 @@ export class SharedModelRuntime {
     const previous = this.#bound;
     this.#bound = undefined;
     this.#epoch = message.runtimeEpoch;
+    await this.#disposal;
     await this.#stopAll();
     if (binding !== this.#binding) return;
     if (previous && previous !== port) this.#drop(previous);
@@ -211,6 +215,16 @@ export class SharedModelRuntime {
   readonly #disposeDriver = async (port: MessagePort, message: RuntimeMessage): Promise<void> => {
     const binding = ++this.#binding;
     this.#epoch = message.runtimeEpoch;
+    const disposal = (this.#disposal ??= this.#resetDriver());
+    try {
+      await disposal;
+    } finally {
+      if (this.#disposal === disposal) this.#disposal = undefined;
+    }
+    if (binding !== this.#binding) return;
+    this.#reply(port, message, 'runtime:disposed', { instanceId: this.instanceId, loaded: false });
+  };
+  readonly #resetDriver = async (): Promise<void> => {
     await this.#stopAll();
     this.#loaded = false;
     try {
@@ -219,10 +233,7 @@ export class SharedModelRuntime {
       this.#disposalFailure = describeFailure(error);
       throw error;
     }
-    if (binding !== this.#binding) return;
-    this.#loaded = false;
     this.#configuration = undefined;
     this.#driver = this.#newDriver();
-    this.#reply(port, message, 'runtime:disposed', { instanceId: this.instanceId, loaded: false });
   };
 }

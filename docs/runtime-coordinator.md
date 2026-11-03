@@ -22,7 +22,7 @@ RuntimeCoordinatorAbstract supplies the tab interface; RuntimeCoordinator starts
 
 The coordinator state machine owns resource state, initialization deduplication, client/request identity, per-resource queues, cancellation, accepted-response leases and configuration drain. Generation runs FIFO, one request at a time. RagService owns résumé retrieval, chunk loading, prompt construction, generation and tab-local history. No inference or conversation history lives in RuntimeCoordinator.
 
-SharedModelRuntime adapts the actual generation and retrieval drivers to the shared-worker protocol. Each model worker reports its instance, loaded configuration, readiness, execution and actual stopping. Rebinding waits for old work to stop. Epochs reject old initialization and response messages. Cancellation suppresses subsequent chunks; a stop acknowledgment follows completion of the driver, not receipt of the cancel command. The generation driver yields to an event-loop task between model forward passes so CPU cancellation can be received.
+SharedModelRuntime adapts the actual generation and retrieval drivers to the shared-worker protocol. Each model worker reports its instance, loaded configuration, readiness, execution and actual stopping. Rebinding waits for initialization, execution and any in-flight disposal to settle before it can report readiness. Epochs reject old initialization and response messages. Cancellation suppresses subsequent chunks; a stop acknowledgment follows completion of the driver, not receipt of the cancel command. The generation driver yields to an event-loop task between model forward passes so CPU cancellation can be received.
 
 ## Departure and failure
 

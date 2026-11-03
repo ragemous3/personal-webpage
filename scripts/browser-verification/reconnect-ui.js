@@ -9,6 +9,36 @@ const stopModel = async (targets, browser) => {
   await session.detach().catch(() => {});
 };
 
+const exerciseRemount = async (page) => {
+  await page.evaluate(() => {
+    const provider = globalThis.document.querySelector('chatbot-offline-provider');
+    const chat = provider.shadowRoot.querySelector('chat-container');
+    chat.remove();
+    provider.shadowRoot.append(chat);
+  });
+  await page.waitForFunction(
+    () =>
+      !globalThis.document
+        .querySelector('chatbot-offline-provider')
+        .shadowRoot.querySelector('chat-container')
+        .shadowRoot.querySelector('input').disabled,
+  );
+  await page.type('chatbot-offline-provider >>> chat-container >>> input', 'After remount');
+  await page.click('chatbot-offline-provider >>> chat-container >>> button[type=submit]');
+  await page.waitForFunction(
+    () => {
+      const chat = globalThis.document
+        .querySelector('chatbot-offline-provider')
+        .shadowRoot.querySelector('chat-container').shadowRoot;
+      return (
+        chat.querySelector('[role=status]').textContent.trim() === 'ready' &&
+        chat.querySelector('[role=log] p:last-child')?.textContent.includes('Controlled')
+      );
+    },
+    { timeout: 5000 },
+  );
+};
+
 export const exerciseReconnectUI = async ({ context, origin, targets, browser, evidence }) => {
   const page = await context.newPage();
   page.on('pageerror', (error) => evidence.record({ type: 'ui-error', message: error.message }));
@@ -87,4 +117,5 @@ export const exerciseReconnectUI = async ({ context, origin, targets, browser, e
     2,
     'Concurrent reconnect duplicated model initialization',
   );
+  await exerciseRemount(page);
 };

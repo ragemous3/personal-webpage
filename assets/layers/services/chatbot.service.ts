@@ -68,12 +68,7 @@ export class RagService implements ChatbotServiceContract {
     if (this.#attachedClients > 0) return;
     this.reset();
     for (const disconnect of this.#transportUnsubscribers) disconnect();
-    const status = this.runtime?.onData?.((data) => {
-      if (!isRecord(data) || data.task !== 'runtime:state' || !isRecord(data.payload)) return;
-      this.#configuring = data.payload.configuring === true;
-      if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
-    });
-    this.#transportUnsubscribers = [...(status ? [status] : [])];
+    this.#transportUnsubscribers = [];
   };
 
   send = (question: string): void => {

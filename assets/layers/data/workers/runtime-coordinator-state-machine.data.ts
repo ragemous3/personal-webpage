@@ -563,6 +563,8 @@ export class RuntimeCoordinatorStateMachine {
         runtimeEpoch: model.epoch,
       });
     model.epoch = crypto.randomUUID();
+    model.port?.close();
+    delete model.port;
     for (const request of [...this.#requests.values()].filter(
       (entry) => entry.message.name === model.role,
     )) {

@@ -1,5 +1,5 @@
 import { isRuntimeMessage } from '@/layers/data/guards/is-runtime-message.guard';
-import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager';
+import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager.data';
 import { isRecord } from '@/layers/shared/guards/guards';
 import {
   type RuntimeMessage,

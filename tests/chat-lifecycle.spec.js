@@ -294,3 +294,46 @@ test('runtime reconnect preserves partial history, coalesces attempts and never 
   assert.equal(database.sent.filter((entry) => entry.action === 'query').length, 1);
   assert.deepEqual(finished, [requestId]);
 });
+
+test('detaching and remounting a runtime-backed service releases all subscriptions and restores answer delivery', async () => {
+  const chat = transport();
+  const database = transport();
+  const runtimeListeners = new Set();
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+    {
+      begin: async () => {},
+      finish() {},
+      reconnect: async () => {},
+      onData: (listener) => {
+        runtimeListeners.add(listener);
+        return () => runtimeListeners.delete(listener);
+      },
+    },
+  );
+  const detach = service.attach();
+  chat.emit({ task: 'llm:ready' });
+  database.emit({ task: 'vectordb:ready' });
+  detach();
+  assert.equal(runtimeListeners.size, 0);
+  assert.equal(chat.listeners, 0);
+  assert.equal(database.listeners, 0);
+  const release = service.attach();
+  assert.equal(runtimeListeners.size, 1);
+  assert.equal(chat.listeners, 1);
+  assert.equal(database.listeners, 1);
+  service.send('After remount');
+  await new Promise((resolve) => setImmediate(resolve));
+  const requestId = database.sent.find((entry) => entry.action === 'query').requestId;
+  chat.emit({
+    task: 'llm:message:response',
+    requestId,
+    payload: { generated_text: 'Remounted answer' },
+  });
+  assert.equal(service.chatMessagesSubscription.getValue().at(-1).content, 'Remounted answer');
+  release();
+  assert.equal(runtimeListeners.size, 0);
+});
