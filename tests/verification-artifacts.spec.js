@@ -88,3 +88,47 @@ test('retained reports preserve blocked checks and do not hide teardown failures
   assert.equal(evidence.cleanup.evidenceRetained, true);
   assert.deepEqual(evidence.skippedChecks, [{ name: 'cache', reason: 'Missing model data' }]);
 });
+
+for (const screenshotAvailable of [true, false]) {
+  test(`entry assertion failure preserves required screenshot outcome (available: ${screenshotAvailable})`, async (context) => {
+    const { runEntry } = await import(
+      new URL('../scripts/browser-verification/application.js', import.meta.url)
+    );
+    const directory = await mkdtemp(path.join(tmpdir(), 'entry-failure-'));
+    context.after(() => rm(directory, { recursive: true, force: true }));
+    let closed = false;
+    const page = {
+      on() {},
+      async goto() {},
+      async waitForSelector() {},
+      async evaluate() {
+        return { title: 'Unexpected title' };
+      },
+      async screenshot({ path: file }) {
+        assert.equal(closed, false);
+        if (!screenshotAvailable) throw new Error('Renderer unavailable');
+        await writeFile(file, 'failure-state screenshot');
+      },
+      async close() {
+        closed = true;
+      },
+    };
+    const evidence = { artifacts: [], scenarios: [], cleanup: { errors: [] } };
+    await runEntry(
+      {
+        async newPage() {
+          return page;
+        },
+      },
+      'http://localhost',
+      evidence,
+      directory,
+    );
+    assert.equal(closed, true);
+    assert.equal(evidence.scenarios[0].verdict, 'FAIL');
+    assert.ok(evidence.artifacts.includes('entry-open.png'));
+    await finalizeEvidence(directory, evidence);
+    assert.equal(evidence.verdict, screenshotAvailable ? 'FAIL' : 'ERROR');
+    assert.equal(evidence.cleanup.evidenceRetained, screenshotAvailable);
+  });
+}

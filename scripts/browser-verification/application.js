@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 export const runEntry = async (browser, origin, evidence, directory) => {
+  evidence.artifacts.push('entry-open.png');
   const page = await browser.newPage();
   const events = [];
   page.on('pageerror', (error) => events.push({ type: 'pageerror', message: error.message }));
@@ -39,12 +40,15 @@ export const runEntry = async (browser, origin, evidence, directory) => {
       };
     });
     assert.equal(result.state.title, 'Rasmus Moberg');
-    evidence.artifacts.push('entry-open.png');
-    await page.screenshot({ path: path.join(directory, 'entry-open.png'), fullPage: true });
   } catch (error) {
     result.verdict = 'FAIL';
     result.reason = error.message;
   } finally {
+    try {
+      await page.screenshot({ path: path.join(directory, 'entry-open.png'), fullPage: true });
+    } catch (error) {
+      result.screenshotError = error.message;
+    }
     evidence.scenarios.push(result);
     await page.close();
   }
