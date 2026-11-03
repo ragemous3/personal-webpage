@@ -1,6 +1,6 @@
 # Store routine verification evidence as retained artifacts
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task, verification
 
@@ -31,7 +31,7 @@ The approved proposal covers documentation, ignored artifact paths, post-teardow
 
 - [x] Focused file-finalization and CLI checks, lint/type checks, native entry/controlled artifact-retention checks and full post-review suite pass. Product-scenario failures remain visible and are reported separately.
 - [x] Required Standards and Spec reviews pass; blast-radius disposition recorded.
-- [x] Signed local commits are created. No push, PR, merge or deployment is requested for this follow-up.
+- [x] Signed commits are created and added to PR #21 under the subsequent publication approval. No merge or deployment is requested.
 
 ### Execution record
 
@@ -62,3 +62,11 @@ Stage 6: blast-radius assessment is not applicable: this follow-up changes local
 Stage 7: npm test ran after both reviews against 33a7651af71d86c8972c36fa1a7c533a02447fd8: 92 tests passed, zero failed/skipped. Focused checks, lint, typecheck, workflow syntax and native entry checks passed as recorded above. Controlled worker-recovery failures remain separately reported baseline observations; real-model cache/performance checks and hosted uploads were not run for this storage-only follow-up. Routine output remains ignored and local-only until optional publication. These summary/status edits do not change the reviewed implementation.
 
 The requested local-commit handoff is complete. Publication, CI artifact links and PR creation remain outside the user's request; no push, merge or deployment occurred. Ticket remains OPEN under the repository's publication-based closure rule, with no unfinished authorized implementation work. Next action, only if separately requested: publish this branch, attach retained evidence, and complete PR handoff.
+
+### PR #21 publication
+
+The user subsequently requested “Add them to pr 21,” authorizing branch publication and the PR/documentation updates needed for handoff. Guided mode and the reviewed implementation remain unchanged. The five signed follow-up commits were fast-forward pushed to refactor/20261029-193942-runtime-coordinator at 3e4fd1e0a8cd5bf25361979e310b4488c5975e3a; the PR description now covers artifact storage and its verification limits. Auto-merge and merge-queue entry were both absent before publication. No merge or deployment was requested or performed.
+
+PR: https://github.com/ragemous3/personal-webpage/pull/21. Local full-suite result remains 92 passing tests on reviewed implementation 33a7651af71d86c8972c36fa1a7c533a02447fd8. Subsequent commits change ticket records only. Hosted CI is triggered on the PR branch; its checks and retained test output provide shared evidence with the configured 90-day retention. Native browser reports remain local-only and are not represented as uploaded artifacts; the new manual workflow is unavailable for dispatch until published on the default branch. The entry run passed and the controlled recovery failures remain documented above.
+
+Stage 7 publication completes this artifact-storage ticket; CLOSED denotes PR handoff, not merge. Three existing PR review threads concern README naming guidance and configuration-factory utilities, outside this storage follow-up; they remain unresolved. Next action: inspect CI for the closure head and report its status with the PR link.
