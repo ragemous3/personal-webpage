@@ -121,6 +121,7 @@ export const runCache = async (restart, origin, evidence, directory) => {
       'External DNS and loopback /models/ downloads blocked; application, WASM and retrieval assets remain served; same profile, new browser process';
     result.returning = await ask(browser, origin, evidence);
     const pages = await browser.pages();
+    evidence.artifacts.push('cache-returning.png');
     await pages.at(-1).screenshot({ path: path.join(directory, 'cache-returning.png') });
     result.restartModelRequests = evidence.modelRequests.slice(restartEvent);
     if (result.restartModelRequests.length > 0)

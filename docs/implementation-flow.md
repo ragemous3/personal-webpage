@@ -16,6 +16,7 @@ implement → deslop → runtime verification → code-review → blast-radius
 
 This workflow owns stage order, check timing, reviews, commits, publication, and closure. Skills supply each stage's method. Read each required `SKILL.md` before use; see [setup and sources](implementation-setup.md).
 
+- Follow [verification evidence storage](verification-evidence.md): commit reusable tools and approved baselines; publish routine run outputs as retained artifacts and record concise source-linked summaries. Curated migration/audit records need an explicit ticket rationale.
 - Follow stages 0–7. After a stage passes, continue without another approval pause. Skip, replace, or reorder a required step only with explicit user approval recorded in the ticket.
 - Use the TATR ticket as the spec. Resume its recorded stage after the ticket gate. Return to stage 1 for unresolved requirements or changed scope/interfaces. Reuse recorded approvals; silence or elapsed time is not approval.
 - On stage entry and completion, record the stage, latest implementation SHA, checks and review SHAs, and next action. Commit these records with work snapshots. Keep the review-base SHA fixed.
@@ -36,16 +37,16 @@ At every point below, run the [decision CLI](../scripts/implementation-decision.
 node scripts/implementation-decision.js --mode "$FLOW_MODE" <decision-id>
 ```
 
-| Point | Decision ID |
-| --- | --- |
-| Stage 2 passes; also before resuming a prepared ticket | `after-ticket` |
+| Point                                                     | Decision ID                   |
+| --------------------------------------------------------- | ----------------------------- |
+| Stage 2 passes; also before resuming a prepared ticket    | `after-ticket`                |
 | Before documentation, comment, docstring, or ticket edits | `before-documentation-change` |
-| Stage 3 passes | `after-implementation` |
-| Stage 4 passes | `after-verification` |
-| Stage 5 passes | `after-code-review` |
-| Stage 6 passes | `after-blast-radius` |
-| Before publication, including closure push | `before-publish` |
-| Stage 7 handoff | `after-publish` |
+| Stage 3 passes                                            | `after-implementation`        |
+| Stage 4 passes                                            | `after-verification`          |
+| Stage 5 passes                                            | `after-code-review`           |
+| Stage 6 passes                                            | `after-blast-radius`          |
+| Before publication, including closure push                | `before-publish`              |
+| Stage 7 handoff                                           | `after-publish`               |
 
 Follow stdout when present. Exit 0 with empty stdout adds no instruction. A nonzero exit blocks progress until the lookup is fixed. The CLI retrieves instructions; it grants no permission. Apply it on fix passes and resumption too. Keep shared requirements here, not in the [mode maps](implementation-modes/decisions.json).
 
@@ -101,7 +102,7 @@ Follow stdout when present. Exit 0 with empty stdout adds no instruction. A nonz
 ## 7. Test, publish, and close
 
 - **Action:** Complete these steps in order:
-  1. Record acceptance-criteria and Definition of Done evidence in the ticket. Read `show-me` and prepare the PR title and body from the final diff. Follow the [PR template](../.github/pull_request_template.md) and ASD-STE100 Simplified Technical English. Use the smallest useful diagram or example. Keep verification results in the ticket, not the PR body. Record which snapshot the body describes; use accessible links instead of local temporary paths.
+  1. Record acceptance-criteria and Definition of Done evidence in the ticket. Read `show-me` and prepare the PR title and body from the final diff. Follow the [PR template](../.github/pull_request_template.md) and ASD-STE100 Simplified Technical English. Use the smallest useful diagram or example. Keep a concise verification summary, tested SHA, commands, outcomes, skipped/unattempted checks, accessible artifact links and retention in the ticket, not routine execution logs. Link that evidence from the PR; keep the PR body focused on the change. Record which snapshot the body describes; use accessible links instead of local temporary paths.
   2. Run the ticket's full-suite command once, after reviews and before push. Record the command, result, and tested implementation SHA. Reuse a passing result only if no implementation changed; ticket status/evidence and PR-text edits alone do not require another run.
   3. Run `before-publish` and satisfy its instructions. Reuse publication approval already given. Use git-workflow for signed commits and branch push. Create or update the branch's existing PR. Before every push to an existing PR, check auto-merge and merge-queue state; stop if either could merge without authorization.
   4. After the branch is pushed and the PR is open, set the ticket to CLOSED. Record the PR URL and completed stage. Sign and push the closure commit to the same branch. Do not wait for PR approval or merge.

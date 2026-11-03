@@ -6,7 +6,7 @@ This map describes the existing home-page surface. Entry-open has been exercised
 
 - Follow Launch and Doctor in [the skill](../SKILL.md).
 - Use a unique loopback port, disposable browser profile, and runtime directory.
-- Retain evidence separately and record the source revision.
+- Save routine evidence under the ignored `artifacts/verification/<run-id>/` directory, publish an accessible artifact/archive link with retention, and record the source revision.
 - The configured models and matching résumé data must load for answer verification. There are no accounts to seed.
 
 ## Features

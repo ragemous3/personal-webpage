@@ -32,6 +32,6 @@ export const closeResources = async (state) => {
   cleanup.browserClosed = !state.browser?.connected;
   cleanup.browserProcess = processState(state.browser, cleanup.errors);
   cleanup.serverClosed = !state.site?.server.listening;
-  cleanup.evidenceRetained = true;
+  cleanup.evidenceRetained = false;
   return cleanup;
 };

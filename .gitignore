@@ -57,6 +57,7 @@ Thumbs.db
 # Misc
 #######################################
 coverage/
+/artifacts/verification/
 **/evidence/**/*.png
 tmp/
 temp/

@@ -15,7 +15,7 @@ const { values } = parseArgs({
 });
 if (values.help) {
   console.info(
-    'Usage: npm run verify:browser -- --mode controlled|entry|cache|performance --evidence <new-directory> [--baseline]\nOr: --assess <observations.json>',
+    'Usage: npm run verify:browser -- --mode controlled|entry|cache|performance [--evidence <new-directory>] [--baseline]\nDefault output: artifacts/verification/<unique-run-id>/\nOr: --assess <observations.json>',
   );
 }
 if (values.assess && !values.help) {
@@ -25,14 +25,14 @@ if (values.assess && !values.help) {
 }
 
 if (!values.assess && !values.help) {
-  if (!['controlled', 'entry', 'cache', 'performance'].includes(values.mode) || !values.evidence)
+  if (!['controlled', 'entry', 'cache', 'performance'].includes(values.mode))
     throw new Error(
-      'Use --mode controlled|entry|cache|performance --evidence <new-directory> [--baseline], or --assess <observations.json>',
+      'Use --mode controlled|entry|cache|performance [--evidence <new-directory>] [--baseline], or --assess <observations.json>',
     );
   const { verifyBrowser } = await import('./browser.js');
   process.exitCode = await verifyBrowser({
     mode: values.mode,
-    directory: path.resolve(values.evidence),
+    directory: values.evidence ? path.resolve(values.evidence) : undefined,
     baseline: values.baseline,
   });
 }

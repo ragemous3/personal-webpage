@@ -39,6 +39,7 @@ export const runEntry = async (browser, origin, evidence, directory) => {
       };
     });
     assert.equal(result.state.title, 'Rasmus Moberg');
+    evidence.artifacts.push('entry-open.png');
     await page.screenshot({ path: path.join(directory, 'entry-open.png'), fullPage: true });
   } catch (error) {
     result.verdict = 'FAIL';

@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -8,16 +8,11 @@ import { runEntry } from './application.js';
 import { runCache } from './cache.js';
 import { closeResources } from './cleanup.js';
 import { createSite, launch, root } from './environment.js';
+import { defaultEvidenceDirectory, finalizeEvidence } from './evidence.js';
 import { runPerformance } from './performance.js';
 import { runControlled } from './scenarios.js';
 import { sourceSnapshot } from './source.js';
 
-const verdict = (evidence) => {
-  if (evidence.toolError || evidence.cleanup.errors.length > 0) return 'ERROR';
-  if (evidence.scenarios.some((scenario) => scenario.verdict === 'FAIL')) return 'FAIL';
-  if (evidence.scenarios.some((scenario) => scenario.verdict === 'BLOCKED')) return 'BLOCKED';
-  return evidence.scenarios.length > 0 ? 'PASS' : 'ERROR';
-};
 const sourceHashes = async (site, workers) => {
   const hashes = {};
   for (const name of Object.keys(workers)) {
@@ -47,12 +42,30 @@ const exercise = async (state, evidence, directory) => {
   return runEntry(browser, state.site.origin, evidence, directory);
 };
 
-export const verifyBrowser = async ({ mode, directory, baseline }) => {
+export const verifyBrowser = async ({
+  mode,
+  directory = defaultEvidenceDirectory(root, mode),
+  baseline,
+}) => {
+  await mkdir(path.dirname(directory), { recursive: true });
   await mkdir(directory, { recursive: false });
   const scratch = await mkdtemp(path.join(tmpdir(), 'browser-verification-'));
   const state = { scratch };
   const evidence = {
     mode,
+    artifacts: [],
+    command: {
+      executable: 'node',
+      arguments: [
+        'scripts/browser-verification/run.js',
+        '--mode',
+        mode,
+        '--evidence',
+        directory,
+        ...(baseline ? ['--baseline'] : []),
+      ],
+      cwd: root,
+    },
     sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], {
       cwd: root,
       encoding: 'utf8',
@@ -85,8 +98,7 @@ export const verifyBrowser = async ({ mode, directory, baseline }) => {
   } finally {
     evidence.cleanup = await closeResources(state);
     evidence.finished = new Date().toISOString();
-    evidence.verdict = verdict(evidence);
-    await writeFile(path.join(directory, 'evidence.json'), JSON.stringify(evidence, null, 2));
+    await finalizeEvidence(directory, evidence);
   }
   console.info(
     JSON.stringify({
