@@ -1,6 +1,6 @@
 # Offline assistant verification map
 
-This map describes the existing home-page surface. It is a draft with no successful live run. Read the selected feature before driving the app.
+This map describes the existing home-page surface. Entry-open has been exercised against the untouched production build in a fresh offline profile. Typing, model readiness, answers and cache reuse require separate evidence. Read the selected feature before driving the app.
 
 ## Baseline preconditions
 
@@ -11,11 +11,11 @@ This map describes the existing home-page surface. It is a draft with no success
 
 ## Features
 
-| Feature | Entry point | Current limitation |
-| --- | --- | --- |
-| [Open and type a question](question-entry.md) | Home page `/` | Input is disabled until both workers report ready. |
-| [Observe loading](loading.md) | Fresh visit to `/` | The configured WebGPU models require an available GPU adapter. |
-| [Get a résumé answer](resume-answer.md) | Send button or Enter in the input | Matching résumé data and working model backends are required. |
+| Feature                                       | Entry point                       | Current limitation                                                          |
+| --------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------- |
+| [Open and type a question](question-entry.md) | Home page `/`                     | Entry-open is independent of readiness; typing requires both workers ready. |
+| [Observe loading](loading.md)                 | Fresh visit to `/`                | The configured WebGPU models require an available GPU adapter.              |
+| [Get a résumé answer](resume-answer.md)       | Send button or Enter in the input | Matching résumé data and working model backends are required.               |
 
 ## Driving conventions
 

@@ -1,0 +1,20 @@
+<!doctype html><html><head><title>Native coordination verification</title></head><body>
+<script type="module">
+const { workers } = await (await fetch('/data/workers.json')).json();
+const client = crypto.randomUUID();
+const events = [];
+const state = new SharedWorker(workers['state-machine.shared-worker.ts'], { type: 'module' });
+state.port.addEventListener('message', ({data}) => events.push({ channel: 'state', data, at: Date.now() }));
+state.port.start();
+const hub = new Worker(workers['hub.worker.ts'], { type: 'module' });
+hub.addEventListener('message', ({data}) => events.push({ channel: 'hub', data, at: Date.now() }));
+const send = (task, payload) => hub.postMessage({ id: client, name: 'hub', task, payload });
+globalThis.probe = {
+  client, events,
+  check: (name = 'llm') => state.port.postMessage({ id: client, name, task: `${name}:check`, payload: null }),
+  host: (fail = false, name = 'llm') => send('hub:host', { id: client, name, task: `${name}:init`, payload: { source: workers[`${name}.worker.ts`], fail } }),
+  query: (requestId, payload = {}, name = 'llm') => send('hub:query', { id: client, name, task: `${name}:query`, requestId, payload }),
+  cancel: (requestId) => send('hub:query', { id: client, name: 'llm', task: 'llm:cancel', requestId, payload: {} }),
+};
+send('hub:ping', null);
+</script></body></html>

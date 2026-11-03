@@ -9,11 +9,11 @@ A visitor opens the Offline assistant and enters a question about Rasmus.
 
 ## How to get to it (user POV)
 
-Open `/`. Wait for `ready`, click the question input, and type `What experience does Rasmus have?`.
+Open `/` and verify the visible form for entry-open. For entry-type, wait for `ready`, click the question input, and type `What experience does Rasmus have?`.
 
 ## Driving it with Puppeteer
 
-Preconditions: Doctor passes, the owned Hugo instance builds, and the browser renders the actual components.
+For entry-open, Doctor --journey entry passes and the owned production build renders the actual components. Run npm run verify:browser -- --mode entry --evidence <new-directory>. The offline initial condition permits disabled controls and proves only the visible entry surface. For entry-type, Doctor --journey answer passes and both model resources must actually reach ready.
 
 - **Open.** Run the skill's `open` command. Expect title `Rasmus Moberg` and visible `chatbot-offline-provider >>> chat-container >>> input` and `chatbot-offline-provider >>> chat-container >>> button[type="submit"]`.
 - **Type.** Run `type`. Inspect `after.png` and `observations.json`; expect the exact question in the input and an unchanged page URL.

@@ -12,7 +12,8 @@
     "dev": "hugo serve --disableFastRender --ignoreCache --noHTTPCache --gc",
     "build": "node scripts/build-site.js",
     "knip": "npx knip",
-    "typecheck": "tsc --noEmit --pretty false"
+    "typecheck": "tsc --noEmit --pretty false",
+    "verify:browser": "node scripts/browser-verification/run.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
