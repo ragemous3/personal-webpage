@@ -26,7 +26,7 @@ Hugo, typescript, lit3.0 and CSS.
 
 ## Task tracking
 
-Project tasks live in [`tasks/`](https://github.com/ragemous3/personal-webpage/tree/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks) and follow [TATR](https://github.com/tsoding/tatr)'s Markdown format. On Linux, follow the [TATR setup and quick start](tasks/README.md), then use `tatr new` to create a task and `tatr ls` to list open tasks from this repository.
+Project tasks live in [`tasks/`](tasks/) and follow [TATR](https://github.com/tsoding/tatr)'s Markdown format. On Linux, follow the [TATR setup and quick start](tasks/README.md), then use `tatr new` to create a task and `tatr ls` to list open tasks from this repository.
 
 ## Infrastructure
 
