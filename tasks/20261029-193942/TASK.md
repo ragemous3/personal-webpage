@@ -1,6 +1,6 @@
 # Introduce three SharedWorkers with RuntimeCoordinator lifecycle and recovery
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 300
 - TAGS: task, refactor
 
@@ -70,7 +70,7 @@ Planning publication: branch `docs/20261101-runtime-tickets-skills`, fixed base 
 - [x] Run focused protocol/lifecycle checks, native multi-tab browser checks and a real CPU application journey. Cover simultaneous attachment, isolated requests, cancellation, departure/background behavior, failed initialization, worker failure, repeated reconnect and cache reuse. Report controlled versus real-model coverage, latency measurements and remaining limitations accurately.
 - [x] Update the architecture explanation with labelled connections, layer responsibilities and verified worker counts. Record classes retained, renamed, refactored or removed, and explain intentional historical hub references.
 - [x] Complete the repository implementation flow, including relevant lint/type/build checks, deslop, runtime verification, Standards and Spec reviews, blast-radius disposition and the final full test suite after reviews. Clean up owned test processes and record baseline failures separately.
-- [ ] Publish through the agreed implementation workflow after implementation mode is selected. The recorded Autopilot grant authorizes implementation and PR handoff. Merge and release need separate explicit approval.
+- [x] Publish through the agreed implementation workflow after implementation mode is selected. The recorded Autopilot grant authorizes implementation and PR handoff. Merge and release need separate explicit approval.
 
 ### Planning PR verification (2026-11-01)
 
@@ -188,3 +188,9 @@ Verified 3 workers and 4 JavaScript assets at /resume/
 ```
 
 ESLint and TypeScript exit 0; native/real checks and review findings are recorded above and in retained evidence. PR body is prepared for the reviewed final implementation; ticket-only status/evidence changes do not alter that description. Next action: publication under the existing Autopilot grant, then CLOSED status and PR link in a signed closure push. No merge or deployment is authorized.
+
+### PR handoff and ticket closure
+
+PR: https://github.com/ragemous3/personal-webpage/pull/21. The signed branch is pushed and the open PR targets main at the fixed base. Its body was read back and matches the prepared description. Both reviews remain valid for implementation `3aee22587c2ff802d5513edfba2b985fe8a677ec` / reviewed snapshot `af2aec77717d263a95485d534f64d1492849800f`; publication commits contain only ticket evidence/status updates. The post-review full suite passed all 84 tests.
+
+Ticket status is CLOSED at PR handoff under the repository workflow. Before this closure push, the existing git-workflow status tool reported auto-merge disabled, no active merge queue/entry, no unsigned commits, no unresolved threads or unanswered comments, and four CI checks pending with zero failures. The closure push will be followed by the same status tool on its new head. No merge or deployment occurred. Implementation, review and verification are complete; CI state will be reported separately from human review readiness.
