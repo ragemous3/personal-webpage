@@ -11,6 +11,7 @@ export const modelConfig = {
 export const databaseConfig = {
   source: '/workers/vectordb.js',
   baseUrl: '/',
+  device: 'webgpu',
   featureExtractionModel: 'Xenova/all-MiniLM-L6-v2',
   vectorsPath: '/content-data/contents.bin',
   metadataPath: '/content-data/vector-metadata.json',
@@ -27,62 +28,49 @@ export const databaseConfig = {
 export const resources = [];
 export const workers = [];
 
-class WorkerPort {
-  listeners = new Map();
-
-  start() {}
-  close() {}
-
-  addEventListener(name, listener) {
-    const listeners = this.listeners.get(name) ?? [];
-    listeners.push(listener);
-    this.listeners.set(name, listeners);
+class WorkerPort extends EventTarget {
+  constructor(worker) {
+    super();
+    this.worker = worker;
   }
-
-  postMessage(message) {
-    message = structuredClone(message);
-    for (const listener of this.listeners.get('message') ?? []) {
-      listener({
+  start() {
+    if (this.worker.options.name === 'RuntimeCoordinator') return;
+    this.dispatchEvent(
+      new MessageEvent('message', {
         data: {
-          ...message,
-          payload: {
-            entity: message.name,
-            initiator: message.id,
-            status: 'UNINITIALIZED',
-          },
+          id: crypto.randomUUID(),
+          name: 'llm',
+          task: 'runtime:state',
+          payload: { instanceId: crypto.randomUUID(), loaded: false },
         },
-      });
-    }
+      }),
+    );
+  }
+  close() {}
+  postMessage(message) {
+    this.worker.messages.push(message);
+    if (message.task === 'runtime:attach')
+      this.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            ...message,
+            task: 'runtime:state',
+            payload: { resources: [], configuring: false },
+          },
+        }),
+      );
   }
 }
-
-class BrowserSharedWorker {
-  port = new WorkerPort();
-
-  constructor() {
-    resources.push(this);
-  }
-}
-
-class BrowserWorker extends EventTarget {
+class BrowserSharedWorker extends EventTarget {
   messages = [];
-
-  constructor(source) {
+  constructor(source, options) {
     super();
     this.source = source;
+    this.options = options;
+    this.port = new WorkerPort(this);
     resources.push(this);
     workers.push(this);
   }
-
-  postMessage(message) {
-    message = structuredClone(message);
-    this.messages.push(message);
-    if (message.task === 'hub:ping') {
-      this.dispatchEvent(new MessageEvent('message', { data: message }));
-    }
-  }
-
-  terminate() {}
 }
 
 class BrowserBroadcast {
@@ -96,7 +84,6 @@ class BrowserBroadcast {
 }
 
 const browserGlobals = {
-  Worker: BrowserWorker,
   SharedWorker: BrowserSharedWorker,
   BroadcastChannel: BrowserBroadcast,
 };
@@ -154,9 +141,8 @@ export const siteConfig = () => ({
   },
   PAGE_PARAMS: {},
   WORKER_NAMES: {
-    'state-machine.shared-worker.ts': '/workers/state-machine.js',
-    'hub.worker.ts': '/workers/hub.js',
-    'llm.worker.ts': '/workers/llm.js',
-    'vectordb.worker.ts': '/workers/vectordb.js',
+    'runtime-coordinator.shared-worker.ts': '/workers/coordinator.js',
+    'llm.shared-worker.ts': '/workers/llm.js',
+    'vectordb.shared-worker.ts': '/workers/vectordb.js',
   },
 });

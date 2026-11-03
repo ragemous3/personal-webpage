@@ -12,7 +12,9 @@ import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
+import { configureModelEnvironment } from './model-environment';
 import { type LlmDTO, type MessageBase } from './models';
+import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime';
 
 interface LlmWorkerDependencies {
   loadGeneratorPipeline: (
@@ -24,12 +26,21 @@ interface LlmWorkerDependencies {
 }
 
 const defaultDependencies: LlmWorkerDependencies = {
-  loadGeneratorPipeline: (config, progress) =>
-    pipeline<'text-generation'>('text-generation', config.model, {
+  loadGeneratorPipeline: async (config, progress) => {
+    configureModelEnvironment(config);
+    const generator = await pipeline<'text-generation'>('text-generation', config.model, {
       device: config.device,
       dtype: config.dtype,
       progress_callback: progress,
-    }),
+    });
+    const forward = generator.model.forward.bind(generator.model);
+    generator.model.forward = async (...arguments_: Parameters<typeof forward>) => {
+      const result: unknown = await forward(...arguments_);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      return result;
+    };
+    return generator;
+  },
   loadTokenizer: async (model) => {
     const tokenizer = new TokenizerUtility(model);
     await tokenizer.initTokenizer();
@@ -54,8 +65,13 @@ const loadModel = async (
       payload: progress,
     });
   });
-  const tokenizer = await dependencies.loadTokenizer(config.model);
-  return new LocalLLMData(generator, tokenizer, tokenizer.getMaxLength(), config.generation);
+  try {
+    const tokenizer = await dependencies.loadTokenizer(config.model);
+    return new LocalLLMData(generator, tokenizer, tokenizer.getMaxLength(), config.generation);
+  } catch (error) {
+    await generator.dispose();
+    throw error;
+  }
 };
 
 const createGenerationQueue = (
@@ -103,7 +119,7 @@ const createGenerationQueue = (
   };
 
   return async (request: MessageBase<unknown>): Promise<void> => {
-    const key = request.requestId ?? request.id;
+    const key = `${request.id}:${request.requestId ?? request.id}`;
     if (request.task === 'llm:cancel') {
       const entry = pending.get(key);
       if (entry?.owner === request.id) entry.stopping.interrupt();
@@ -121,7 +137,11 @@ const createGenerationQueue = (
   };
 };
 
-export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => {
+const identity = ({ generation: _generation, ...value }: LmConfig): unknown => value;
+
+export const createLlmMessageHandler = (
+  dependencies: LlmWorkerDependencies,
+): SharedModelDriver['handle'] & { dispose: SharedModelDriver['dispose'] } => {
   let localLLM: LocalLLMData | undefined;
   let initialization: Promise<LocalLLMData> | undefined;
   let activeConfiguration: LmConfig | undefined;
@@ -131,7 +151,7 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
     const { payload } = request;
     if (!isLmConfig(payload))
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
-    if (activeConfiguration && !areValuesEqual(activeConfiguration, payload)) {
+    if (activeConfiguration && !areValuesEqual(identity(activeConfiguration), identity(payload))) {
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
       );
@@ -151,10 +171,12 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
       );
       await initialization;
     }
+    localLLM?.configure(payload.generation);
+    activeConfiguration = payload;
     dependencies.publish({ ...request, task: 'llm:ready' });
   };
 
-  return async (event: MessageEvent<MessageBase<unknown>>) => {
+  const handle = async (event: MessageEvent<MessageBase<unknown>>): Promise<void> => {
     const request = event.data;
     try {
       if (request.task === 'llm:init') await handleInit(request);
@@ -169,16 +191,29 @@ export const createLlmMessageHandler = (dependencies: LlmWorkerDependencies) => 
             : {
                 name: `[${SeverityLevelCodes.CRITICAL}] - Unexpected Error`,
                 message: String(error),
-                stack: null,
+                stack: undefined,
               },
       });
     }
   };
+  return Object.assign(handle, {
+    dispose: async (): Promise<void> => {
+      await localLLM?.dispose();
+      localLLM = undefined;
+      initialization = undefined;
+      activeConfiguration = undefined;
+    },
+  });
 };
 
-if ('importScripts' in globalThis) {
-  const handleMessage = createLlmMessageHandler(defaultDependencies);
-  globalThis.addEventListener('message', (event) => {
-    void handleMessage(event as MessageEvent<MessageBase<unknown>>);
+export const createLlmDriver = (publish: (message: unknown) => void): SharedModelDriver => {
+  const handle = createLlmMessageHandler({ ...defaultDependencies, publish });
+  return { handle, dispose: handle.dispose };
+};
+if ('onconnect' in globalThis) {
+  const runtime = new SharedModelRuntime('llm', createLlmDriver);
+  globalThis.addEventListener('connect', (event: Event) => {
+    const port = (event as MessageEvent).ports[0];
+    if (port) runtime.connect(port);
   });
 }

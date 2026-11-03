@@ -41,11 +41,11 @@ Doctor returns PREREQUISITES_PRESENT or BLOCKED and always sets runtimeVerified 
 npm run verify:browser -- --mode controlled --evidence /tmp/assistant-coordination-unique
 ```
 
-This mode serves the unmodified built hub and state SharedWorker in native browser contexts. Only generation/retrieval model workers are deterministic fixtures. The probe exercises transport and coordination directly, not RagService or the full question UI. Controlled outputs never establish real inference, retrieval quality or model cancellation performance.
+This mode serves the built RuntimeCoordinator and all three native application SharedWorkers in native browser contexts. Only generation/retrieval model drivers are deterministic fixtures; their SharedModelRuntime adapter is production code. The application reconnect scenario uses a labelled chunk fixture. The probe exercises transport and coordination directly, not RagService or the full question UI. Controlled outputs never establish real inference, retrieval quality or model cancellation performance.
 
-The cases cover first-tab requests, retrieval/generation transport, joining tabs, competing claims, cancellation transport, close/crash, freeze/resume, navigation/back, worker self-close and initialization retry. Each isolated context retains native CDP target identities/counts, model-instance/initialization events and port messages. Library/internal browser targets are distinct from application workers. An exception alone is not worker termination: the self-close case also waits for the native worker target to disappear. The crash case requires a page crash event; it does not claim that only one OS process was affected.
+The cases cover first-tab requests, retrieval/generation transport, joining tabs, simultaneous attachment, cancellation transport, close/crash, freeze/resume, navigation/back, worker self-close and initialization retry. Each isolated context retains native CDP target identities/counts, model-instance/initialization events and port messages. Library/internal browser targets are distinct from application workers. An exception alone is not worker termination: the self-close case also waits for the native worker target to disappear. The crash case requires a page crash event; it does not claim that only one OS process was affected.
 
-By default, observed failures return exit 1. Add `--baseline` only when recording known current product failures. It permits completion with FAIL/BLOCKED scenarios but preserves every verdict and never permits a tool/cleanup ERROR. Do not use this option as a green product gate. Product failures belong to the runtime ticket. Future three-SharedWorker/reconnect scenarios are explicitly BLOCKED migration definitions, not passing tests of the old topology.
+By default, observed failures return exit 1. Add `--baseline` only when recording known current product failures. It permits completion with FAIL/BLOCKED scenarios but preserves every verdict and never permits a tool/cleanup ERROR. Do not use this option as a green product gate. Product failures belong to the runtime ticket. The three-SharedWorker, queued-cancellation, recovery and reconnect scenarios now run against this architecture. A missing observation is not a pass.
 
 ### Real-model cache restart
 
@@ -54,9 +54,17 @@ node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey answer
 npm run verify:browser -- --mode cache --evidence /tmp/assistant-cache-unique
 ```
 
-This mode first requires the actual retrieval files. It then attempts a question with the configured real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS is blocked on restart while the owned loopback site remains reachable. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records are labelled with their scope; DNS blocking applies to worker requests too. No model download count is inferred from page-only request events.
+This mode first requires the actual retrieval files. It then attempts a question with the real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS and the local model-download route are blocked on restart while application, WASM and retrieval assets remain served. The local model endpoint records worker downloads; a returning answer must make zero model requests. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records remain labelled with their scope. The local endpoint count covers worker fetches as well.
 
-A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
+A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. Set RUNTIME_MODEL_DIR to a local model mirror for isolated WASM/one-thread/32-token deterministic configuration; production defaults remain unchanged. The cache journey also checks real answers in two tabs, continued work after closing one, Cancel and Reset. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
+
+## CPU cancellation and throughput
+
+```sh
+RUNTIME_MODEL_DIR=/path/to/model-mirror npm run verify:browser -- --mode performance --evidence /tmp/assistant-performance-unique
+```
+
+This compares the production shared generation path with the same handler, actual Qwen model, prompt, backend and generation settings in a dedicated Worker without cooperative task yields. It checks identical outputs, retains one warm-up plus three measured answers per topology and measures actual cancellation stop acknowledgment. Report sample variation; do not turn CPU measurements into a hardware-wide or WebGPU guarantee. See [the runtime explanation](../../../docs/runtime-coordinator.md) for mirror layout and reproducible browser-compatible retrieval data preparation.
 
 ## Evidence
 

@@ -1,0 +1,456 @@
+{
+  "kind": "controlled",
+  "verdict": "PASS",
+  "sourceRevision": "32c82a41721d20ae85de18b054b0ab096255af25",
+  "sourceSnapshot": {
+    "algorithm": "SHA-256 of sorted path/content-hash pairs for existing assets, scripts, tests, config and toolchain configuration",
+    "files": 136,
+    "digest": "451af58d36c3dee96461ae9411015c4e89aedd3ae42340b077172519c3fab661"
+  },
+  "sourceHashes": {
+    "llm.shared-worker.ts": "16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0",
+    "runtime-coordinator.shared-worker.ts": "06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9",
+    "vectordb.shared-worker.ts": "b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec"
+  },
+  "browser": "Chrome/154.0.8037.57",
+  "started": "2026-11-03T09:24:59.874Z",
+  "finished": "2026-11-03T09:25:21.358Z",
+  "build": {
+    "status": 0,
+    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  3 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 807 ms\n",
+    "stderr": "WARN  found no layout file for \"html\" for kind \"taxonomy\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\nWARN  found no layout file for \"html\" for kind \"term\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\n"
+  },
+  "cleanup": {
+    "browserCreated": true,
+    "serverCreated": true,
+    "errors": [],
+    "scratchRemoved": true,
+    "browserClosed": true,
+    "browserProcess": {
+      "pid": 18191,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    "serverClosed": true,
+    "evidenceRetained": true
+  },
+  "migrationScenarios": [
+    {
+      "name": "three-shared-worker-topology",
+      "requires": "RuntimeCoordinator migration",
+      "expected": "One coordinator, one generation and one retrieval application SharedWorker; joining tabs cause no duplicate initialization.",
+      "verdict": "PASS"
+    },
+    {
+      "name": "queued-cancellation",
+      "requires": "Shared generation queue",
+      "expected": "A cancelled queued request never starts; stopping is acknowledged accurately and later requests progress.",
+      "verdict": "PASS"
+    },
+    {
+      "name": "coordinator-model-failure-recovery",
+      "requires": "RuntimeCoordinator failure protocol",
+      "expected": "Observed coordinator or model termination fails affected work without stale readiness or stranded requests; healthy resources survive where possible.",
+      "verdict": "PASS"
+    },
+    {
+      "name": "concurrent-reconnect",
+      "requires": "Reconnect UI",
+      "expected": "Something went wrong and an unstyled reconnect button; concurrent clicks share one recovery attempt, keep history and do not replay the interrupted question.",
+      "verdict": "PASS"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "first-tab-answer",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["91c7232e-a4de-4d8e-a9aa-8b1776850969"],
+        "vectordb": ["e49f8206-d28a-4c5e-a8f1-23fb4b2f9c11"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "retrieval-generation-transport",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["abf9e865-7401-45b1-9b4a-6572a4f2647c"],
+        "vectordb": ["2c09be1a-de9b-43b3-b056-3f1e3d19d56c"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 1
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "owner-renderer-crash",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["d0c8a483-cde1-4ad5-8d06-b466ae60c781", "ba6aa8eb-42c9-42cc-ab6c-357a085b6660"],
+        "vectordb": ["9cf9b2cb-5b90-4c75-b61f-0d57ca268ec0", "ec0640cd-9c24-4ed2-b5d1-e848a3a68ce4"]
+      },
+      "initializations": {
+        "llm": 2,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "second-tab-request-isolation",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["a8adc1a9-1fbd-4b5b-a6a4-c41eb56d3b50"],
+        "vectordb": ["6f4f431d-5e08-4a85-b9f7-657d56a369b3"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "simultaneous-claim-routing",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["8e2a58e1-c81d-478e-9f9c-e22d8a2f95f6"],
+        "vectordb": ["dc088395-1353-4d8a-b9b9-cd2d96f3ceae"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "active-cancellation-transport",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["c653f57c-4c25-40a4-8b11-bc896c5c2068"],
+        "vectordb": ["7aeed617-17fa-4343-8025-929356c46ca0"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [
+        {
+          "instance": "c653f57c-4c25-40a4-8b11-bc896c5c2068",
+          "role": "llm",
+          "at": 1793697906169,
+          "type": "stopped",
+          "requestId": "cancel-me"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "owner-close-departure",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["6fefdb95-07f7-4995-b6d0-a2b26dde07d7"],
+        "vectordb": ["f059e1c6-7566-442e-aef5-8018b4790b90"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [
+        {
+          "instance": "6fefdb95-07f7-4995-b6d0-a2b26dde07d7",
+          "role": "llm",
+          "at": 1793697906931,
+          "type": "stopped",
+          "requestId": "departing"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "freeze-retains-accepted-work",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["dde6c234-fce1-491a-b1cb-d0ecbe3ee2f0"],
+        "vectordb": ["a7745a46-558f-4b84-b604-2abf51dff8f8"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "navigation-back-attachment",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["b8f757e5-2f04-467c-b0ed-4c49d3f3059f"],
+        "vectordb": ["e764de44-b930-4ed3-96a7-2c26b6a15132"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "model-worker-stop-observation",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["a7c623ad-cdae-4f2d-bc2f-aa38581df9d7", "bb465f43-5ebd-4e5d-bf23-0c6c2d7e61ef"],
+        "vectordb": ["e8635400-6713-4355-af58-627d531e943d"]
+      },
+      "initializations": {
+        "llm": 2,
+        "vectordb": 0
+      },
+      "events": [
+        {
+          "instance": "a7c623ad-cdae-4f2d-bc2f-aa38581df9d7",
+          "role": "llm",
+          "at": 1793697908872,
+          "type": "closing"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "coordinator-target-close-observation",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["d9652a64-b005-43a5-b4c3-60e1e3bff048"],
+        "vectordb": ["0638c4e2-4661-42ad-a161-189a1aa1b638"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "failed-initialization-retry-cleanup",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["b0e392cb-1da0-4abc-b8c6-7eef49caa1f6"],
+        "vectordb": ["33bd32ed-d9b5-49ca-b731-50034a4164af"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "three-shared-worker-topology",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["9c181cd3-d780-4ca9-b5f7-a341afa40253"],
+        "vectordb": ["7c96d4fc-a710-4822-b677-728a857c849b"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 1
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "queued-cancellation",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["1a865b33-62d0-419f-a2c1-28f604d50036"],
+        "vectordb": ["cc6c2437-c4a1-47f1-87ed-a54761d25957"]
+      },
+      "initializations": {
+        "llm": 1,
+        "vectordb": 0
+      },
+      "events": [
+        {
+          "instance": "1a865b33-62d0-419f-a2c1-28f604d50036",
+          "role": "llm",
+          "at": 1793697914859,
+          "type": "stopped",
+          "requestId": "active"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "coordinator-model-failure-recovery",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["7bc37d7b-9ab7-419e-a8cb-d0aba02edea9", "775deade-8a98-43f1-b596-08982e785d77"],
+        "vectordb": ["eaf184e9-8374-47f2-9c17-047b9c77f7f9"]
+      },
+      "initializations": {
+        "llm": 2,
+        "vectordb": 1
+      },
+      "events": [
+        {
+          "instance": "7bc37d7b-9ab7-419e-a8cb-d0aba02edea9",
+          "role": "llm",
+          "at": 1793697915765,
+          "type": "closing"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "concurrent-reconnect",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["76be3579-8362-4686-9d8d-ddf9c8281d4b", "62b8723b-f7be-45ce-9f37-1c7070595634"],
+        "vectordb": ["2b24dadd-d2fa-4e2e-bc80-6a2b46e5238f"]
+      },
+      "initializations": {
+        "llm": 2,
+        "vectordb": 1
+      },
+      "events": [
+        {
+          "type": "ui-console",
+          "message": "Runtime resource failure: llm Request deadline exceeded"
+        },
+        {
+          "type": "ui-console",
+          "message": "Runtime resource failure: llm Request deadline exceeded"
+        },
+        {
+          "type": "ui-console",
+          "message": "Runtime resource failure: llm Request deadline exceeded"
+        }
+      ],
+      "cleanup": "Owned browser context closed"
+    },
+    {
+      "name": "full-response-drain",
+      "kind": "native-production-runtime-controlled-model-drivers",
+      "verdict": "PASS",
+      "workerCounts": {
+        "llm.shared-worker.ts": 1,
+        "runtime-coordinator.shared-worker.ts": 1,
+        "vectordb.shared-worker.ts": 1
+      },
+      "modelInstances": {
+        "llm": ["a7c9512d-7a9c-4dcb-8274-ba10b46a7800"],
+        "vectordb": ["785ae987-c07b-43f9-ad8f-65e001ab6309"]
+      },
+      "initializations": {
+        "llm": 2,
+        "vectordb": 0
+      },
+      "events": [],
+      "cleanup": "Owned browser context closed"
+    }
+  ]
+}

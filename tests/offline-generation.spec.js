@@ -19,7 +19,9 @@ test('explicit valid generation options survive composition into the worker star
   };
   config.SITE_PARAMS.params.chatbot.config.locallm.generation = options;
   assert.ok(buildChatbotOfflineDeps(config));
-  const hub = workers.find((worker) => worker.source.pathname === '/workers/hub.js');
-  const model = hub.messages.find((message) => message.payload?.task === 'llm:init');
+  const coordinator = workers.find(
+    (worker) => worker.source.pathname === '/workers/coordinator.js',
+  );
+  const model = coordinator.messages.find((message) => message.payload?.task === 'llm:init');
   assert.deepEqual(model.payload.payload.generation, options);
 });

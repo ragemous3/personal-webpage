@@ -1,0 +1,273 @@
+{
+  "kind": "performance",
+  "verdict": "PASS",
+  "sourceRevision": "32c82a41721d20ae85de18b054b0ab096255af25",
+  "sourceSnapshot": {
+    "algorithm": "SHA-256 of sorted path/content-hash pairs for existing assets, scripts, tests, config and toolchain configuration",
+    "files": 136,
+    "digest": "eeb4b70022ba98dba5aa773674890b0dc780b3f2055ce51fe768d5bb04299945"
+  },
+  "sourceHashes": {
+    "llm.shared-worker.ts": "16e77d18bb522e599c1d5846212f0aba40104b72d05ca43f90094cc320d955b0",
+    "runtime-coordinator.shared-worker.ts": "06a3ed4ae56a6be4622f45e234aa538b9ce9026aa6a2d6482b5253615984ade9",
+    "vectordb.shared-worker.ts": "b20be8b7787eb4d6ddc49978cb417b683944c0a7a575745950f9a9aff0c47dec"
+  },
+  "browser": "Chrome/154.0.8037.57",
+  "started": "2026-11-03T09:15:48.994Z",
+  "finished": "2026-11-03T09:19:01.188Z",
+  "build": {
+    "status": 0,
+    "stdout": "Start building sites … \nhugo v0.158.0-f41be7959a44108641f1e081adf5c4be7fc1bb63+extended linux/amd64 BuildDate=2026-03-16T17:42:04Z VendorInfo=gohugoio\n\n\n                  │ EN \n──────────────────┼────\n Pages            │ 14 \n Paginator pages  │  0 \n Non-page files   │  0 \n Static files     │  3 \n Processed images │  0 \n Aliases          │  0 \n Cleaned          │  0 \n\nTotal in 768 ms\n",
+    "stderr": "WARN  found no layout file for \"html\" for kind \"taxonomy\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\nWARN  found no layout file for \"html\" for kind \"term\": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.\n"
+  },
+  "cleanup": {
+    "browserCreated": true,
+    "serverCreated": true,
+    "errors": [],
+    "scratchRemoved": true,
+    "browserClosed": true,
+    "browserProcess": {
+      "pid": 14842,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    "serverClosed": true,
+    "evidenceRetained": true
+  },
+  "configuration": {
+    "device": "wasm",
+    "generation": {
+      "max_new_tokens": 32,
+      "do_sample": false
+    },
+    "modelMirror": "/workspace/scratch/three-sharedworkers/source-models",
+    "wasmSource": "@huggingface/transformers/dist",
+    "productionDefaultsChanged": false
+  },
+  "modelRequests": [
+    {
+      "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer.json",
+      "blocked": false,
+      "at": 1793697350869
+    },
+    {
+      "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/tokenizer_config.json",
+      "blocked": false,
+      "at": 1793697350871
+    },
+    {
+      "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/config.json",
+      "blocked": false,
+      "at": 1793697350872
+    },
+    {
+      "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/onnx/model_q4.onnx",
+      "blocked": false,
+      "at": 1793697350901
+    },
+    {
+      "path": "/models/Xenova/Qwen1.5-0.5B-Chat/resolve/main/generation_config.json",
+      "blocked": false,
+      "at": 1793697350903
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "real-cpu-cancellation-throughput",
+      "kind": "real-model-comparison",
+      "verdict": "PASS",
+      "baseline": "Same Qwen q4 / WASM / one thread / prompt / generation settings in a dedicated Worker without cooperative yields; actual production SharedWorker with yields",
+      "dedicated": {
+        "kind": "dedicated",
+        "configuration": {
+          "source": "/__verify/baseline.js",
+          "model": "Xenova/Qwen1.5-0.5B-Chat",
+          "device": "wasm",
+          "dtype": "q4",
+          "generation": {
+            "max_new_tokens": 32,
+            "do_sample": false
+          },
+          "modelBaseUrl": "http://127.0.0.1:46411/models/",
+          "wasmBaseUrl": "http://127.0.0.1:46411/lib/"
+        },
+        "samples": [
+          {
+            "warmup": true,
+            "elapsedMs": 20411.699999999255,
+            "firstChunkMs": 3635.4000000003725,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 18697.60000000149,
+            "firstChunkMs": 2659.9000000003725,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 19349,
+            "firstChunkMs": 2828.2000000011176,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 28447.199999999255,
+            "firstChunkMs": 4648.5999999996275,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          }
+        ]
+      },
+      "shared": {
+        "kind": "shared",
+        "configuration": {
+          "source": "/__verify/baseline.js",
+          "model": "Xenova/Qwen1.5-0.5B-Chat",
+          "device": "wasm",
+          "dtype": "q4",
+          "generation": {
+            "max_new_tokens": 32,
+            "do_sample": false
+          },
+          "modelBaseUrl": "http://127.0.0.1:46411/models/",
+          "wasmBaseUrl": "http://127.0.0.1:46411/lib/"
+        },
+        "samples": [
+          {
+            "warmup": true,
+            "elapsedMs": 20401.900000000373,
+            "firstChunkMs": 3526,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 21720.300000000745,
+            "firstChunkMs": 2749.60000000149,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 19290.599999999627,
+            "firstChunkMs": 2743.2999999988824,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          },
+          {
+            "warmup": false,
+            "elapsedMs": 19130,
+            "firstChunkMs": 2717,
+            "answer": [
+              {
+                "role": "system",
+                "content": "You are a helpful assistant."
+              },
+              {
+                "role": "user",
+                "content": "Count from one to twenty."
+              },
+              {
+                "role": "assistant",
+                "content": "Sure, here's how I can count from one to twenty:\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1"
+              }
+            ]
+          }
+        ],
+        "cancellation": {
+          "stopMs": 637.9000000003725
+        }
+      },
+      "medianElapsedRatio": 0.9969817561630899,
+      "limitations": "Three measured answers plus one warm-up per topology on this CPU; equal output checked. Process scheduling, cache warming and measurement noise limit comparisons; no WebGPU claim or general performance guarantee."
+    }
+  ]
+}

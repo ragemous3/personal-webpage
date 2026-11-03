@@ -1,5 +1,4 @@
 import { type MessageBase } from '@/layers/data/workers/models';
-import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type MessagingBaseContract } from '@/layers/shared/contracts/message-base.contract';
 // https://medium.com/@artemkhrenov/web-workers-parallel-processing-in-the-browser-e4c89e6cad77 - Mostly reworked edition of the example found here.
 
@@ -9,7 +8,6 @@ export abstract class WorkerBase<
   From,
 > implements MessagingBaseContract<Carrier, To, From> {
   carrier: Carrier | undefined;
-  isTerminating: boolean | undefined = false;
   protected listeners: Set<(data: MessageBase<From>) => void> = new Set<
     (data: MessageBase<From>) => void
   >();
@@ -23,10 +21,6 @@ export abstract class WorkerBase<
     this.listeners.add(function_);
     return (): boolean => this.listeners.delete(function_);
   };
-  //TODO:// fix this check - should check if actual Path to a script
-  isScriptPath = (scriptPath: string | undefined): scriptPath is string =>
-    typeof scriptPath === 'string' ? true : false;
-
   abstract initialize(wm: To): void;
   abstract send(message: To): void;
   abstract terminate(): void;
@@ -39,10 +33,5 @@ export abstract class WorkerBase<
 
   protected handleMessage = (event: MessageEvent<MessageBase<From>>): void => {
     this.emit(event.data);
-  };
-
-  protected handleError = (error: ErrorEvent | MessageEvent<unknown>): void => {
-    console.error(`[${SeverityLevelCodes.FATAL}] - ${this.carrierName}: worker error:`, error);
-    this.terminate();
   };
 }

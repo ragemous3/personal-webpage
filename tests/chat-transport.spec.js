@@ -8,11 +8,16 @@ test('transport preserves retrieval envelopes, readiness, errors and request ide
   let receive;
   const sent = [];
   const chat = new Chat(
-    { $isReady: createStatefulSubscribable(false), send: (data) => sent.push(data) },
-    { listen() {}, send() {} },
     {
-      listen(listener) {
+      $isReady: createStatefulSubscribable(false),
+      send: (data) => sent.push(data),
+      release() {},
+      host() {},
+      onData(listener) {
         receive = listener;
+        return () => {
+          receive = undefined;
+        };
       },
     },
     { name: 'llm', payload: {} },

@@ -98,7 +98,16 @@ export const isMessageBase = <T, Y = Task>(
 const hasMessageIdentity = (value: Record<string, unknown>): boolean =>
   typeof value.id === 'string' && typeof value.name === 'string';
 
+const isStructuredWorkerError = (value: unknown): boolean => {
+  if (!isObject(value) || typeof value.message !== 'string') return false;
+  return ['name', 'stack'].every(
+    (key) => value[key] === undefined || typeof value[key] === 'string',
+  );
+};
 const hasValidMessageError = (value: Record<string, unknown>): boolean =>
-  !('error' in value) || value.error === undefined || typeof value.error === 'string';
+  !('error' in value) ||
+  value.error === undefined ||
+  typeof value.error === 'string' ||
+  isStructuredWorkerError(value.error);
 
 export { isVectorDatabaseResponse as isVectorDbResponse };

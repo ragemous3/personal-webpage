@@ -3,20 +3,15 @@ import { SeverityLevelCodes } from '@/layers/shared/constants';
 
 /* eslint-disable unicorn/prefer-add-event-listener */
 export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
-  indexDBVersion = 21;
   constructor(private readonly indexName: string) {}
 
   openStore = (storeName = 'FILE_DATA'): Promise<IDBDatabase> =>
     new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.indexName, this.indexDBVersion);
+      const request = indexedDB.open(this.indexName);
 
       request.onupgradeneeded = () => {
         const database = request.result;
-        if (!database.objectStoreNames.contains(storeName)) {
-          reject(
-            new Error(`[${SeverityLevelCodes.FATAL}] - Store should have been loaded earlier.`),
-          );
-        }
+        if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName);
       };
 
       request.onsuccess = () => {
@@ -25,9 +20,7 @@ export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
       };
       request.onerror = () => {
         console.error(`[${SeverityLevelCodes.ERROR}] - Failed to open IndexedDB`, request.error);
-        if (request.error instanceof Error) {
-          reject(request.error);
-        }
+        reject(request.error ?? new Error('Failed to open IndexedDB'));
       };
     });
 }

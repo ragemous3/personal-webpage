@@ -1,6 +1,5 @@
 import { type SearchResult } from 'hnswlib-wasm/dist/hnswlib-wasm';
 
-import { type StateMachineStatesEnum } from '@/layers/data/contants/constants';
 import { type ChatMessage } from '@/layers/data/models/models';
 import { type Nullable } from '@/layers/shared/models';
 
@@ -15,7 +14,30 @@ export type Action =
   | 'query'
   | 'cancel'
   | 'ready'
-  | 'cleanup';
+  | 'cleanup'
+  | 'accepted'
+  | 'attach'
+  | 'detach'
+  | 'register'
+  | 'bind'
+  | 'bound'
+  | 'state'
+  | 'event'
+  | 'begin'
+  | 'finish'
+  | 'send'
+  | 'started'
+  | 'stopped'
+  | 'closing'
+  | 'failed'
+  | 'recovered'
+  | 'release'
+  | 'loading'
+  | 'recover'
+  | 'configure'
+  | 'configured'
+  | 'dispose'
+  | 'disposed';
 
 export type Task = `${string}:${Action}`;
 export type TaskResponse = `${string}:${Action}:response`;
@@ -25,23 +47,12 @@ export interface MessageBase<T, Y = Task | TaskResponse> {
   task: Y;
   payload: T;
   requestId?: string;
-  error?: string;
+  operationId?: string;
+  error?: string | { message: string; name?: string; stack?: string };
+  runtimeEpoch?: string;
+  instanceId?: string;
+  runtimeFailure?: boolean;
 }
-
-export type StateMachineTask = 'check' | 'set' | 'transfer';
-export type StateMachineStates = keyof typeof StateMachineStatesEnum;
-export type StateMachineName = string;
-export type StateMachineProtocol = `${StateMachineName}:${StateMachineTask}`;
-
-// announcement is be the global broadcast one.
-export interface StateMachineStatusLog {
-  initiator: ReturnType<typeof crypto.randomUUID> | 'announcement';
-  entity: StateMachineName;
-  status: StateMachineStatesEnum;
-}
-
-export type SharedWorkerMessage = MessageBase<Nullable<unknown>, StateMachineProtocol>;
-export type WorkerMessageHub = MessageBase<MessageBase<unknown>>;
 
 export interface LlmDTO {
   message: ChatMessage[];

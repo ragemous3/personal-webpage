@@ -83,13 +83,13 @@ test('cancel retains partial text; retry replaces the attempt and reset rejects 
   const first = database.sent[0].requestId;
   chat.emit({ task: 'llm:stream:response', requestId: first, payload: 'Partial' });
   service.send('Must not send twice');
-  assert.equal(database.sent.length, 1);
+  assert.equal(database.sent.filter(({ action }) => action === 'query').length, 1);
   service.cancel();
   assert.equal(chat.sent.at(-1).action, 'cancel');
   assert.equal(service.chatMessagesSubscription.getValue()[1].interrupted, true);
   service.retry();
   assert.equal(service.chatMessagesSubscription.getValue().length, 2);
-  const second = database.sent[1].requestId;
+  const second = database.sent.filter(({ action }) => action === 'query')[1].requestId;
   assert.notEqual(second, first);
   chat.emit({ task: 'llm:stream:response', requestId: first, payload: 'stale' });
   assert.equal(service.chatMessagesSubscription.getValue()[1].content, '');
@@ -146,11 +146,11 @@ test('a failed partial answer remains visible until explicit retry', () => {
     content: 'Partial',
     interrupted: true,
   });
-  assert.equal(database.sent.length, 1);
+  assert.equal(database.sent.filter(({ action }) => action === 'query').length, 1);
   chat.emit({ task: 'llm:ready' });
   assert.equal(service.stateSubscription.getValue().status, 'error');
   service.retry();
-  assert.equal(database.sent.length, 2);
+  assert.equal(database.sent.filter(({ action }) => action === 'query').length, 2);
 });
 
 test('reset preserves a failed initialization and retry restarts only the failed worker', () => {
@@ -244,6 +244,53 @@ test('a cached client recovers on retry after another client repairs its worker'
   service.retry();
   assert.equal(service.stateSubscription.getValue().status, 'ready');
   service.send('Question after recovery');
-  assert.equal(database.sent.length, 1);
+  assert.equal(database.sent.filter(({ action }) => action === 'query').length, 1);
   detach();
+});
+
+test('runtime reconnect preserves partial history, coalesces attempts and never replays the interrupted question', async () => {
+  const chat = transport();
+  const database = transport();
+  let complete;
+  let recoveries = 0;
+  const finished = [];
+  const lifecycle = {
+    begin: async () => {},
+    finish: (id) => finished.push(id),
+    reconnect: () => {
+      recoveries++;
+      return new Promise((resolve) => {
+        complete = resolve;
+      });
+    },
+  };
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'Help' }),
+    lifecycle,
+  );
+  service.init();
+  chat.emit({ task: 'llm:ready' });
+  database.emit({ task: 'vectordb:ready' });
+  service.send('Question');
+  await new Promise((resolve) => setImmediate(resolve));
+  const { requestId } = database.sent[0];
+  chat.emit({ task: 'llm:stream:response', requestId, payload: 'Partial' });
+  chat.emit({ task: 'llm:init', error: { message: 'Something went wrong' }, runtimeFailure: true });
+  const a = service.reconnect();
+  const b = service.reconnect();
+  assert.equal(recoveries, 1);
+  chat.emit({ task: 'llm:ready' });
+  complete();
+  await Promise.all([a, b]);
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.deepEqual(service.chatMessagesSubscription.getValue()[1], {
+    role: 'assistant',
+    content: 'Partial',
+    interrupted: true,
+  });
+  assert.equal(database.sent.filter((entry) => entry.action === 'query').length, 1);
+  assert.deepEqual(finished, [requestId]);
 });

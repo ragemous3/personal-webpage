@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { BroadcastManager } from '@/layers/data/abstracts/broadcast-manager.abstract';
-import { WebWorkerManager as AbstractWorkerManager } from '@/layers/data/abstracts/web-worker-manager.abstract';
 import {
   isMessageBase,
   isVectorDbResponse as isVectorDatabaseResponse,
 } from '@/layers/data/guards/is-message-base.guard';
-import { WebWorkerManager } from '@/layers/data/workers/web-worker-manager';
+import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager';
 import { isProgressStatusInfo } from '@/layers/shared/guards/progress.guard';
 
 const message = { id: 'request', name: 'llm', task: 'llm:query', payload: 'question' };
@@ -22,12 +21,13 @@ test('message validation preserves payload, task, and error checks', () => {
     { ...message, name: undefined },
     { ...message, payload: null },
     { ...message, task: 'invalid' },
-    { ...message, error: new Error('failed') },
+    { ...message, error: { message: 42 } },
   ]) {
     assert.equal(isMessageBase(invalid, stringPayload), false);
   }
   assert.equal(isMessageBase({ ...message, error: undefined }, stringPayload), true);
   assert.equal(isMessageBase({ ...message, error: 'failed' }, stringPayload), true);
+  assert.equal(isMessageBase({ ...message, error: { message: 'Failed' } }, stringPayload), true);
 });
 
 test('a custom task guard controls message acceptance', () => {
@@ -68,7 +68,7 @@ test('progress validation accepts boundary values and rejects invalid amounts', 
 });
 
 test('worker and broadcast listener setup delivers one notification per message', () => {
-  for (const Manager of [WebWorkerManager, AbstractWorkerManager, BroadcastManager]) {
+  for (const Manager of [SharedWorkerManager, BroadcastManager]) {
     const manager = new Manager('source', 'name');
     manager.carrier = new EventTarget();
     const received = [];

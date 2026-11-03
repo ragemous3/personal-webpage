@@ -3,9 +3,10 @@ import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { hasStringProperties, isRecord } from '@/layers/shared/guards/guards';
 
 import { isGenerationConfig } from './is-generation-config.guard';
+import { isInitConfigBase } from './is-init-config-base.guard';
 
 export function isLmConfig(value: unknown): value is LmConfig {
-  if (!isRecord(value)) {
+  if (!isRecord(value) || !isInitConfigBase(value)) {
     return false;
   }
   const generation = value.generation;

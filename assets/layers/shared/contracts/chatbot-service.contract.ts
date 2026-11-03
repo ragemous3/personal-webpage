@@ -11,10 +11,12 @@ export interface ChatbotServiceContract {
   cancel(): void;
   reset(): void;
   retry(): void;
+  reconnect(): Promise<void>;
   dispose(): void;
 }
 
 export interface ChatState {
   status: 'initializing' | 'ready' | 'responding' | 'error';
   error?: string;
+  runtimeFailure?: boolean;
 }

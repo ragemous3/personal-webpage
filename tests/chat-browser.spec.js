@@ -73,7 +73,7 @@ test('browser handles late context, submit, plain text, interruption, retry and 
       const { chat, database } = globalThis.fixture;
       chat.emit({
         task: 'llm:message:response',
-        requestId: database.sent[1].requestId,
+        requestId: database.sent.filter(({ action }) => action === 'query')[1].requestId,
         payload: { generated_text: [{ role: 'assistant', content: 'Completed' }] },
       });
     });

@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { cachePrerequisites } from './application.js';
 import { root } from './environment.js';
+import { exerciseRealTabs } from './real-tabs.js';
 
 const waitReady = async (page) => {
   await page.waitForFunction(
@@ -15,7 +16,7 @@ const waitReady = async (page) => {
           chat.querySelector('[role=alert]')?.textContent.trim())
       );
     },
-    { timeout: 120_000, polling: 100 },
+    { timeout: 600_000, polling: 100 },
   );
   const failure = await page.evaluate(() =>
     globalThis.document
@@ -26,13 +27,23 @@ const waitReady = async (page) => {
   );
   if (failure) throw new Error(failure);
 };
-const ask = async (browser, origin) => {
-  const page = await browser.newPage();
+const ask = async (browser, origin, evidence, existing) => {
+  const page = existing ?? (await browser.newPage());
   const requests = [];
+  page.on('console', (event) => {
+    if (event.type() === 'error')
+      evidence.events.push({ type: 'console-error', message: event.text() });
+  });
+  page.on('error', (error) =>
+    evidence.events.push({ type: 'renderer-error', message: error.message }),
+  );
+  page.on('pageerror', (error) =>
+    evidence.events.push({ type: 'page-error', message: error.message }),
+  );
   page.on('request', (request) =>
     requests.push({ url: request.url(), type: request.resourceType() }),
   );
-  await page.goto(origin, { waitUntil: 'domcontentloaded' });
+  if (!existing) await page.goto(origin, { waitUntil: 'domcontentloaded' });
   await waitReady(page);
   await page.type(
     'chatbot-offline-provider >>> chat-container >>> input',
@@ -55,7 +66,7 @@ const ask = async (browser, origin) => {
         text.slice(10).trim().length > 0
       );
     },
-    { timeout: 120_000, polling: 100 },
+    { timeout: 600_000, polling: 100 },
   );
   await waitReady(page);
   const answer = await page.evaluate(() =>
@@ -92,7 +103,7 @@ export const runCache = async (restart, origin, evidence, directory) => {
   result.verdict = 'BLOCKED';
   try {
     let browser = await restart(false);
-    result.warm = await ask(browser, origin);
+    result.warm = await ask(browser, origin, evidence);
     const cached = result.warm.cache.entries.flatMap((entry) => entry.urls);
     if (
       !['Qwen', 'MiniLM'].every((model) =>
@@ -103,17 +114,24 @@ export const runCache = async (restart, origin, evidence, directory) => {
     result.targetsBeforeRestart = browser
       .targets()
       .map((target) => ({ type: target.type(), url: target.url() }));
+    result.multitab = await exerciseRealTabs(browser, origin, evidence, ask);
+    const restartEvent = evidence.modelRequests.length;
     browser = await restart(true);
     result.networkPolicyOnRestart =
-      'All DNS blocked except the same owned loopback origin; same profile, new browser process';
-    result.returning = await ask(browser, origin);
+      'External DNS and loopback /models/ downloads blocked; application, WASM and retrieval assets remain served; same profile, new browser process';
+    result.returning = await ask(browser, origin, evidence);
     const pages = await browser.pages();
     await pages.at(-1).screenshot({ path: path.join(directory, 'cache-returning.png') });
+    result.restartModelRequests = evidence.modelRequests.slice(restartEvent);
+    if (result.restartModelRequests.length > 0)
+      throw new Error('Returning session attempted model downloads');
     result.verdict = 'PASS';
     result.inferenceVerified = true;
     evidence.inferenceVerified = true;
   } catch (error) {
     result.reason = `Real-model journey could not complete: ${error.message}`;
+    result.failure = error.stack;
+    result.cause = String(error.cause ?? '');
     result.inferenceVerified = false;
   }
   evidence.scenarios.push(result);
