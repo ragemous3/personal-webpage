@@ -73,7 +73,7 @@ Pass execution `auto` directly to the pipeline. Label browser `wasm` as CPU. Pas
 
 ## Dependencies
 
-**Blocked by:** [RuntimeCoordinator lifecycle and recovery](../20261029-193942/TASK.md), which supplies the shared-runtime drain and replacement contract.
+**Blocked by:** None. RuntimeCoordinator lifecycle and recovery merged in [PR #21](https://github.com/ragemous3/personal-webpage/pull/21), supplying the shared-runtime drain and replacement contract.
 
 - [Three SharedWorkers with RuntimeCoordinator lifecycle and recovery](../20261029-193942/TASK.md), before this configuration integration.
 - [Shared chat response and cancellation lifecycle](../20261022-202009/TASK.md), including [PR #14](https://github.com/ragemous3/personal-webpage/pull/14).
@@ -95,3 +95,13 @@ Pass execution `auto` directly to the pipeline. Label browser `wasm` as CPU. Pas
 The historical ticket retains the full implementation chronology, failed per-tab loading attempts, review findings, commands and final evidence. Its [real CPU two-tab result](https://github.com/ragemous3/personal-webpage/blob/06dab29ef08b28ddab9e8e7b7817011a40c1a2dd/tasks/20261028-123834/evidence/review-fix-two-tab-pass.json) demonstrated two owner worker initializations and zero follower initializations for that implementation. Those results must not be presented as verification of the future refactored integration.
 
 Next action: finish the combined RuntimeCoordinator refactor, then revisit the configuration integration design and verification plan before resuming this ticket.
+
+### Integration investigation started after PR #21
+
+The user approved merge and requested the next planned ticket. PR #21 merged as 62ffe3a60a5be907239b8c3d6a6e1427b6105e82 with four CI checks passing and all seven agreed review threads resolved. Resumed this ticket at stage 1 on feature/20261028-123834-integrate-settings, based on that merged revision. The separate open lint-debt ticket is not part of the planned feature sequence; full lint currently passes.
+
+Initial inventory: historical snapshot 06dab29 provides the settings component/context, repository, service and their public-interface tests. The old configuration-runtime/shared-configuration-runtime worker ownership and RuntimeTransport must not be restored. Current RuntimeCoordinator exposes configure, begin/finish, readiness and onData; its state machine already drains accepted work before replacement. Composition currently starts model clients immediately, so saved settings must be resolved before that startup. Current shared snapshots expose resource state and configuring, but not a complete selected/active settings record; the integration must establish cross-tab state consistently without a parallel coordinator.
+
+Proposed verification seams: repository load/save/observe with injected storage and events; service update/state subscription with a runtime contract; native MessagePorts for coordinator configuration/drain behavior; actual component controls in Chromium; real application saved-startup, Online/Local, retained history and two-tab settings journeys. Reuse suitable historical tests after replacing the obsolete transport fixtures. Focused commands and final design remain to be confirmed before implementation tests. Final suite remains npm test after both reviews. Routine run outputs follow the artifact policy and are not committed.
+
+Mode selection is pending the explicit per-ticket question. No implementation or current browser proof is claimed by this inventory. Next: confirm mode and the integration seam/command mapping, then update the ticket and implement the first focused slice. The earlier ticket's explicit no-CI-wait handoff instruction remains in force for its eventual publication.
