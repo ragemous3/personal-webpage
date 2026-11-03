@@ -24,6 +24,8 @@ export class ConfigurationService implements ConfigurationServiceContract {
   #revision = 0;
   #lastWorking?: AssistantSettings;
   #sharedRuntime: RuntimeAvailability | undefined;
+  #seenSelectionId: string | undefined;
+  #selectionBaseline: string | undefined;
   #disconnect: Array<() => void> = [];
 
   #current(): ConfigurationState {
@@ -85,6 +87,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
 
   #publishRuntime(runtime: RuntimeAvailability): void {
     this.#sharedRuntime = runtime;
+    this.#captureSelectionIdentity(runtime.selectionId);
     const state = this.#sharedSelection(runtime);
     if (!state) return;
     this.#rememberWorking(runtime);
@@ -101,13 +104,45 @@ export class ConfigurationService implements ConfigurationServiceContract {
     });
   }
 
+  #captureSelectionIdentity(identity: string | undefined): void {
+    if (!identity) return;
+    this.#seenSelectionId = identity;
+    this.#selectionBaseline ??= identity;
+  }
+
   #sharedSelection(runtime: RuntimeAvailability): ConfigurationState | undefined {
     const state = this.#current();
+    if (this.#staleFailure(runtime, state)) return undefined;
     if (areValuesEqual(runtime.selected, state.selected)) return state;
-    if (this.#running || (state.pending && !state.error) || !isAssistantSettings(runtime.selected))
-      return undefined;
+    if (!this.#canAdoptDifferent(runtime, state)) return undefined;
     this.#revision++;
     return { ...state, selected: Object.freeze({ ...runtime.selected }), error: undefined };
+  }
+
+  #staleFailure(runtime: RuntimeAvailability, state: ConfigurationState): boolean {
+    return Boolean(state.error) && !runtime.error && !this.#canReplaceFailure(runtime, state);
+  }
+
+  #canAdoptDifferent(
+    runtime: RuntimeAvailability,
+    state: ConfigurationState,
+  ): runtime is RuntimeAvailability & { selected: AssistantSettings } {
+    return (
+      !this.#running &&
+      (!state.pending || Boolean(state.error)) &&
+      this.#canReplaceFailure(runtime, state) &&
+      isAssistantSettings(runtime.selected)
+    );
+  }
+
+  #canReplaceFailure(runtime: RuntimeAvailability, state: ConfigurationState): boolean {
+    if (!state.error) return true;
+    return runtime.selectionId !== undefined && runtime.selectionId !== this.#selectionBaseline;
+  }
+
+  #invalidateSharedSnapshot(): void {
+    this.#selectionBaseline = this.#seenSelectionId;
+    this.#sharedRuntime = undefined;
   }
 
   #runtimeError(runtime: RuntimeAvailability, state: ConfigurationState): string | undefined {
@@ -128,6 +163,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   #select(settings: AssistantSettings, persist = true): void {
     const state = this.#current();
     if (areValuesEqual(state.selected, settings)) return;
+    this.#invalidateSharedSnapshot();
     this.#revision++;
     const notice = (persist ? this.repository.save(settings).notice : undefined) ?? state.notice;
     this.#state.emit({
@@ -160,6 +196,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   async #apply(): Promise<void> {
     const before = this.#current();
     const revision = this.#revision;
+    this.#invalidateSharedSnapshot();
     this.runtime.setAvailable(false);
     this.#state.emit({ ...before, loading: true });
     try {
@@ -199,6 +236,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
 
   retry(): void {
     const state = this.#current();
+    this.#invalidateSharedSnapshot();
     this.#revision++;
     this.#state.emit({ ...state, pending: true, error: undefined, available: false });
     this.#schedule();

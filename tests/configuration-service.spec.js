@@ -270,3 +270,93 @@ test('a repairing shared port cannot silently retry the same failed selection', 
   assert.equal(attempts, 1);
   assert.match(service.stateSubscription.getValue().error, /GPU unavailable/);
 });
+
+test('a cached shared snapshot cannot erase a failed local selection', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  const old = {
+    selected: original,
+    active: original,
+    selectionId: 'previous',
+    pending: false,
+    loading: false,
+    ready: true,
+  };
+  runtime.stateSubscription.emit({ responding: false, runtime: old });
+  runtime.apply = async () => {
+    throw new Error('Connection deadline exceeded');
+  };
+  service.update({ ...original, execution: 'webgpu' });
+  await settle();
+  runtime.stateSubscription.emit({ responding: false, runtime: old });
+  const failed = service.stateSubscription.getValue();
+  assert.equal(failed.selected.execution, 'webgpu');
+  assert.match(failed.error, /Connection deadline exceeded/);
+  assert.equal(failed.available, false);
+  const newer = { ...original, execution: 'wasm' };
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { ...old, selected: newer, active: newer, selectionId: 'newer' },
+  });
+  assert.equal(service.stateSubscription.getValue().selected.execution, 'wasm');
+  assert.equal(service.stateSubscription.getValue().error, undefined);
+  service.retry();
+  await settle();
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { ...old, selected: newer, active: newer, selectionId: 'newer' },
+  });
+  assert.match(service.stateSubscription.getValue().error, /Connection deadline exceeded/);
+  assert.equal(service.stateSubscription.getValue().available, false);
+});
+
+test('each apply attempt establishes a shared-snapshot baseline even for observed settings', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  runtime.apply = async () => {
+    throw new Error('Connection deadline exceeded');
+  };
+  const selected = { ...original, execution: 'wasm' };
+  const shared = {
+    selected,
+    active: original,
+    selectionId: 'peer',
+    pending: true,
+    loading: true,
+    ready: false,
+  };
+  runtime.stateSubscription.emit({ responding: false, runtime: shared });
+  await settle();
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { ...shared, active: selected, pending: false, loading: false, ready: true },
+  });
+  assert.match(service.stateSubscription.getValue().error, /Connection deadline exceeded/);
+  assert.equal(service.stateSubscription.getValue().available, false);
+});
+
+test('the first late shared identity cannot erase a failure with no previously observed baseline', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  runtime.apply = async () => {
+    throw new Error('Connection deadline exceeded');
+  };
+  service.update({ ...original, execution: 'webgpu' });
+  await settle();
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: {
+      selected: original,
+      active: original,
+      selectionId: 'first-observed',
+      pending: false,
+      loading: false,
+      ready: true,
+    },
+  });
+  assert.equal(service.stateSubscription.getValue().selected.execution, 'webgpu');
+  assert.match(service.stateSubscription.getValue().error, /Connection deadline exceeded/);
+});

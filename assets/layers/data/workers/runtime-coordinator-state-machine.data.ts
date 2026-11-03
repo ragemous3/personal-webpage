@@ -712,7 +712,11 @@ export class RuntimeCoordinatorStateMachine {
 
   readonly #selectCommand = (command: RuntimeCommand, selection: unknown): void => {
     if (!isRecord(selection) || typeof selection.enabled !== 'boolean') return;
-    command.selection = { enabled: selection.enabled, settings: selection.settings };
+    command.selection = {
+      enabled: selection.enabled,
+      settings: selection.settings,
+      selectionId: crypto.randomUUID(),
+    };
     this.#selection = command.selection;
     for (const queued of this.#configurationQueue) {
       if (!queued.selection) continue;

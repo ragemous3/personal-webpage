@@ -12,6 +12,11 @@ import {
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
+const selectionIdentity = (selection: unknown): Pick<RuntimeAvailability, 'selectionId'> =>
+  isRecord(selection) && typeof selection.selectionId === 'string'
+    ? { selectionId: selection.selectionId }
+    : {};
+
 const readSettings = (selection: unknown): AssistantSettings | undefined =>
   isRecord(selection) && isAssistantSettings(selection.settings) ? selection.settings : undefined;
 
@@ -127,6 +132,7 @@ export class ConfigurationRuntime implements ConfigurationRuntimeContract {
       state.configuring === true || !areValuesEqual(selected, active) || resources.loading;
     return {
       selected,
+      ...selectionIdentity(state.selection),
       ...(active ? { active } : {}),
       pending,
       loading: state.configurationLoading === true || resources.loading,

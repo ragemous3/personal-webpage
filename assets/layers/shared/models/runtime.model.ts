@@ -30,6 +30,7 @@ export interface RuntimeResourceSnapshot {
   error?: string;
 }
 export interface RuntimeSelection {
+  selectionId?: string;
   enabled: boolean;
   settings: unknown;
 }

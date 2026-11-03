@@ -21,6 +21,7 @@ export interface ConfigurationState {
 }
 
 export interface RuntimeAvailability {
+  selectionId?: string;
   selected?: AssistantSettings;
   active?: AssistantSettings;
   pending: boolean;
