@@ -3,19 +3,19 @@ import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard'
 import { IndexDBBase } from '@/layers/data/idb-base.data';
 import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
 import { VectorDBHNSWData } from '@/layers/data/vectordb-hnsw.data';
+import { type RetrievalDriverDependenciesContract } from '@/layers/shared/contracts/retrieval-driver-dependencies.contract';
+import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 import { type RuntimeMessage } from '@/layers/shared/models/runtime.model';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 import { configureModelEnvironment } from './model-environment.data';
-import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime.data';
+import { SharedModelRuntime } from './shared-model-runtime.data';
 
-interface RetrievalDependencies {
-  create(config: DatabaseConfig): Pick<VectorDBHNSWData, 'init' | 'query' | 'dispose'>;
-  publish(message: unknown): void;
-}
-export const createRetrievalDriver = (dependencies: RetrievalDependencies): SharedModelDriver => {
-  let database: ReturnType<RetrievalDependencies['create']> | undefined;
+export const createRetrievalDriver = (
+  dependencies: RetrievalDriverDependenciesContract,
+): SharedModelDriverContract => {
+  let database: ReturnType<RetrievalDriverDependenciesContract['create']> | undefined;
   let initialization: Promise<void> | undefined;
   let configuration: DatabaseConfig | undefined;
   const initialize = async (request: RuntimeMessage): Promise<void> => {

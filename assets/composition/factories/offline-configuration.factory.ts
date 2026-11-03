@@ -9,8 +9,8 @@ import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard'
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { isRecord, isString } from '@/layers/shared/guards/guards';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
+import { requireNonEmptyString, requireRecord } from '@/layers/shared/utils/validation.utility';
 
 interface OfflineConfiguration {
   baseURL: string;
@@ -19,21 +19,6 @@ interface OfflineConfiguration {
   model: RagConfigBase<LmConfig>;
   database: RagConfigBase<DatabaseConfig>;
 }
-
-const requireRecord = (value: unknown, name: string): Record<string, unknown> => {
-  if (!isRecord(value) || Array.isArray(value)) {
-    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected an object for ${name}`);
-  }
-  return value;
-};
-
-const requireString = (record: Record<string, unknown>, key: string): string => {
-  const value = record[key];
-  if (!isString(value) || value.trim().length === 0) {
-    throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a nonempty string for ${key}`);
-  }
-  return value;
-};
 
 const modelLocations = (
   value: Record<string, unknown>,
@@ -53,12 +38,15 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
   const config = requireRecord(chatbot.config, 'chatbot.config');
   const rawModel = requireRecord(config.locallm, 'chatbot.config.locallm');
   const rawDatabase = requireRecord(config.localdatabase, 'chatbot.config.localdatabase');
-  const baseURL = requireString(site, 'baseURL');
-  const coordinatorSource = requireString(workers, WorkerFileNames.coordinator);
+  const baseURL = requireNonEmptyString(site.baseURL, 'baseURL');
+  const coordinatorSource = requireNonEmptyString(
+    workers[WorkerFileNames.coordinator],
+    WorkerFileNames.coordinator,
+  );
   const model = {
     ...rawModel,
     ...modelLocations(rawModel),
-    source: requireString(workers, WorkerFileNames.llm),
+    source: requireNonEmptyString(workers[WorkerFileNames.llm], WorkerFileNames.llm),
     generation: rawModel.generation === undefined ? {} : rawModel.generation,
   };
   const database = {
@@ -68,7 +56,7 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
         rawDatabase[key.toLowerCase()],
       ]),
     ),
-    source: requireString(workers, WorkerFileNames.vectordb),
+    source: requireNonEmptyString(workers[WorkerFileNames.vectordb], WorkerFileNames.vectordb),
     baseUrl: baseURL,
     device: rawDatabase.device ?? rawModel.device,
     ...modelLocations(rawDatabase),

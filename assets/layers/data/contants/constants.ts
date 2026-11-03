@@ -12,3 +12,9 @@ export const WorkerFileNames = {
   llm: 'llm.shared-worker.ts',
   vectordb: 'vectordb.shared-worker.ts',
 } as const;
+
+export const SharedWorkerNames = {
+  coordinator: 'RuntimeCoordinator',
+  llm: 'Runtime-llm',
+  vectordb: 'Runtime-vectordb',
+} as const;

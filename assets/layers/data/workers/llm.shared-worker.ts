@@ -9,12 +9,13 @@ import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 import { configureModelEnvironment } from './model-environment.data';
 import { type LlmDTO, type MessageBase } from './models';
-import { type SharedModelDriver, SharedModelRuntime } from './shared-model-runtime.data';
+import { SharedModelRuntime } from './shared-model-runtime.data';
 
 interface LlmWorkerDependencies {
   loadGeneratorPipeline: (
@@ -141,7 +142,7 @@ const identity = ({ generation: _generation, ...value }: LmConfig): unknown => v
 
 export const createLlmMessageHandler = (
   dependencies: LlmWorkerDependencies,
-): SharedModelDriver['handle'] & { dispose: SharedModelDriver['dispose'] } => {
+): SharedModelDriverContract['handle'] & { dispose: SharedModelDriverContract['dispose'] } => {
   let localLLM: LocalLLMData | undefined;
   let initialization: Promise<LocalLLMData> | undefined;
   let activeConfiguration: LmConfig | undefined;
@@ -206,7 +207,7 @@ export const createLlmMessageHandler = (
   });
 };
 
-export const createLlmDriver = (publish: (message: unknown) => void): SharedModelDriver => {
+export const createLlmDriver = (publish: (message: unknown) => void): SharedModelDriverContract => {
   const handle = createLlmMessageHandler({ ...defaultDependencies, publish });
   return { handle, dispose: handle.dispose };
 };

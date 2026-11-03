@@ -1,11 +1,9 @@
 import { isRuntimeMessage } from '@/layers/data/guards/is-runtime-message.guard';
+import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
 import { type RuntimeMessage, type RuntimeRole } from '@/layers/shared/models/runtime.model';
+import { describeFailure } from '@/layers/shared/utils/error.utility';
 
-export interface SharedModelDriver {
-  handle(event: MessageEvent<RuntimeMessage>): Promise<void>;
-  dispose(): Promise<void>;
-}
-type DriverFactory = (publish: (message: unknown) => void) => SharedModelDriver;
+type DriverFactory = (publish: (message: unknown) => void) => SharedModelDriverContract;
 interface ModelWork {
   port: MessagePort;
   message: RuntimeMessage;
@@ -16,19 +14,12 @@ interface ModelWork {
 const requestKey = (message: RuntimeMessage): string =>
   `${message.id}:${message.requestId ?? 'initialization'}`;
 
-const describeFailure = (error: unknown): string => {
-  if (!(error instanceof Error)) return String(error);
-  return error.cause === undefined
-    ? error.message
-    : `${error.message}: ${describeFailure(error.cause)}`;
-};
-
 export class SharedModelRuntime {
   readonly instanceId = crypto.randomUUID();
   readonly #ports = new Set<MessagePort>();
   readonly #unbound = new Map<MessagePort, ReturnType<typeof setTimeout>>();
   readonly #work = new Map<string, ModelWork>();
-  #driver: SharedModelDriver;
+  #driver: SharedModelDriverContract;
   #generation = 0;
   #binding = 0;
   #bound: MessagePort | undefined;
@@ -83,7 +74,7 @@ export class SharedModelRuntime {
     port.close();
   };
 
-  readonly #newDriver = (): SharedModelDriver => {
+  readonly #newDriver = (): SharedModelDriverContract => {
     const generation = ++this.#generation;
     return this.create((message: unknown) => this.#publish(message, generation));
   };

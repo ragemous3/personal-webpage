@@ -32,6 +32,6 @@ The manual [Browser verification workflow](../.github/workflows/verification.yml
 
 Both workflows request **90-day retention**, subject to repository limits. These links expire. Before expiry, copy anything needed for a longer audit into an approved durable archive or select a small, reviewed committed record. The manual hosted workflow does not provision the real models/index required for `cache` or `performance`; those runs retain their existing prerequisites and must publish their local evidence separately before shared handoff.
 
-## Migration exception and existing history
+## Historical evidence
 
-The five curated JSON records in [the RuntimeCoordinator migration](../tasks/20261029-193942/evidence/) are retained as the audit record for a major three-worker architecture change. They are an explicit exception, not the template for routine reruns. Existing ticket logs and reports remain historical records; this policy does not delete them or rewrite history. New migration/audit exceptions must state why a durable record is needed and identify the selected evidence and tested revision.
+Historical run reports, including the RuntimeCoordinator migration reports, have been removed from the current tree. Ticket links point to their immutable Git revisions so past observations remain accessible. Git history is preserved. Future routine evidence belongs in retained PR/CI artifacts or a durable archive; it is not committed. Keep concise verification summaries in tickets and preserve reusable tools and approved baselines in Git.

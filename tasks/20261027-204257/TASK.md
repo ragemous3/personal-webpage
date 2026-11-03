@@ -90,15 +90,15 @@ Closure note: the user accepted the recorded lint, test, and build evidence as s
 
 ### Verification evidence
 
-- [Full lint result](evidence/lint-summary.json): exit 0, 97 files checked, no errors or warnings.
+- [Full lint result](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/lint-summary.json): exit 0, 97 files checked, no errors or warnings.
 - Effective ESLint rule comparison against the review base passed for application, browser script, Node script, test, and skill-helper files. Only absolute project paths were normalized.
-- [Full test suite](evidence/tests.log): `npm test` exited 0; 29 tests passed, none failed.
+- [Full test suite](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/tests.log): `npm test` exited 0; 29 tests passed, none failed.
 - New checks cover message validation, custom task guards, the existing vector-response export, progress boundaries, and event delivery without duplicate notifications.
 - Token chunk output and partial-result recovery passed a separate public-method check with fixed token values and no model download.
-- [Type check](evidence/types.log): exit 2, six existing errors. Three affect tracked application code; three affect ignored `public/` artifacts.
-- [Tracked baseline type check](evidence/types-base.log): 12 errors. Nine were resolved; none were added. Existing ignored public artifacts account for the other three current errors.
-- [Hugo build](evidence/hugo-build.log): exit 0 using Hugo 0.152.2 and temporary PostCSS CLI; existing taxonomy and term layout warnings remain.
-- [Runtime prerequisite report](evidence/doctor.json): BLOCKED. The package entry for `hnswlib-wasm` does not resolve, and the three résumé index files are absent.
+- [Type check](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/types.log): exit 2, six existing errors. Three affect tracked application code; three affect ignored `public/` artifacts.
+- [Tracked baseline type check](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/types-base.log): 12 errors. Nine were resolved; none were added. Existing ignored public artifacts account for the other three current errors.
+- [Hugo build](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/hugo-build.log): exit 0 using Hugo 0.152.2 and temporary PostCSS CLI; existing taxonomy and term layout warnings remain.
+- [Runtime prerequisite report](https://github.com/ragemous3/personal-webpage/blob/241c1ff8ba4ea299cb544eac4d2820a2bb84eb6e/tasks/20261027-204257/evidence/doctor.json): BLOCKED. The package entry for `hnswlib-wasm` does not resolve, and the three résumé index files are absent.
 - Live browser journeys were not run. The user directed closure based on the recorded lint, test, and build evidence. Live browser verification was not performed; Doctor reported missing dependencies and résumé index files.
 - `observe.js --help` and `git diff --check` passed. Automatic fixes and the working diff were inspected for unintended changes.
 - The index download helper was not executed because it removes the destination data directory. Its file operations are unchanged.

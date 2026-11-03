@@ -1,3 +1,4 @@
+import { SharedWorkerNames } from '@/layers/data/contants/constants';
 import { isRuntimeMessage } from '@/layers/data/guards/is-runtime-message.guard';
 import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager.data';
 import { isRecord } from '@/layers/shared/guards/guards';
@@ -18,7 +19,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
     private readonly sources: Record<RuntimeRole, string>,
     readonly policy: Partial<RuntimePolicy> = {},
   ) {
-    super(scriptPath, 'RuntimeCoordinator');
+    super(scriptPath, SharedWorkerNames.coordinator);
     this.listenErrors(this.#coordinatorFailure);
     this.listen(this.#observeResources);
     if ('addEventListener' in globalThis) globalThis.addEventListener('pagehide', this.#departure);
@@ -75,7 +76,10 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
   readonly #connectModel = (role: RuntimeRole, attempt: number): void => {
     const previous = this.#models.get(role);
     this.#modelInstances.delete(role);
-    const model = new SharedWorkerManager<RuntimeMessage>(this.sources[role], `Runtime-${role}`);
+    const model = new SharedWorkerManager<RuntimeMessage>(
+      this.sources[role],
+      SharedWorkerNames[role],
+    );
     this.#models.set(role, model);
     let instanceId: string | undefined;
     const disconnect = model.listen((message) => {
