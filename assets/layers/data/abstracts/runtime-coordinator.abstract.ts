@@ -24,6 +24,7 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
   #terminalFailure = false;
   #hostingVersion = 0;
   #recovery: Promise<void> | undefined;
+  #configurationRevision = 0;
   constructor(protected readonly connection: RuntimeCoordinatorConnection) {
     connection.listen(this.#receive);
   }
@@ -81,7 +82,9 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
     configurations: Partial<Record<RuntimeRole, unknown>>,
     selection?: RuntimeSelection,
   ): Promise<void> => {
+    const revision = ++this.#configurationRevision;
     if (selection?.enabled) await this.connection.ensureModels();
+    if (selection && revision !== this.#configurationRevision) return;
     await this.#command(
       'runtime:configure',
       { configurations, ...(selection ? { selection } : {}) },

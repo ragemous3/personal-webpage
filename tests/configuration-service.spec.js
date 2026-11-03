@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 
 import { ConfigurationRepository } from '@/layers/data/configuration-repository.data';
@@ -29,6 +30,36 @@ const setup = () => {
 };
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 const disconnect = () => {};
+
+test('a cached pending snapshot cannot restart a completed apply in a microtask loop', () => {
+  const source = `
+    import assert from 'node:assert/strict';
+    import { ConfigurationService } from '@/layers/services/configuration.service';
+    import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
+    let finish;
+    const runtime = {
+      select() {}, setAvailable() {},
+      stateSubscription: createStatefulSubscribable({ responding: false }),
+      apply: () => new Promise((resolve) => { finish = resolve; }),
+    };
+    const repository = { load: () => ({}), save: () => ({}), observe: () => () => {} };
+    const service = new ConfigurationService(repository, runtime);
+    const selected = service.stateSubscription.getValue().selected;
+    runtime.stateSubscription.emit({ responding: false, runtime: {
+      selected, pending: true, loading: true, ready: false,
+    } });
+    finish();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(service.stateSubscription.getValue().pending, false);
+    service.dispose();
+  `;
+  const result = spawnSync(
+    process.execPath,
+    ['--import', './scripts/typescript-test.loader.js', '--input-type=module', '-e', source],
+    { encoding: 'utf8', timeout: 5000 },
+  );
+  assert.equal(result.status, 0, result.error?.message ?? result.stderr);
+});
 
 test('startup resolves preferences and publishes defaults before loading the runtime', async () => {
   const { service, runtime } = setup();
@@ -158,4 +189,84 @@ test('an ongoing shared runtime failure remains visible after startup apply has 
   assert.equal(state.available, false);
   assert.match(state.error, /Replacement owner failed/);
   assert.equal(state.canSwitchBack, true);
+});
+
+test('a session-only tab adopts authoritative shared settings without writing preferences back', async () => {
+  const { runtime } = setup();
+  let writes = 0;
+  const denied = new ConfigurationRepository(
+    {
+      getItem() {
+        throw new Error('Denied');
+      },
+      setItem() {
+        writes++;
+        throw new Error('Denied');
+      },
+    },
+    new EventTarget(),
+  );
+  const service = new ConfigurationService(denied, runtime);
+  await settle();
+  const selected = {
+    ...service.stateSubscription.getValue().selected,
+    execution: 'wasm',
+    maxNewTokens: 32,
+  };
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { selected, active: selected, pending: false, loading: false, ready: true },
+  });
+  const state = service.stateSubscription.getValue();
+  assert.equal(state.selected.execution, 'wasm');
+  assert.equal(state.active.maxNewTokens, 32);
+  assert.equal(writes, 0);
+  assert.equal(state.available, true);
+});
+
+test('a shared snapshot cannot overwrite a newer local edit while it is applying', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  let finish;
+  runtime.apply = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  service.update({ ...original, maxNewTokens: 48 });
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { selected: original, active: original, pending: false, loading: false, ready: true },
+  });
+  assert.equal(service.stateSubscription.getValue().selected.maxNewTokens, 48);
+  const peer = { ...original, maxNewTokens: 64 };
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { selected: peer, active: peer, pending: false, loading: false, ready: true },
+  });
+  finish();
+  await settle();
+  assert.equal(service.stateSubscription.getValue().selected.maxNewTokens, 64);
+  assert.equal(service.stateSubscription.getValue().active.maxNewTokens, 64);
+});
+
+test('a repairing shared port cannot silently retry the same failed selection', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  let attempts = 0;
+  runtime.apply = async () => {
+    attempts++;
+    throw new Error('GPU unavailable');
+  };
+  const failed = { ...original, execution: 'webgpu' };
+  service.update(failed);
+  await settle();
+  runtime.stateSubscription.emit({
+    responding: false,
+    runtime: { selected: failed, active: original, pending: true, loading: true, ready: false },
+  });
+  await settle();
+  assert.equal(attempts, 1);
+  assert.match(service.stateSubscription.getValue().error, /GPU unavailable/);
 });

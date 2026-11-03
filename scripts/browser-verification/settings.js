@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
+import { seedVerificationPreferences } from './preferences.js';
+
 const settingsSelector = 'chatbot-offline-provider >>> assistant-configuration';
 const chatSelector = 'chatbot-offline-provider >>> chat-container';
 const ready = (page) =>
@@ -102,6 +104,35 @@ const exerciseChanges = async (first, second) => {
   assert.equal(restored.selected.maxNewTokens, 64);
 };
 
+const exerciseSessionOnlyTab = async (context, origin, first, second, pageErrors) => {
+  const session = await context.newPage();
+  session.on('pageerror', (error) => pageErrors.push(error.message));
+  session.setDefaultTimeout(10_000);
+  await session.evaluateOnNewDocument(() => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      get() {
+        throw new Error('Storage denied for verification');
+      },
+    });
+  });
+  await session.goto(origin);
+  await ready(session);
+  await session.$eval(settingsSelector, (element) => {
+    const service = element.configurationService;
+    service.update({
+      ...service.stateSubscription.getValue().selected,
+      execution: 'wasm',
+      maxNewTokens: 64,
+    });
+  });
+  await Promise.all([ready(first), ready(second), ready(session)]);
+  await untilSettings(first, { execution: 'wasm', maxNewTokens: 64 });
+  await untilSettings(second, { execution: 'wasm', maxNewTokens: 64 });
+  const observed = await configuration(session);
+  assert.match(observed.notice, /not be remembered|session only/);
+  await session.close();
+};
+
 export const runSettings = async (browser, origin, evidence, directory) => {
   const context = await browser.createBrowserContext();
   const pageErrors = [];
@@ -115,25 +146,7 @@ export const runSettings = async (browser, origin, evidence, directory) => {
   };
   evidence.artifacts.push('settings.png');
   try {
-    await first.evaluateOnNewDocument(() => {
-      if (!localStorage.getItem('assistant.preferences'))
-        localStorage.setItem(
-          'assistant.preferences',
-          JSON.stringify({
-            version: 1,
-            preferences: {
-              mode: 'online',
-              model: 'Xenova/Qwen1.5-0.5B-Chat',
-              execution: 'wasm',
-              precision: 'q4',
-              maxNewTokens: 32,
-              sampling: false,
-              temperature: 0.7,
-              topP: 0.9,
-            },
-          }),
-        );
-    });
+    await seedVerificationPreferences(first, 'online');
     await first.goto(origin);
     await untilSettings(first, { mode: 'online', maxNewTokens: 32 });
     const second = await context.newPage();
@@ -154,6 +167,7 @@ export const runSettings = async (browser, origin, evidence, directory) => {
     );
     await first.bringToFront();
     await exerciseChanges(first, second);
+    await exerciseSessionOnlyTab(context, origin, first, second, pageErrors);
     result.finalSettings = await configuration(first);
     result.createdModels = evidence.events.filter((event) => event.type === 'created').length;
 

@@ -28,6 +28,7 @@ interface RuntimeRequest {
   activityTimer: ReturnType<typeof setTimeout> | undefined;
 }
 interface RuntimeResource {
+  deferConfiguration?: boolean;
   role: RuntimeRole;
   status: RuntimeResourceSnapshot['status'];
   epoch: string;
@@ -264,9 +265,25 @@ export class RuntimeCoordinatorStateMachine {
       payload.port.close();
       return;
     }
+    this.#registerPort(
+      model,
+      payload.port,
+      payload.instanceId,
+      payload.deferConfiguration === true,
+    );
+  };
+
+  readonly #registerPort = (
+    model: RuntimeResource,
+    port: MessagePort,
+    instanceId: string,
+    deferConfiguration: boolean,
+  ): void => {
     model.port?.close();
-    model.port = payload.port;
-    model.instanceId = payload.instanceId;
+    model.deferConfiguration = deferConfiguration;
+    if (model.deferConfiguration) model.configuration = undefined;
+    model.port = port;
+    model.instanceId = instanceId;
     model.epoch = crypto.randomUUID();
     model.status = 'connecting';
     clearTimeout(model.phaseTimer);
@@ -274,7 +291,6 @@ export class RuntimeCoordinatorStateMachine {
       () => this.#failResource(model, 'Model connection deadline exceeded'),
       this.#policy.connectionMs,
     );
-    const port = model.port;
     model.port.addEventListener('message', ({ data }: MessageEvent<unknown>) => {
       if (model.port === port && isMessage(data) && data.runtimeEpoch === model.epoch)
         this.#modelMessage(model, data);
@@ -758,6 +774,7 @@ export class RuntimeCoordinatorStateMachine {
       return;
     if (!model.port) {
       model.status = 'uninitialized';
+      this.#waitForRegistration(model);
       return;
     }
     model.epoch = crypto.randomUUID();
@@ -802,8 +819,17 @@ export class RuntimeCoordinatorStateMachine {
       return;
     }
     model.activeConfiguration = message.payload.configuration;
+    if (model.deferConfiguration && model.configuration === undefined) {
+      model.status = 'uninitialized';
+      return;
+    }
+    delete model.deferConfiguration;
     model.configuration ??= model.activeConfiguration;
-    if (message.payload.loaded !== true) {
+    this.#resumeModel(model, message.payload.loaded === true);
+  };
+
+  readonly #resumeModel = (model: RuntimeResource, loaded: boolean): void => {
+    if (!loaded) {
       model.status = 'uninitialized';
       this.#initialize(model);
       return;

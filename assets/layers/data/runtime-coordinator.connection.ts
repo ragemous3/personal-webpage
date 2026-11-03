@@ -89,18 +89,16 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
         () => reject(new Error('Model connection deadline exceeded')),
         this.policy.connectionMs ?? defaultRuntimePolicy.connectionMs,
       );
-      this.#connectModel(
-        role,
-        this.#attempt,
-        () => {
+      this.#connectModel(role, this.#attempt, {
+        connected: () => {
           clearTimeout(timer);
           resolve();
         },
-        (reason) => {
+        failed: (reason) => {
           clearTimeout(timer);
           reject(new Error(reason));
         },
-      );
+      });
     })
       .catch((error: unknown) => {
         if (attempt === this.#attempt && this.#registrations.get(role)?.promise === registration) {
@@ -120,8 +118,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
   readonly #connectModel = (
     role: RuntimeRole,
     attempt: number,
-    connected?: () => void,
-    failed?: (reason: string) => void,
+    repair?: { connected(): void; failed(reason: string): void },
   ): void => {
     const previous = this.#models.get(role);
     this.#modelInstances.delete(role);
@@ -144,11 +141,16 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
       this.#modelInstances.set(role, instanceId);
       disconnect();
       const port = model.takePort();
-      this.control('runtime:register', { role, port, instanceId }, undefined, [port]);
-      connected?.();
+      this.control(
+        'runtime:register',
+        { role, port, instanceId, deferConfiguration: repair !== undefined },
+        undefined,
+        [port],
+      );
+      repair?.connected();
     });
     model.listenErrors((reason) => {
-      failed?.(reason);
+      repair?.failed(reason);
       if (this.carrier && attempt === this.#attempt && instanceId)
         this.control('runtime:failed', { role, instanceId, reason });
     });
@@ -156,7 +158,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
       model.initialize();
       previous?.terminate();
     } catch (error) {
-      failed?.(String(error));
+      repair?.failed(String(error));
       this.#coordinatorFailure(String(error));
     }
   };

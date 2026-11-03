@@ -472,3 +472,64 @@ test('queued settings edits coalesce to the latest mode before an accepted respo
     false,
   );
 });
+
+test('configuration before channel hosting retains the model registration deadline', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine({ connectionMs: 10, initializationMs: 1000 });
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  a.send(
+    'runtime:configure',
+    {
+      configurations: { llm: { model: 'test' } },
+      selection: { enabled: true, settings: { mode: 'local' } },
+    },
+    'missing-model',
+  );
+  await waitFor(() =>
+    a.messages.some((m) => m.task === 'runtime:failed' && m.requestId === 'missing-model'),
+  );
+  const failed = a.messages.find((m) =>
+    m.payload?.resources?.some((r) => r.role === 'llm' && r.status === 'failed'),
+  );
+  assert.equal(
+    failed.payload.resources.find((r) => r.role === 'llm').error,
+    'Model registration deadline exceeded',
+  );
+});
+
+test('a configuration-repair port waits for the new command instead of restarting failed settings', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine({ connectionMs: 10, initializationMs: 1000 });
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  a.send('runtime:configure', { configurations: { llm: { device: 'webgpu' } } }, 'failed');
+  await waitFor(() =>
+    a.messages.some((m) => m.task === 'runtime:failed' && m.requestId === 'failed'),
+  );
+  const { port1, port2 } = new MessageChannel();
+  context.after(() => port2.close());
+  const instanceId = crypto.randomUUID();
+  const initialized = [];
+  port2.addEventListener('message', ({ data }) => {
+    if (data.task === 'runtime:bind')
+      port2.postMessage({ ...data, task: 'runtime:bound', payload: { instanceId, loaded: false } });
+    if (data.task === 'llm:init') {
+      initialized.push(data.payload);
+      port2.postMessage({ ...data, task: 'llm:ready', payload: null });
+    }
+  });
+  port2.start();
+  a.send('runtime:register', { role: 'llm', port: port1, instanceId, deferConfiguration: true });
+  await waitFor(() =>
+    a.messages.some((m) =>
+      m.payload?.resources?.some(
+        (r) => r.role === 'llm' && r.status === 'uninitialized' && r.instanceId === instanceId,
+      ),
+    ),
+  );
+  assert.equal(initialized.length, 0);
+  a.send('runtime:configure', { configurations: { llm: { device: 'wasm' } } }, 'replacement');
+  await waitFor(() =>
+    a.messages.some((m) => m.task === 'runtime:configured' && m.requestId === 'replacement'),
+  );
+  assert.deepEqual(initialized, [{ device: 'wasm' }]);
+});

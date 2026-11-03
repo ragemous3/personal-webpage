@@ -23,6 +23,25 @@ const resourceFailure = (resources: unknown): string | undefined => {
   return typeof failure.error === 'string' ? failure.error : 'Model configuration failed';
 };
 
+const resourcesReady = (resources: unknown): boolean => {
+  if (!Array.isArray(resources)) return false;
+  const entries: unknown[] = resources;
+  return entries.every(
+    (resource) =>
+      isRecord(resource) &&
+      typeof resource.status === 'string' &&
+      ['ready', 'busy', 'stopping'].includes(resource.status),
+  );
+};
+const resourceAvailability = (
+  resources: unknown,
+  mode: AssistantSettings['mode'],
+): { ready: boolean; loading: boolean; error?: string } => {
+  const error = mode === 'local' ? resourceFailure(resources) : undefined;
+  const ready = resourcesReady(resources);
+  return { ready, loading: mode === 'local' && !ready && !error, ...(error ? { error } : {}) };
+};
+
 export class ConfigurationRuntime implements ConfigurationRuntimeContract {
   readonly stateSubscription = createStatefulSubscribable<ConfigurationRuntimeState>({
     responding: false,
@@ -64,21 +83,22 @@ export class ConfigurationRuntime implements ConfigurationRuntimeContract {
       generation,
     };
     const database = { ...this.#database, device: settings.execution };
-    this.chat.configuration.payload = model;
-    this.database.configuration.payload = database;
-    this.#application = this.coordinator.configure(
-      local ? { llm: model, vectordb: database } : {},
-      { enabled: local, settings },
-    );
-    const application = this.#application;
-    void application.catch(() => {
-      if (this.#application === application) this.#failed = true;
+    Object.assign(this.chat.configuration.payload, model);
+    Object.assign(this.database.configuration.payload, database);
+    const configured = this.coordinator.configure(local ? { llm: model, vectordb: database } : {}, {
+      enabled: local,
+      settings,
     });
-    if (local && !this.#hosted) {
+    const application = configured.then(() => {
+      if (this.#application !== application || !local || this.#hosted) return;
       this.#hosted = true;
       this.chat.initialize();
       this.database.initialize();
-    }
+    });
+    this.#application = application;
+    void application.catch(() => {
+      if (this.#application === application) this.#failed = true;
+    });
   };
 
   apply = async (settings: AssistantSettings): Promise<void> => {
@@ -102,15 +122,16 @@ export class ConfigurationRuntime implements ConfigurationRuntimeContract {
     selected: AssistantSettings,
   ): RuntimeAvailability => {
     const active = readSettings(state.activeSelection);
-    const error = selected.mode === 'local' ? resourceFailure(state.resources) : undefined;
-    const pending = state.configuring === true;
+    const resources = resourceAvailability(state.resources, selected.mode);
+    const pending =
+      state.configuring === true || !areValuesEqual(selected, active) || resources.loading;
     return {
       selected,
       ...(active ? { active } : {}),
-      pending: pending || !areValuesEqual(selected, active),
-      loading: state.configurationLoading === true,
-      ready: active?.mode === 'local' && !pending && !error,
-      ...(error ? { error } : {}),
+      pending,
+      loading: state.configurationLoading === true || resources.loading,
+      ready: selected.mode === 'local' && !pending && resources.ready,
+      ...(resources.error ? { error: resources.error } : {}),
     };
   };
 

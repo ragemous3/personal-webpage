@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { cachePrerequisites } from './application.js';
 import { root } from './environment.js';
+import { seedVerificationPreferences } from './preferences.js';
 import { exerciseRealSettings } from './real-settings.js';
 import { exerciseRealTabs } from './real-tabs.js';
 
@@ -28,28 +29,6 @@ const waitReady = async (page) => {
   );
   if (failure) throw new Error(failure);
 };
-const seedPreferences = async (page, evidence) => {
-  if (evidence.configuration?.modelMirror)
-    await page.evaluateOnNewDocument(() => {
-      if (!localStorage.getItem('assistant.preferences'))
-        localStorage.setItem(
-          'assistant.preferences',
-          JSON.stringify({
-            version: 1,
-            preferences: {
-              mode: 'local',
-              model: 'Xenova/Qwen1.5-0.5B-Chat',
-              execution: 'wasm',
-              precision: 'q4',
-              maxNewTokens: 32,
-              sampling: false,
-              temperature: 0.7,
-              topP: 0.9,
-            },
-          }),
-        );
-    });
-};
 const ask = async (browser, origin, evidence, existing) => {
   const page = existing ?? (await browser.newPage());
   const requests = [];
@@ -67,7 +46,7 @@ const ask = async (browser, origin, evidence, existing) => {
     requests.push({ url: request.url(), type: request.resourceType() }),
   );
   if (!existing) {
-    await seedPreferences(page, evidence);
+    if (evidence.configuration?.modelMirror) await seedVerificationPreferences(page, 'local');
     await page.goto(origin, { waitUntil: 'domcontentloaded' });
   }
   await waitReady(page);

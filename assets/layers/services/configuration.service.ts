@@ -23,6 +23,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   #disposed = false;
   #revision = 0;
   #lastWorking?: AssistantSettings;
+  #sharedRuntime: RuntimeAvailability | undefined;
   #disconnect: Array<() => void> = [];
 
   #current(): ConfigurationState {
@@ -83,17 +84,39 @@ export class ConfigurationService implements ConfigurationServiceContract {
   };
 
   #publishRuntime(runtime: RuntimeAvailability): void {
-    const state = this.#current();
-    if (!areValuesEqual(runtime.selected, state.selected)) return;
+    this.#sharedRuntime = runtime;
+    const state = this.#sharedSelection(runtime);
+    if (!state) return;
+    this.#rememberWorking(runtime);
+    const available = runtime.ready && !runtime.pending && !runtime.error;
+    if (state.available !== available) this.runtime.setAvailable(available);
     this.#state.emit({
       ...state,
       active: runtime.active ?? state.active,
       loading: runtime.loading,
       pending: runtime.pending,
-      available: runtime.ready && !runtime.pending && !runtime.error,
-      error: runtime.error ? this.#failureMessage(state.selected, runtime.error) : undefined,
+      available,
+      error: this.#runtimeError(runtime, state),
       canSwitchBack: Boolean(this.#lastWorking),
     });
+  }
+
+  #sharedSelection(runtime: RuntimeAvailability): ConfigurationState | undefined {
+    const state = this.#current();
+    if (areValuesEqual(runtime.selected, state.selected)) return state;
+    if (this.#running || (state.pending && !state.error) || !isAssistantSettings(runtime.selected))
+      return undefined;
+    this.#revision++;
+    return { ...state, selected: Object.freeze({ ...runtime.selected }), error: undefined };
+  }
+
+  #runtimeError(runtime: RuntimeAvailability, state: ConfigurationState): string | undefined {
+    if (runtime.error) return this.#failureMessage(state.selected, runtime.error);
+    return runtime.pending ? state.error : undefined;
+  }
+
+  #rememberWorking(runtime: RuntimeAvailability): void {
+    if (runtime.ready && !runtime.pending && runtime.active) this.#lastWorking = runtime.active;
   }
 
   update(settings: AssistantSettings): boolean {
@@ -127,6 +150,9 @@ export class ConfigurationService implements ConfigurationServiceContract {
     this.#running = true;
     void this.#apply().finally(() => {
       this.#running = false;
+      const shared = this.#sharedRuntime;
+      if (shared && !shared.pending && !areValuesEqual(shared.selected, this.#current().selected))
+        this.#publishRuntime(shared);
       this.#schedule();
     });
   }
