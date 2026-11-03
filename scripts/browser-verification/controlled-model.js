@@ -12,11 +12,13 @@ const createDriver = (publish) => {
   const reply = (request, suffix, payload) =>
     publish({ ...request, task: `${role}:${suffix}`, payload });
   const initialize = (request) => {
+    if (globalThis.verificationSettings && request.payload?.device === 'webgpu')
+      throw new Error('Controlled WebGPU unavailable');
     attempts++;
     void trace({ type: 'initialization-attempt', attempt: attempts });
     if (request.payload?.fail && attempts === 1)
       throw new Error('Controlled initialization failure');
-    void trace({ type: 'initialized', client: request.id });
+    void trace({ type: 'initialized', client: request.id, configuration: request.payload });
     reply(request, 'progress', {
       status: 'progress',
       name: role,

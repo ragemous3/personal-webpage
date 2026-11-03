@@ -6,6 +6,7 @@ import {
   defaultRuntimePolicy,
   type RuntimeMessage,
   type RuntimeRole,
+  type RuntimeSelection,
 } from '@/layers/shared/models/runtime.model';
 import { createStatefulSubscribable, createSubscribable } from '@/layers/shared/utils/subscribable';
 
@@ -76,12 +77,17 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
     this.#operations.delete(requestId);
     if (this.connection.carrier) this.connection.control('runtime:finish', { requestId });
   };
-  configure = (configurations: Partial<Record<RuntimeRole, unknown>>): Promise<void> =>
-    this.#command(
+  configure = async (
+    configurations: Partial<Record<RuntimeRole, unknown>>,
+    selection?: RuntimeSelection,
+  ): Promise<void> => {
+    if (selection?.enabled) await this.connection.ensureModels();
+    await this.#command(
       'runtime:configure',
-      { configurations },
+      { configurations, ...(selection ? { selection } : {}) },
       this.connection.policy.initializationMs ?? defaultRuntimePolicy.initializationMs,
     );
+  };
   reconnect = (): Promise<void> => {
     this.#recovery ??= this.#recover().finally(() => {
       this.#recovery = undefined;

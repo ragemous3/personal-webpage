@@ -35,3 +35,5 @@ Both workflows request **90-day retention**, subject to repository limits. These
 ## Historical evidence
 
 Historical run reports, including the RuntimeCoordinator migration reports, have been removed from the current tree. Ticket links point to their immutable Git revisions so past observations remain accessible. Git history is preserved. Future routine evidence belongs in retained PR/CI artifacts or a durable archive; it is not committed. Keep concise verification summaries in tickets and preserve reusable tools and approved baselines in Git.
+
+The manual workflow also accepts an optional `local_report` JSON input. The attachment step checks the report's source digest against the checked-out branch before saving it, and records that it was submitted from a local run rather than executed by CI. Use this for real-model reports produced with local model/data prerequisites. This uploads the JSON report only; screenshots and other referenced files require their own accessible archive and are not implied by the report attachment.

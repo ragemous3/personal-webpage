@@ -25,6 +25,7 @@ export class RagService implements ChatbotServiceContract {
   #recovery: Promise<void> | undefined;
   #runtimeFailed = false;
   #configuring = false;
+  #available = true;
 
   constructor(
     private readonly chat: StandardCommunicationContract,
@@ -39,6 +40,8 @@ export class RagService implements ChatbotServiceContract {
     const status = this.runtime?.onData?.((data) => {
       if (!isRecord(data) || data.task !== 'runtime:state' || !isRecord(data.payload)) return;
       this.#configuring = data.payload.configuring === true;
+      if (isRecord(data.payload.activeSelection))
+        this.#available = data.payload.activeSelection.enabled !== false;
       if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
     });
     this.#transportUnsubscribers = [
@@ -69,6 +72,11 @@ export class RagService implements ChatbotServiceContract {
     this.reset();
     for (const disconnect of this.#transportUnsubscribers) disconnect();
     this.#transportUnsubscribers = [];
+  };
+
+  setAvailable = (available: boolean): void => {
+    this.#available = available;
+    if (!this.#active) this.#ready();
   };
 
   send = (question: string): void => {
@@ -190,7 +198,9 @@ export class RagService implements ChatbotServiceContract {
   readonly #ready = (): void => {
     this.stateSubscription.emit({
       status:
-        this.#chatReady && this.#databaseReady && !this.#configuring ? 'ready' : 'initializing',
+        this.#available && this.#chatReady && this.#databaseReady && !this.#configuring
+          ? 'ready'
+          : 'initializing',
     });
   };
 

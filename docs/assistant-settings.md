@@ -1,0 +1,11 @@
+# Assistant settings
+
+The unstyled assistant settings component uses an injected ConfigurationService. Mode and Model are separate controls. Local runs Qwen; Online is saved but unavailable and disables Send. Auto is passed to the model framework, CPU maps to WASM, and WebGPU is an explicit request. Generation controls use a 256-token default, with sampling off. No hardware fallback is selected by the application.
+
+Composition supplies browser storage and events to ConfigurationRepository. The repository owns the versioned preference record and reads current storage on relevant events; services and views never access storage keys. Missing preferences use defaults. Invalid or inaccessible storage produces a visible notice and valid session settings. Nothing clears unrelated storage or persists conversations.
+
+Saved settings resolve before model channels are hosted. ConfigurationRuntime adapts selected settings to RuntimeCoordinator commands; it does not own workers or schedule inference. RuntimeCoordinator publishes selected and active settings, drains accepted whole responses and coalesces queued edits before adopting the latest combination. Tabs keep their own RagService and history. Generation-only changes retain model weights; backend/precision changes use the existing disposal and initialization protocol. No Web Locks, heartbeat, tab owner or parallel runtime is introduced.
+
+Errors keep requested settings visible and Send unavailable. Retry resubmits the selection after restoring missing model connections. Switch back uses this client's last working selection; Restore defaults is available when none exists. Neither action silently clears history. Browsers may terminate workers or evict cached downloads; preferences are also subject to browser storage availability.
+
+Verification uses public repository/service/adapter interfaces, native coordinator ports, actual component controls, production application journeys with labelled controlled drivers, and separate real CPU/cache checks. Follow [verification evidence storage](verification-evidence.md); run reports are artifacts, not committed files. Historical configuration work is reused selectively, excluding its superseded worker-ownership implementation.

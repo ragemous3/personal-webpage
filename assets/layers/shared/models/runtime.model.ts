@@ -29,10 +29,18 @@ export interface RuntimeResourceSnapshot {
   instanceId?: string;
   error?: string;
 }
+export interface RuntimeSelection {
+  enabled: boolean;
+  settings: unknown;
+}
 export interface RuntimeSnapshot {
+  selection?: RuntimeSelection;
+  activeSelection?: RuntimeSelection;
   runtimeId: string;
   resources: RuntimeResourceSnapshot[];
   configuring: boolean;
+  responding: boolean;
+  configurationLoading: boolean;
 }
 export type RuntimeMessage = MessageBase<unknown>;
 export const isRuntimeRole = (value: unknown): value is RuntimeRole =>

@@ -406,3 +406,69 @@ test('resource failure releases the stale model port before a replacement can re
   a.send('runtime:failed', { role: 'llm', instanceId, reason: 'Stopped worker' });
   await waitFor(() => closed);
 });
+
+test('shared mode changes drain accepted responses and reject new work while Online is active', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine();
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  const b = client(runtime, context);
+  const accepted = crypto.randomUUID();
+  a.send('runtime:begin', { requestId: accepted }, accepted);
+  await waitFor(() =>
+    a.messages.some((m) => m.requestId === accepted && m.task === 'runtime:accepted'),
+  );
+  const change = crypto.randomUUID();
+  b.send(
+    'runtime:configure',
+    { configurations: {}, selection: { enabled: false, settings: { mode: 'online' } } },
+    change,
+  );
+  await waitFor(() =>
+    a.messages.some(
+      (m) => m.payload?.selection?.settings?.mode === 'online' && m.payload.configuring,
+    ),
+  );
+  assert.equal(
+    b.messages.some((m) => m.requestId === change && m.task === 'runtime:configured'),
+    false,
+  );
+  const waiting = a.messages.findLast((m) => m.task === 'runtime:state').payload;
+  assert.equal(waiting.responding, true);
+  assert.equal(waiting.configurationLoading, false);
+  a.send('runtime:finish', { requestId: accepted });
+  await waitFor(() =>
+    b.messages.some((m) => m.requestId === change && m.task === 'runtime:configured'),
+  );
+  const blocked = crypto.randomUUID();
+  a.send('runtime:begin', { requestId: blocked }, blocked);
+  await waitFor(() => a.messages.some((m) => m.requestId === blocked));
+  assert.equal(a.messages.find((m) => m.requestId === blocked).task, 'runtime:failed');
+  assert.ok(a.messages.some((m) => m.payload?.activeSelection?.enabled === false));
+});
+
+test('queued settings edits coalesce to the latest mode before an accepted response drains', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine();
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  a.send('runtime:begin', { requestId: 'response' }, 'begin');
+  await waitFor(() => a.messages.some((m) => m.task === 'runtime:accepted'));
+  a.send(
+    'runtime:configure',
+    { configurations: {}, selection: { enabled: false, settings: { mode: 'online' } } },
+    'old',
+  );
+  a.send(
+    'runtime:configure',
+    { configurations: {}, selection: { enabled: true, settings: { mode: 'local' } } },
+    'latest',
+  );
+  await waitFor(() => a.messages.some((m) => m.payload?.selection?.settings?.mode === 'local'));
+  a.send('runtime:finish', { requestId: 'response' });
+  await waitFor(() =>
+    a.messages.some((m) => m.requestId === 'latest' && m.task === 'runtime:configured'),
+  );
+  assert.equal(
+    a.messages.some((m) => m.payload?.activeSelection?.settings?.mode === 'online'),
+    false,
+  );
+});

@@ -3,6 +3,7 @@ import { isRuntimeMessage } from '@/layers/data/guards/is-runtime-message.guard'
 import { SharedWorkerManager } from '@/layers/data/workers/shared-worker-manager.data';
 import { isRecord } from '@/layers/shared/guards/guards';
 import {
+  defaultRuntimePolicy,
   type RuntimeMessage,
   type RuntimePolicy,
   type RuntimeRole,
@@ -12,6 +13,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
   readonly clientId = crypto.randomUUID();
   readonly #models = new Map<RuntimeRole, SharedWorkerManager<RuntimeMessage>>();
   readonly #modelInstances = new Map<RuntimeRole, string>();
+  readonly #registrations = new Map<RuntimeRole, { attempt: number; promise: Promise<void> }>();
   #attempt = 0;
   #attached = false;
   constructor(
@@ -73,7 +75,54 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
     this.#models.clear();
   };
 
-  readonly #connectModel = (role: RuntimeRole, attempt: number): void => {
+  ensureModels = async (): Promise<void> => {
+    await Promise.all((['llm', 'vectordb'] as const).map((role) => this.#ensureModel(role)));
+  };
+
+  readonly #ensureModel = (role: RuntimeRole): Promise<void> => {
+    const pending = this.#registrations.get(role);
+    if (pending?.attempt === this.#attempt) return pending.promise;
+    if (this.#models.has(role)) return Promise.resolve();
+    const attempt = this.#attempt;
+    const registration = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('Model connection deadline exceeded')),
+        this.policy.connectionMs ?? defaultRuntimePolicy.connectionMs,
+      );
+      this.#connectModel(
+        role,
+        this.#attempt,
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        (reason) => {
+          clearTimeout(timer);
+          reject(new Error(reason));
+        },
+      );
+    })
+      .catch((error: unknown) => {
+        if (attempt === this.#attempt && this.#registrations.get(role)?.promise === registration) {
+          this.#models.get(role)?.terminate();
+          this.#models.delete(role);
+        }
+        throw error;
+      })
+      .finally(() => {
+        if (this.#registrations.get(role)?.promise === registration)
+          this.#registrations.delete(role);
+      });
+    this.#registrations.set(role, { attempt, promise: registration });
+    return registration;
+  };
+
+  readonly #connectModel = (
+    role: RuntimeRole,
+    attempt: number,
+    connected?: () => void,
+    failed?: (reason: string) => void,
+  ): void => {
     const previous = this.#models.get(role);
     this.#modelInstances.delete(role);
     const model = new SharedWorkerManager<RuntimeMessage>(
@@ -96,8 +145,10 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
       disconnect();
       const port = model.takePort();
       this.control('runtime:register', { role, port, instanceId }, undefined, [port]);
+      connected?.();
     });
     model.listenErrors((reason) => {
+      failed?.(reason);
       if (this.carrier && attempt === this.#attempt && instanceId)
         this.control('runtime:failed', { role, instanceId, reason });
     });
@@ -105,6 +156,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
       model.initialize();
       previous?.terminate();
     } catch (error) {
+      failed?.(String(error));
       this.#coordinatorFailure(String(error));
     }
   };

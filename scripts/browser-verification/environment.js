@@ -76,7 +76,7 @@ const modelAsset = (pathname, response, state, evidence) => {
   return false;
 };
 const serveControlled = (pathname, response, state) => {
-  if (state.mode !== 'controlled') return false;
+  if (!['controlled', 'settings'].includes(state.mode)) return false;
   if (pathname === '/content-data/chunks.json') {
     response.setHeader('content-type', 'application/json');
     response.end(
@@ -88,7 +88,7 @@ const serveControlled = (pathname, response, state) => {
   if (!['llm.shared-worker.ts', 'vectordb.shared-worker.ts'].includes(role)) return false;
   response.setHeader('content-type', 'text/javascript');
   response.end(
-    `globalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
+    `globalThis.verificationSettings = ${state.mode === 'settings'};\nglobalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
   );
   return true;
 };
@@ -188,7 +188,7 @@ export const createSite = async (scratch, mode, evidence) => {
         : undefined,
   };
   evidence.modelRequests = [];
-  if (['controlled', 'performance'].includes(mode)) await buildFixtures(scratch);
+  if (['controlled', 'settings', 'performance'].includes(mode)) await buildFixtures(scratch);
   const server = createServer(requestHandler(state, evidence));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;

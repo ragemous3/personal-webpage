@@ -337,3 +337,23 @@ test('detaching and remounting a runtime-backed service releases all subscriptio
   release();
   assert.equal(runtimeListeners.size, 0);
 });
+
+test('settings availability blocks new questions without cancelling accepted work or clearing history', async () => {
+  const { service, chat, database } = setup();
+  service.send('Keep this question');
+  const { requestId } = database.sent[0];
+  service.setAvailable(false);
+  assert.equal(service.stateSubscription.getValue().status, 'responding');
+  chat.emit({
+    task: 'llm:message:response',
+    requestId,
+    payload: { generated_text: 'Kept answer' },
+  });
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  service.send('Blocked question');
+  assert.equal(database.sent.length, 1);
+  service.setAvailable(true);
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.equal(service.chatMessagesSubscription.getValue()[0].content, 'Keep this question');
+  assert.equal(service.chatMessagesSubscription.getValue()[1].content, 'Kept answer');
+});

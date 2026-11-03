@@ -91,3 +91,9 @@ The manual Browser verification workflow publishes entry/controlled reports and 
 ## Helpers
 
 The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The older [observe.js](scripts/observe.js) helper captures an existing owned loopback instance for manual exploration; its exit code and brief capture window do not provide a feature verdict. Prefer the isolated runner for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.
+
+## Persisted assistant settings
+
+`npm run verify:browser -- --mode settings` builds the production application with controlled model drivers and a labelled retrieval fixture. It seeds saved Online/CPU preferences before startup, verifies zero model initialization until Local is selected, and exercises two-tab settings propagation, edits during an accepted response, cancellation, retained conversation history, forced WebGPU failure with explicit switch-back, and returning-page preferences. Reports and a screenshot remain in the ignored run directory. This proves UI/coordination behavior, not real inference or hardware support. The manual Browser verification workflow accepts `settings` to publish this evidence with 90-day retention.
+
+With RUNTIME_MODEL_DIR set, the real cache journey seeds explicit Local/CPU preferences and a 32-token budget before the first production application load. It keeps saved settings on restart. This controlled verification setup preserves production defaults and still uses real generation, retrieval and cached model weights.
