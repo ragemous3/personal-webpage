@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -94,7 +94,7 @@ Pass execution `auto` directly to the pipeline. Label browser `wasm` as CPU. Pas
 
 The historical ticket retains the full implementation chronology, failed per-tab loading attempts, review findings, commands and final evidence. Its [real CPU two-tab result](https://github.com/ragemous3/personal-webpage/blob/06dab29ef08b28ddab9e8e7b7817011a40c1a2dd/tasks/20261028-123834/evidence/review-fix-two-tab-pass.json) demonstrated two owner worker initializations and zero follower initializations for that implementation. Those results must not be presented as verification of the future refactored integration.
 
-Next action: finish the combined RuntimeCoordinator refactor, then revisit the configuration integration design and verification plan before resuming this ticket.
+The RuntimeCoordinator prerequisite is merged. The integration implementation and current PR handoff are recorded below.
 
 ### Integration investigation started after PR #21
 
@@ -166,3 +166,12 @@ Blast-radius review: no bulk or destructive live-data operation applies. Persist
 Required production settings and real CPU/Auto/cache journeys pass, with 75 focused checks, lint/type/build and workflow syntax checks passing as recorded. Successful explicit WebGPU operation and model factual accuracy remain unverified. The supplemental forced-close baseline remains separately disclosed; it is not counted as passing. Native screenshots are produced by the hosted settings workflow, and the matching local real-model JSON is submitted with explicit provenance and 90-day retention. Its referenced local cache screenshot is not represented as uploaded. The workflow must run before hosted results/artifact URLs exist.
 
 Stage 7 entered under the Autopilot grant. The prepared PR describes 3ee419abcb231d96ad488414c3651f6ca535a78b. Next: signed metadata snapshot, branch push, PR creation, dispatch verification/artifact publication, then closure on the same branch. The user removed CI waiting for this ticket; handoff reports available CI state without monitoring to completion. No merge, queue, auto-merge or deployment is authorized.
+
+
+### Stage 7 PR handoff
+
+PR: https://github.com/ragemous3/personal-webpage/pull/22. Signed branch feature/20261028-123834-integrate-settings is published. Both reviews cover implementation 3ee419abcb231d96ad488414c3651f6ca535a78b; the final post-review suite passes 124 tests, zero failures/skips. Later changes update ticket and PR metadata only.
+
+Verification/artifact publication is dispatched at https://github.com/ragemous3/personal-webpage/actions/runs/41732354470 on publication head 1bd3eb6ec50e071b1f3f29db0e44b97500141806. It runs the production controlled-driver settings journey and accepts the submitted local real CPU/Auto/cache JSON only if its source digest matches. This is in progress at handoff, not claimed as hosted PASS or a completed upload. On completion it exposes report/screenshot artifact links with 90-day retention; local-report provenance distinguishes the submitted model run from hosted execution. The local cache screenshot remains local-only. The exact tested source digest is 87878a687af99d99509d4dc799c385238d86e9aa3c57dde46c2e878a4fdbe0c6.
+
+CI results: https://github.com/ragemous3/personal-webpage/pull/22/checks. The user explicitly removed CI waiting for this ticket; report the current state and hand off without monitoring to completion. Auto-merge and merge-queue entry are absent before the closure push. CLOSED means implemented and published for review, not merged. No merge, auto-merge, queue entry, or deployment is performed. The known supplemental forced-coordinator-close baseline remains disclosed above; successful explicit WebGPU and model factual accuracy remain unverified. Next action: user review of PR #22 and any subsequently available CI/review findings.
