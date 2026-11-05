@@ -23,6 +23,13 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      - name: Install the Puppeteer-compatible test browser
+        shell: bash
+        run: |
+          npx puppeteer browsers install chrome
+          browser_path=$(node --input-type=module -e 'import puppeteer from "puppeteer"; console.info(puppeteer.executablePath())')
+          "$browser_path" --version
+          printf 'CHROME_PATH=%s\n' "$browser_path" >> "$GITHUB_ENV"
       - name: Run tests and retain execution output
         shell: bash
         run: |
