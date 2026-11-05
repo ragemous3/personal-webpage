@@ -7,18 +7,18 @@ import { customElement } from 'lit/decorators.js';
 import { chatbotContext } from '@/layers/views/context/chatbot.context';
 import { configurationContext } from '@/layers/views/context/configuration.context';
 
-import { buildConfigurableChatbotDeps } from './factories/configurable-chatbot.factory';
+import { buildChatbotOfflineDeps } from './factories/chatbot-offline.factory';
 
 @customElement('chatbot-offline-provider')
 export class ChatbotOfflineProvider extends LitElement {
   readonly _provide: ContextProvider<typeof chatbotContext, this>;
-  #dependencies: ReturnType<typeof buildConfigurableChatbotDeps> | undefined;
+  #dependencies: ReturnType<typeof buildChatbotOfflineDeps> | undefined;
 
   readonly settingsProvider: ContextProvider<typeof configurationContext, this>;
 
   constructor() {
     super();
-    const dependencies = buildConfigurableChatbotDeps(config, globalThis);
+    const dependencies = buildChatbotOfflineDeps(config, globalThis);
     this.#dependencies = dependencies;
     const initialValue = dependencies.service;
     this.settingsProvider = new ContextProvider(this, {
@@ -34,7 +34,7 @@ export class ChatbotOfflineProvider extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     if (this.#dependencies) return;
-    this.#dependencies = buildConfigurableChatbotDeps(config, globalThis);
+    this.#dependencies = buildChatbotOfflineDeps(config, globalThis);
     this._provide.setValue(this.#dependencies.service);
     this.settingsProvider.setValue(this.#dependencies.settings);
   }

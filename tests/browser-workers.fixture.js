@@ -49,6 +49,8 @@ class WorkerPort extends EventTarget {
   close() {}
   postMessage(message) {
     this.worker.messages.push(message);
+    if (message.task === 'runtime:configure')
+      this.dispatchEvent(new MessageEvent('message', { data: { ...message, task: 'runtime:configured' } }));
     if (message.task === 'runtime:attach')
       this.dispatchEvent(
         new MessageEvent('message', {

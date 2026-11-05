@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 100
 - TAGS: task
 
@@ -191,3 +191,10 @@ PR: https://github.com/ragemous3/personal-webpage/pull/22. Signed branch feature
 Verification/artifact publication is dispatched at https://github.com/ragemous3/personal-webpage/actions/runs/41732354470 on publication head 1bd3eb6ec50e071b1f3f29db0e44b97500141806. It runs the production controlled-driver settings journey and accepts the submitted local real CPU/Auto/cache JSON only if its source digest matches. This is in progress at handoff, not claimed as hosted PASS or a completed upload. On completion it exposes report/screenshot artifact links with 90-day retention; local-report provenance distinguishes the submitted model run from hosted execution. The local cache screenshot remains local-only. The exact tested source digest is 87878a687af99d99509d4dc799c385238d86e9aa3c57dde46c2e878a4fdbe0c6.
 
 CI results: https://github.com/ragemous3/personal-webpage/pull/22/checks. The user explicitly removed CI waiting for this ticket; report the current state and hand off without monitoring to completion. Auto-merge and merge-queue entry are absent before the closure push. CLOSED means implemented and published for review, not merged. No merge, auto-merge, queue entry, or deployment is performed. The known supplemental forced-coordinator-close baseline remains disclosed above; successful explicit WebGPU and model factual accuracy remain unverified. Next action: user review of PR #22 and any subsequently available CI/review findings.
+
+
+### Approved offline factory consolidation
+
+The user approved merging the settings composition into the existing offline bot factory and removing the duplicate. Resume stage 3 under the existing Autopilot grant on PR #22. Keep RuntimeConfigurationAdapter separate, saved-settings-first startup and disposal unchanged. The single buildChatbotOfflineDeps now returns service/settings/dispose and accepts browser dependencies. Invalid configuration throws before allocation, matching the production path. Update existing startup tests to cover the actual settings-aware composition; generation passthrough belongs to validated site defaults because preferences override effective generation. Reviews, blast radius and final tests are invalidated. Fixed review base remains 62ffe3a60a5be907239b8c3d6a6e1427b6105e82. Next: focused checks, built settings journey, signed snapshot and both reviews. Other comments remain discussion only.
+
+Factory consolidation stages 3–4 complete: one offline factory assembles service/settings/adapter/disposal, and the provider uses its original name. No optional legacy assembly path remains. Invalid input fails before resource allocation. Updated startup tests use asynchronous configuration acknowledgment and verify preference-derived effective startup; the defaults test verifies site generation options independently of preference overrides. Ten focused tests, TypeScript, lint and whitespace checks pass. The production settings journey PASS at artifacts/verification/settings-2026-11-05T20-54-41-903Z-6bf84941-99ca-4be4-9608-238193e4a73e/ includes saved startup and shared recovery, with retained output and clean teardown. No real inference/cache rerun applies to this composition consolidation. Deslop found no further necessary changes. Next: signed snapshot, fresh independent reviews, final suite and PR update.
