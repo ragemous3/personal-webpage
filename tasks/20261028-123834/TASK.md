@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -103,6 +103,8 @@ Stage 4 complete: the production settings journey passes with zero cleanup error
 Stages 5 and 6 complete at signed implementation 4568a00ba3b45fbf4d5c24a93ae24afb51e2e885: independent adapter_standards_review and adapter_spec_review both PASS, zero actionable findings against fixed base 62ffe3a60a5be907239b8c3d6a6e1427b6105e82. Blast radius is inapplicable to real-data writes: the follow-up only renames code/types/files and documents the adapter role; persisted fields, storage keys and worker protocol are unchanged. The production report's source digest matches this snapshot: 5dd58ad47e2ab0a27e6cd5e95315b29aa8a8d7d60fe7190275695de554b0e875. Stage 7 entered with the same Autopilot publication grant and no-CI-wait instruction. Final npm test is running after both reviews. Next: record its result, update PR #22 and dispatch a matching hosted settings run. The previous real-model/cache report remains evidence for its original snapshot only.
 
 Final post-review npm test passes 124 tests with zero failures/skips at implementation 4568a00ba3b45fbf4d5c24a93ae24afb51e2e885. Focused checks pass 46 cases; TypeScript, lint, whitespace checks and the built production settings journey pass. All adapter naming follow-up requirements are met. Later ticket/PR updates are metadata only. The existing PR is OPEN with no auto-merge or merge-queue entry; publication does not authorize a merge. Next: push, publish current browser evidence and close this follow-up at PR handoff.
+
+Adapter follow-up handoff: implementation 4568a00ba3b45fbf4d5c24a93ae24afb51e2e885 and verification metadata 601b75a30fb42f9f7f821de7c1bf610b41d5fe49 are pushed to PR #22. All 124 final tests pass after both reviews, with 46 focused checks and the production settings run passing. Current artifact publication is running at https://github.com/ragemous3/personal-webpage/actions/runs/42102093397 on 601b75a. It runs the production settings journey and attaches the source-matched local settings JSON with explicit provenance; screenshots come from hosted execution. Artifact retention is 90 days. It is not claimed as completed at handoff. Earlier real-model/cache evidence remains attached to https://github.com/ragemous3/personal-webpage/actions/runs/41732354470 at its original source snapshot; no new exact-source inference, WebGPU or cache result is claimed for this rename. CI results are available at https://github.com/ragemous3/personal-webpage/pull/22/checks. The no-CI-wait instruction remains in effect. CLOSED denotes the completed PR handoff; PR #22 stays unmerged. Next action: user review and any subsequently available CI/review findings.
 
 ### Historical evidence and resumption
 
