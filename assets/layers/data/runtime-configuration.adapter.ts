@@ -67,6 +67,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
   #application: Promise<void> = Promise.resolve();
   #hosted = false;
   #failed = false;
+  #applying = false;
 
   constructor(
     private readonly coordinator: RuntimeCoordinatorContract,
@@ -103,19 +104,28 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     const database = { ...this.#database, device: settings.execution };
     Object.assign(this.chat.configuration.payload, model);
     Object.assign(this.database.configuration.payload, database);
+    this.#applying = true;
     const configured = this.coordinator.configure(local ? { llm: model, vectordb: database } : {}, {
       enabled: local,
       settings,
     });
     const application = configured.then(() => {
-      if (this.#application !== application || !local || this.#hosted) return;
+      if (this.#application !== application) return;
+      this.#applying = false;
+      if (!local || this.#hosted) return;
       this.#hosted = true;
       this.chat.initialize();
       this.database.initialize();
     });
     this.#application = application;
+    this.stateSubscription.emit({
+      responding: this.stateSubscription.getValue()?.responding ?? false,
+    });
     void application.catch(() => {
-      if (this.#application === application) this.#failed = true;
+      if (this.#application === application) {
+        this.#failed = true;
+        this.#applying = false;
+      }
     });
   };
 
@@ -140,9 +150,9 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     selected: AssistantSettings,
   ): RuntimeAvailability => {
     const active = readSettings(state.activeSelection);
-    const resources = this.#resources(state.resources, selected);
-    const pending =
-      state.configuring === true || !areValuesEqual(selected, active) || resources.loading;
+    const configuring = state.configuring === true || this.#applying;
+    const resources = this.#resources(state.resources, selected, configuring);
+    const pending = configuring || !areValuesEqual(selected, active) || resources.loading;
     return {
       selected,
       ...selectionIdentity(state.selection),
@@ -150,15 +160,25 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       pending,
       loading: state.configurationLoading === true || resources.loading,
       ready: selected.mode === 'local' && !pending && resources.ready,
-      ...(resources.error ? { error: resources.error } : {}),
+      error: resources.error,
     };
   };
 
-  #resources(value: unknown, selected: AssistantSettings): ReturnType<typeof resourceAvailability> {
+  #resources(
+    value: unknown,
+    selected: AssistantSettings,
+    configuring: boolean,
+  ): ReturnType<typeof resourceAvailability> {
     const resources = resourceAvailability(value, selected.mode);
     const revision = sharedRevision(value);
     const expected = this.models.find(({ id }) => id === selected.model)?.revision;
-    if (selected.mode === 'local' && resources.ready && revision && revision !== expected) {
+    if (
+      !configuring &&
+      selected.mode === 'local' &&
+      resources.ready &&
+      revision &&
+      revision !== expected
+    ) {
       resources.ready = false;
       resources.error =
         'Shared model revision differs from this page. Retry or reload to align the configuration.';

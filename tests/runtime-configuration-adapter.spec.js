@@ -240,3 +240,51 @@ test('a tab cannot report ready against another model revision held by the share
   assert.equal(state.runtime.ready, false);
   assert.match(state.runtime.error, /revision/);
 });
+
+test('an accepted response draining on the previous revision remains pending without a failure', () => {
+  const { runtime, publish } = fixture();
+  publish({
+    selection: { settings: defaultAssistantSettings },
+    activeSelection: { settings: defaultAssistantSettings },
+    configuring: true,
+    configurationLoading: false,
+    responding: true,
+    resources: [
+      { role: 'llm', status: 'busy', revision: '0'.repeat(40) },
+      { role: 'vectordb', status: 'ready' },
+    ],
+  });
+  const state = runtime.stateSubscription.getValue();
+  assert.equal(state.responding, true);
+  assert.equal(state.runtime.pending, true);
+  assert.equal(state.runtime.loading, false);
+  assert.equal(state.runtime.ready, false);
+  assert.equal(state.runtime.error, undefined);
+});
+
+test('selecting a replacement clears the cached idle mismatch while its command is pending', async () => {
+  const { runtime, coordinator, publish } = fixture();
+  const previous = {
+    selection: { settings: defaultAssistantSettings },
+    activeSelection: { settings: defaultAssistantSettings },
+    configuring: false,
+    resources: [
+      { role: 'llm', status: 'ready', revision: '0'.repeat(40) },
+      { role: 'vectordb', status: 'ready' },
+    ],
+  };
+  publish(previous);
+  assert.match(runtime.stateSubscription.getValue().runtime.error, /revision/);
+  let complete;
+  coordinator.configure = () =>
+    new Promise((resolve) => {
+      complete = resolve;
+    });
+  runtime.select(defaultAssistantSettings);
+  assert.equal(runtime.stateSubscription.getValue().runtime?.error, undefined);
+  publish(previous);
+  assert.equal(runtime.stateSubscription.getValue().runtime.error, undefined);
+  assert.equal(runtime.stateSubscription.getValue().runtime.ready, false);
+  complete();
+  await runtime.apply(defaultAssistantSettings);
+});
