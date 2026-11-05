@@ -61,6 +61,32 @@ const serveModel = (pathname, response, state, evidence) => {
   streamAsset(file, response);
 };
 const modelAsset = (pathname, response, state, evidence) => {
+  if (pathname === `/__verify/model-metadata/${state.model}/revision/${state.modelRevision}`) {
+    evidence.events.push({
+      type: 'metadata-request',
+      model: state.model,
+      revision: state.modelRevision,
+    });
+    response.setHeader('content-type', 'application/json');
+    const files = state.models
+      ? ['onnx/model_q4.onnx']
+      : ['onnx/model_q4.onnx', 'onnx/model_fp16.onnx'];
+    response.end(
+      JSON.stringify({
+        sha: state.modelRevision,
+        siblings: files.map((rfilename) => ({ rfilename })),
+      }),
+    );
+    return true;
+  }
+  if (
+    !state.models &&
+    pathname === `/models/${state.model}/resolve/${state.modelRevision}/config.json`
+  ) {
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ model_type: 'qwen2' }));
+    return true;
+  }
   if (!state.models) return false;
   if (pathname.startsWith('/models/')) {
     serveModel(pathname, response, state, evidence);
@@ -76,7 +102,7 @@ const modelAsset = (pathname, response, state, evidence) => {
   return false;
 };
 const serveControlled = (pathname, response, state) => {
-  if (state.mode !== 'controlled') return false;
+  if (!['controlled', 'settings'].includes(state.mode)) return false;
   if (pathname === '/content-data/chunks.json') {
     response.setHeader('content-type', 'application/json');
     response.end(
@@ -88,7 +114,7 @@ const serveControlled = (pathname, response, state) => {
   if (!['llm.shared-worker.ts', 'vectordb.shared-worker.ts'].includes(role)) return false;
   response.setHeader('content-type', 'text/javascript');
   response.end(
-    `globalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
+    `globalThis.verificationSettings = ${state.mode === 'settings'};\nglobalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
   );
   return true;
 };
@@ -135,14 +161,20 @@ const requestHandler = (state, evidence) => async (request, response) => {
 const prepareConfiguration = async (scratch, origin, state, evidence) => {
   const configDirectory = path.join(scratch, 'config');
   await cp(path.join(root, 'config'), configDirectory, { recursive: true });
-  if (state.models) {
+  if (state.models || ['settings', 'controlled'].includes(state.mode)) {
     const parametersFile = path.join(configDirectory, '_default/params.toml');
     const locations = `modelBaseUrl = '${origin}/models/'\nwasmBaseUrl = '${origin}/lib/'\n`;
+    const metadataLocation = `metadataBaseUrl = '${origin}/__verify/model-metadata/'\n`;
     const source = await readFile(parametersFile, 'utf8');
+    state.model = /^model = '([^']+)'/m.exec(source)?.[1];
+    state.modelRevision = /^revision = '([^']+)'/m.exec(source)?.[1];
     const parameters = source
       .replace("device = 'webgpu'", "device = 'wasm'")
       .replace('[chatbot.config.localDatabase]', `[chatbot.config.localDatabase]\n${locations}`)
-      .replace('[chatbot.config.localLM]', `[chatbot.config.localLM]\n${locations}`);
+      .replace(
+        '[chatbot.config.localLM]',
+        `[chatbot.config.localLM]\n${locations}${metadataLocation}`,
+      );
     await writeFile(
       parametersFile,
       `${parameters}\n[chatbot.config.localLM.generation]\nmax_new_tokens = 32\ndo_sample = false\n`,
@@ -151,6 +183,9 @@ const prepareConfiguration = async (scratch, origin, state, evidence) => {
       device: 'wasm',
       generation: { max_new_tokens: 32, do_sample: false },
       modelMirror: state.models,
+      metadataKind: state.models ? 'local-mirror-manifest' : 'controlled-model-metadata',
+      modelRevision: state.modelRevision,
+      model: state.model,
       wasmSource: '@huggingface/transformers/dist',
       productionDefaultsChanged: false,
     };
@@ -188,7 +223,7 @@ export const createSite = async (scratch, mode, evidence) => {
         : undefined,
   };
   evidence.modelRequests = [];
-  if (['controlled', 'performance'].includes(mode)) await buildFixtures(scratch);
+  if (['controlled', 'settings', 'performance'].includes(mode)) await buildFixtures(scratch);
   const server = createServer(requestHandler(state, evidence));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;

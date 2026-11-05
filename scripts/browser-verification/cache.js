@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import { cachePrerequisites } from './application.js';
 import { root } from './environment.js';
+import { seedVerificationPreferences } from './preferences.js';
+import { exerciseRealSettings } from './real-settings.js';
 import { exerciseRealTabs } from './real-tabs.js';
 
 const waitReady = async (page) => {
@@ -43,7 +45,10 @@ const ask = async (browser, origin, evidence, existing) => {
   page.on('request', (request) =>
     requests.push({ url: request.url(), type: request.resourceType() }),
   );
-  if (!existing) await page.goto(origin, { waitUntil: 'domcontentloaded' });
+  if (!existing) {
+    if (evidence.configuration?.modelMirror) await seedVerificationPreferences(page, 'local');
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+  }
   await waitReady(page);
   await page.type(
     'chatbot-offline-provider >>> chat-container >>> input',
@@ -94,6 +99,25 @@ const ask = async (browser, origin, evidence, existing) => {
   };
 };
 
+const assertPinnedModel = (evidence) => {
+  const revision = evidence.configuration?.modelRevision;
+  if (!revision) return;
+  const model = evidence.configuration.model;
+  const requests = evidence.modelRequests.filter(({ path: asset }) =>
+    asset.includes(`/models/${model}/`),
+  );
+  const required = ['config.json', 'tokenizer.json', 'onnx/model_q4.onnx'];
+  const complete = required.every((file) =>
+    requests.some(({ path: asset }) => asset.endsWith(`/${file}`)),
+  );
+  const consistent = requests.every(({ path: asset }) => asset.includes(`/resolve/${revision}/`));
+  if (!complete || !consistent)
+    throw new Error(
+      'Generation weights and tokenizer requests did not use the same pinned revision',
+    );
+  return revision;
+};
+
 export const runCache = async (restart, origin, evidence, directory) => {
   const result = cachePrerequisites(root);
   if (result.verdict === 'BLOCKED') {
@@ -111,10 +135,12 @@ export const runCache = async (restart, origin, evidence, directory) => {
       )
     )
       throw new Error('Cache evidence does not contain both model weight sets');
+    result.pinnedRevision = assertPinnedModel(evidence);
     result.targetsBeforeRestart = browser
       .targets()
       .map((target) => ({ type: target.type(), url: target.url() }));
     result.multitab = await exerciseRealTabs(browser, origin, evidence, ask);
+    result.settings = await exerciseRealSettings(browser, origin, evidence, ask);
     const restartEvent = evidence.modelRequests.length;
     browser = await restart(true);
     result.networkPolicyOnRestart =

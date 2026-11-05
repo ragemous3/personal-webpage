@@ -24,15 +24,25 @@ export const defaultRuntimePolicy: RuntimePolicy = {
   stoppingMs: 30_000,
 };
 export interface RuntimeResourceSnapshot {
+  revision?: string;
   role: RuntimeRole;
   status: RuntimeResourceStatus;
   instanceId?: string;
   error?: string;
 }
+export interface RuntimeSelection {
+  selectionId?: string;
+  enabled: boolean;
+  settings: unknown;
+}
 export interface RuntimeSnapshot {
+  selection?: RuntimeSelection;
+  activeSelection?: RuntimeSelection;
   runtimeId: string;
   resources: RuntimeResourceSnapshot[];
   configuring: boolean;
+  responding: boolean;
+  configurationLoading: boolean;
 }
 export type RuntimeMessage = MessageBase<unknown>;
 export const isRuntimeRole = (value: unknown): value is RuntimeRole =>

@@ -14,6 +14,7 @@ export abstract class StandardCommunication<
   constructor(
     protected readonly coordinator: RuntimeCoordinatorContract,
     readonly configuration: RagConfigBase<TConfig>,
+    autoStart = true,
   ) {
     super(configuration.name);
     this.connections.push(
@@ -28,7 +29,7 @@ export abstract class StandardCommunication<
         this.#data.emit(data);
       }),
     );
-    this.initialize();
+    if (autoStart) this.initialize();
   }
   onData = (listener: (data: unknown) => void): (() => void) => {
     const disconnect = this.#data.connect(listener);

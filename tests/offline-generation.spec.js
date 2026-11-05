@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildChatbotOfflineDeps } from '@/composition/factories/chatbot-offline.factory';
+import { getOfflineConfiguration } from '@/composition/factories/offline-configuration.factory';
 
-import { siteConfig, workers } from './browser-workers.fixture.js';
+import { siteConfig } from './browser-workers.fixture.js';
 
-test('explicit valid generation options survive composition into the worker startup message', () => {
+test('explicit valid generation options survive validated offline site defaults', () => {
   const config = siteConfig();
   const options = {
     max_new_tokens: 64,
@@ -18,10 +18,5 @@ test('explicit valid generation options survive composition into the worker star
     min_new_tokens: 0,
   };
   config.SITE_PARAMS.params.chatbot.config.locallm.generation = options;
-  assert.ok(buildChatbotOfflineDeps(config));
-  const coordinator = workers.find(
-    (worker) => worker.source.pathname === '/workers/coordinator.js',
-  );
-  const model = coordinator.messages.find((message) => message.payload?.task === 'llm:init');
-  assert.deepEqual(model.payload.payload.generation, options);
+  assert.deepEqual(getOfflineConfiguration(config).model.payload.generation, options);
 });

@@ -22,7 +22,7 @@ interface LlmWorkerDependencies {
     config: LmConfig,
     progress: (value: ProgressInfo) => void,
   ) => Promise<TextGenerationPipeline>;
-  loadTokenizer: (model: string) => Promise<TokenizerUtility>;
+  loadTokenizer: (model: string, revision?: string) => Promise<TokenizerUtility>;
   publish: (message: unknown) => void;
 }
 
@@ -30,6 +30,7 @@ const defaultDependencies: LlmWorkerDependencies = {
   loadGeneratorPipeline: async (config, progress) => {
     configureModelEnvironment(config);
     const generator = await pipeline<'text-generation'>('text-generation', config.model, {
+      ...(config.revision ? { revision: config.revision } : {}),
       device: config.device,
       dtype: config.dtype,
       progress_callback: progress,
@@ -42,8 +43,8 @@ const defaultDependencies: LlmWorkerDependencies = {
     };
     return generator;
   },
-  loadTokenizer: async (model) => {
-    const tokenizer = new TokenizerUtility(model);
+  loadTokenizer: async (model, revision) => {
+    const tokenizer = new TokenizerUtility(model, revision);
     await tokenizer.initTokenizer();
     return tokenizer;
   },
@@ -67,7 +68,7 @@ const loadModel = async (
     });
   });
   try {
-    const tokenizer = await dependencies.loadTokenizer(config.model);
+    const tokenizer = await dependencies.loadTokenizer(config.model, config.revision);
     return new LocalLLMData(generator, tokenizer, tokenizer.getMaxLength(), config.generation);
   } catch (error) {
     await generator.dispose();

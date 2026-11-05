@@ -7,12 +7,17 @@ export class TokenizerUtility {
   tokenizer: PreTrainedTokenizer | undefined;
   model: string;
 
-  constructor(model: string) {
+  constructor(
+    model: string,
+    private readonly revision?: string,
+  ) {
     this.model = model;
   }
 
   initTokenizer = async (): Promise<PreTrainedTokenizer> =>
-    (this.tokenizer = await AutoTokenizer.from_pretrained(this.model));
+    (this.tokenizer = await AutoTokenizer.from_pretrained(this.model, {
+      ...(this.revision ? { revision: this.revision } : {}),
+    }));
 
   getMaxLength = (): number => {
     if (!this.tokenizer) throw new Error(`[${SeverityLevelCodes.ERROR}] - tokenizer not init`);

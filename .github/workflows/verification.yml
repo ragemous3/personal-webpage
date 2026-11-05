@@ -6,9 +6,15 @@ on:
       mode:
         description: Browser checks to run
         type: choice
-        options: [both, entry, controlled]
+        options: [both, entry, controlled, settings]
         default: both
         required: true
+
+      local_report:
+        description: Optional local JSON report; its source digest must match this ref
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -43,6 +49,15 @@ jobs:
         if: ${{ !cancelled() && (inputs.mode == 'controlled' || inputs.mode == 'both') }}
         shell: bash
         run: npm run verify:browser -- --mode controlled --evidence artifacts/verification/controlled 2>&1 | tee artifacts/verification/logs/controlled.log
+      - name: Verify assistant settings integration
+        if: ${{ !cancelled() && inputs.mode == 'settings' }}
+        shell: bash
+        run: npm run verify:browser -- --mode settings --evidence artifacts/verification/settings 2>&1 | tee artifacts/verification/logs/settings.log
+      - name: Attach matching local verification report
+        if: ${{ !cancelled() && inputs.local_report != '' }}
+        env:
+          LOCAL_VERIFICATION_REPORT: ${{ inputs.local_report }}
+        run: node scripts/browser-verification/publish-report.js
       - name: Upload verification evidence
         id: verification-artifacts
         if: always()

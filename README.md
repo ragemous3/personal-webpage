@@ -147,6 +147,7 @@ layers       = application architecture
 |   |   |-- workers
 |   |   |   |-- <example>.worker.ts
 |   |   |   `-- <example>.shared-worker.ts
+|   |   |-- <example>.adapter.ts
 |   |   `-- <example>.data.ts
 |   |
 |   |-- services
@@ -231,6 +232,9 @@ api-base.service.ts
 
 - **data**  
   Data-layer entity.
+
+- **adapter**
+  Data-layer entity that implements a contract and translates between application-facing operations and a technical interface.
 
 - **spec**  
   Test files.

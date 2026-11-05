@@ -322,7 +322,7 @@ const definitions = [
   [
     'concurrent-reconnect',
     async (context) => {
-      await owner(context.context, context.origin);
+      await open(context.context, context.origin);
       await exerciseReconnectUI(context);
     },
   ],

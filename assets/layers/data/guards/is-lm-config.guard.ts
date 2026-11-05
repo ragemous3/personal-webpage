@@ -5,11 +5,16 @@ import { hasStringProperties, isRecord } from '@/layers/shared/guards/guards';
 import { isGenerationConfig } from './is-generation-config.guard';
 import { isInitConfigBase } from './is-init-config-base.guard';
 
+const validRevision = (value: unknown): boolean =>
+  value === undefined || (typeof value === 'string' && /^[a-f\d]{40}$/.test(value));
+
 export function isLmConfig(value: unknown): value is LmConfig {
   if (!isRecord(value) || !isInitConfigBase(value)) {
     return false;
   }
   const generation = value.generation;
+  const revision = value.revision;
+  if (!validRevision(revision)) return false;
   if (!hasStringProperties(value, lmConfigKeys)) {
     return false;
   }

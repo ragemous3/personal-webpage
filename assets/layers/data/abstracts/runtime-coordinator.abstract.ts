@@ -6,6 +6,7 @@ import {
   defaultRuntimePolicy,
   type RuntimeMessage,
   type RuntimeRole,
+  type RuntimeSelection,
 } from '@/layers/shared/models/runtime.model';
 import { createStatefulSubscribable, createSubscribable } from '@/layers/shared/utils/subscribable';
 
@@ -23,6 +24,7 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
   #terminalFailure = false;
   #hostingVersion = 0;
   #recovery: Promise<void> | undefined;
+  #configurationRevision = 0;
   constructor(protected readonly connection: RuntimeCoordinatorConnection) {
     connection.listen(this.#receive);
   }
@@ -76,12 +78,19 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
     this.#operations.delete(requestId);
     if (this.connection.carrier) this.connection.control('runtime:finish', { requestId });
   };
-  configure = (configurations: Partial<Record<RuntimeRole, unknown>>): Promise<void> =>
-    this.#command(
+  configure = async (
+    configurations: Partial<Record<RuntimeRole, unknown>>,
+    selection?: RuntimeSelection,
+  ): Promise<void> => {
+    const revision = ++this.#configurationRevision;
+    if (selection?.enabled) await this.connection.ensureModels();
+    if (selection && revision !== this.#configurationRevision) return;
+    await this.#command(
       'runtime:configure',
-      { configurations },
+      { configurations, ...(selection ? { selection } : {}) },
       this.connection.policy.initializationMs ?? defaultRuntimePolicy.initializationMs,
     );
+  };
   reconnect = (): Promise<void> => {
     this.#recovery ??= this.#recover().finally(() => {
       this.#recovery = undefined;
