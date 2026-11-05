@@ -133,6 +133,48 @@ const exerciseSessionOnlyTab = async (context, origin, first, second, pageErrors
   await session.close();
 };
 
+const exerciseDiscoveredOptions = async (first, second, initialized) => {
+  await first.bringToFront();
+  await first.waitForFunction(
+    () => {
+      const provider = globalThis.document.querySelector('chatbot-offline-provider');
+      return (
+        provider.shadowRoot
+          .querySelector('assistant-configuration')
+          .configurationService.stateSubscription.getValue().metadataLoading === false
+      );
+    },
+    { polling: 25, timeout: 10_000 },
+  );
+  const discovered = await configuration(first);
+  assert.equal(discovered.metadataError, undefined);
+  assert.equal(
+    initialized.find((event) => event.role === 'llm').configuration.revision,
+    discovered.choices.revision,
+  );
+  assert.deepEqual(
+    discovered.choices.precisions.map(({ value }) => value),
+    ['fp16', 'q4'],
+  );
+  await first.bringToFront();
+  await first.click(`${settingsSelector} >>> summary`);
+  const rendered = await first.$$eval(
+    `${settingsSelector} >>> select[name=precision] option`,
+    (options) => options.map((option) => option.value),
+  );
+  assert.deepEqual(rendered, ['fp16', 'q4']);
+  await select(first, 'precision', 'fp16');
+  await Promise.all([ready(first), ready(second)]);
+  const fp16 = await configuration(first);
+  assert.equal(fp16.active.precision, 'fp16');
+  await select(first, 'precision', 'q4');
+  await Promise.all([ready(first), ready(second)]);
+  return {
+    metadataRevision: discovered.choices.revision,
+    discoveredPrecisions: discovered.choices.precisions,
+  };
+};
+
 export const runSettings = async (browser, origin, evidence, directory) => {
   const context = await browser.createBrowserContext();
   const pageErrors = [];
@@ -165,6 +207,7 @@ export const runSettings = async (browser, origin, evidence, directory) => {
       initialized.find((event) => event.role === 'llm').configuration.generation.max_new_tokens,
       32,
     );
+    Object.assign(result, await exerciseDiscoveredOptions(first, second, initialized));
     await first.bringToFront();
     await exerciseChanges(first, second);
     await exerciseSessionOnlyTab(context, origin, first, second, pageErrors);

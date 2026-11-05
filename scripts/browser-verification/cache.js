@@ -99,6 +99,25 @@ const ask = async (browser, origin, evidence, existing) => {
   };
 };
 
+const assertPinnedModel = (evidence) => {
+  const revision = evidence.configuration?.modelRevision;
+  if (!revision) return;
+  const model = evidence.configuration.model;
+  const requests = evidence.modelRequests.filter(({ path: asset }) =>
+    asset.includes(`/models/${model}/`),
+  );
+  const required = ['config.json', 'tokenizer.json', 'onnx/model_q4.onnx'];
+  const complete = required.every((file) =>
+    requests.some(({ path: asset }) => asset.endsWith(`/${file}`)),
+  );
+  const consistent = requests.every(({ path: asset }) => asset.includes(`/resolve/${revision}/`));
+  if (!complete || !consistent)
+    throw new Error(
+      'Generation weights and tokenizer requests did not use the same pinned revision',
+    );
+  return revision;
+};
+
 export const runCache = async (restart, origin, evidence, directory) => {
   const result = cachePrerequisites(root);
   if (result.verdict === 'BLOCKED') {
@@ -116,6 +135,7 @@ export const runCache = async (restart, origin, evidence, directory) => {
       )
     )
       throw new Error('Cache evidence does not contain both model weight sets');
+    result.pinnedRevision = assertPinnedModel(evidence);
     result.targetsBeforeRestart = browser
       .targets()
       .map((target) => ({ type: target.type(), url: target.url() }));

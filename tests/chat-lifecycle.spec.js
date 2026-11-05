@@ -5,6 +5,8 @@ import { ContentRepository } from '@/layers/data/content-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { RagService } from '@/layers/services/chatbot.service';
 
+const disconnect = () => {};
+
 const transport = () => {
   const listeners = new Set();
   let ready;
@@ -356,4 +358,44 @@ test('settings availability blocks new questions without cancelling accepted wor
   assert.equal(service.stateSubscription.getValue().status, 'ready');
   assert.equal(service.chatMessagesSubscription.getValue()[0].content, 'Keep this question');
   assert.equal(service.chatMessagesSubscription.getValue()[1].content, 'Kept answer');
+});
+
+test('shared ready snapshots cannot override the application availability gate', () => {
+  const chat = transport();
+  const database = transport();
+  let observe;
+  const runtime = {
+    onData(callback) {
+      observe = callback;
+      return disconnect;
+    },
+  };
+  const service = new RagService(
+    chat,
+    database,
+    { getChunksAsync: async () => [] },
+    new ChatMessageModel({ role: 'system', content: 'System' }),
+    runtime,
+  );
+  service.init();
+  chat.emit({ task: 'llm:ready' });
+  database.emit({ task: 'vectordb:ready' });
+  service.setAvailable(false);
+  observe({
+    task: 'runtime:state',
+    payload: { configuring: false, activeSelection: { enabled: true } },
+  });
+  assert.notEqual(service.stateSubscription.getValue().status, 'ready');
+  service.setAvailable(true);
+  observe({
+    task: 'runtime:state',
+    payload: { configuring: false, activeSelection: { enabled: false } },
+  });
+  assert.notEqual(service.stateSubscription.getValue().status, 'ready');
+  observe({
+    task: 'runtime:state',
+    payload: { configuring: false, activeSelection: { enabled: true } },
+  });
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  service.dispose();
 });

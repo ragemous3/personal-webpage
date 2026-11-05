@@ -3,6 +3,7 @@ import { after, before } from 'node:test';
 export const modelConfig = {
   source: '/workers/llm.js',
   model: 'Xenova/Qwen1.5-0.5B-Chat',
+  revision: '340777bb38067a8a5af921a405e3206a8cc2f318',
   device: 'webgpu',
   dtype: 'q4',
   generation: {},
@@ -50,7 +51,9 @@ class WorkerPort extends EventTarget {
   postMessage(message) {
     this.worker.messages.push(message);
     if (message.task === 'runtime:configure')
-      this.dispatchEvent(new MessageEvent('message', { data: { ...message, task: 'runtime:configured' } }));
+      this.dispatchEvent(
+        new MessageEvent('message', { data: { ...message, task: 'runtime:configured' } }),
+      );
     if (message.task === 'runtime:attach')
       this.dispatchEvent(
         new MessageEvent('message', {
@@ -88,6 +91,15 @@ class BrowserBroadcast {
 const browserGlobals = {
   SharedWorker: BrowserSharedWorker,
   BroadcastChannel: BrowserBroadcast,
+  fetch: async (url) =>
+    Response.json(
+      String(url).includes('/api/models/')
+        ? {
+            sha: modelConfig.revision,
+            siblings: [{ rfilename: 'onnx/model_q4.onnx' }],
+          }
+        : {},
+    ),
 };
 const originalGlobals = new Map(
   Object.keys(browserGlobals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]),
@@ -121,6 +133,7 @@ export const siteConfig = () => ({
         config: {
           locallm: {
             model: modelConfig.model,
+            revision: modelConfig.revision,
             device: modelConfig.device,
             dtype: modelConfig.dtype,
           },

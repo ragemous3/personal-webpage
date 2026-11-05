@@ -387,3 +387,23 @@ test('generation settings change after draining without loading weights again', 
     false,
   );
 });
+
+test('the generation pipeline and tokenizer receive the same pinned model revision', async () => {
+  const calls = [];
+  const revision = '340777bb38067a8a5af921a405e3206a8cc2f318';
+  const handler = createLlmMessageHandler({
+    async loadGeneratorPipeline(configuration) {
+      calls.push(configuration.revision);
+      return emptyGenerator;
+    },
+    async loadTokenizer(model, selectedRevision) {
+      calls.push(selectedRevision);
+      return { getMaxLength: () => 2048, countTokens: () => 1 };
+    },
+    publish() {},
+  });
+  await handler({
+    data: { id: 'pinned', name: 'llm', task: 'llm:init', payload: { ...config, revision } },
+  });
+  assert.deepEqual(calls, [revision, revision]);
+});

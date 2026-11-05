@@ -6,6 +6,8 @@ import { ConfigurationRepository } from '@/layers/data/configuration-repository.
 import { ConfigurationService } from '@/layers/services/configuration.service';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
+import { metadata } from './model-metadata.fixture.js';
+
 const setup = () => {
   const storage = new Map();
   const repository = new ConfigurationRepository(
@@ -26,7 +28,7 @@ const setup = () => {
       this.applied.push(settings);
     },
   };
-  return { repository, runtime, service: new ConfigurationService(repository, runtime) };
+  return { repository, runtime, service: new ConfigurationService(repository, runtime, metadata) };
 };
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 const disconnect = () => {};
@@ -34,6 +36,7 @@ const disconnect = () => {};
 test('a cached pending snapshot cannot restart a completed apply in a microtask loop', () => {
   const source = `
     import assert from 'node:assert/strict';
+    import { metadata } from './tests/model-metadata.fixture.js';
     import { ConfigurationService } from '@/layers/services/configuration.service';
     import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
     let finish;
@@ -43,7 +46,7 @@ test('a cached pending snapshot cannot restart a completed apply in a microtask 
       apply: () => new Promise((resolve) => { finish = resolve; }),
     };
     const repository = { load: () => ({}), save: () => ({}), observe: () => () => {} };
-    const service = new ConfigurationService(repository, runtime);
+    const service = new ConfigurationService(repository, runtime, metadata);
     const selected = service.stateSubscription.getValue().selected;
     runtime.stateSubscription.emit({ responding: false, runtime: {
       selected, pending: true, loading: true, ready: false,
@@ -101,14 +104,18 @@ test('returning visitors load saved settings before the first model starts', asy
   first.service.update({ ...first.service.stateSubscription.getValue().selected, mode: 'online' });
   await settle();
   const applied = [];
-  const returning = new ConfigurationService(first.repository, {
-    select() {},
-    stateSubscription: createStatefulSubscribable({ responding: false }),
-    setAvailable() {},
-    async apply(settings) {
-      applied.push(settings);
+  const returning = new ConfigurationService(
+    first.repository,
+    {
+      select() {},
+      stateSubscription: createStatefulSubscribable({ responding: false }),
+      setAvailable() {},
+      async apply(settings) {
+        applied.push(settings);
+      },
     },
-  });
+    metadata,
+  );
   await settle();
   assert.equal(applied[0].mode, 'online');
   assert.equal(returning.stateSubscription.getValue().available, false);
@@ -128,7 +135,7 @@ test('repository observations adopt settings without echoing a write', async () 
       return disconnect;
     },
   };
-  const service = new ConfigurationService(repository, original.runtime);
+  const service = new ConfigurationService(repository, original.runtime, metadata);
   await settle();
   observe({ value: { ...service.stateSubscription.getValue().selected, execution: 'wasm' } });
   await settle();
@@ -206,7 +213,7 @@ test('a session-only tab adopts authoritative shared settings without writing pr
     },
     new EventTarget(),
   );
-  const service = new ConfigurationService(denied, runtime);
+  const service = new ConfigurationService(denied, runtime, metadata);
   await settle();
   const selected = {
     ...service.stateSubscription.getValue().selected,
@@ -359,4 +366,82 @@ test('the first late shared identity cannot erase a failure with no previously o
   });
   assert.equal(service.stateSubscription.getValue().selected.execution, 'webgpu');
   assert.match(service.stateSubscription.getValue().error, /Connection deadline exceeded/);
+});
+
+test('metadata failure does not disable inference or replace the selected preferences', async () => {
+  const base = setup();
+  await settle();
+  const unavailable = {
+    ...metadata,
+    async load() {
+      throw new Error('Offline metadata');
+    },
+  };
+  const service = new ConfigurationService(base.repository, base.runtime, unavailable);
+  await settle();
+  const state = service.stateSubscription.getValue();
+  assert.equal(state.available, true);
+  assert.match(state.metadataError, /Offline metadata/);
+  assert.equal(state.selected.precision, 'q4');
+  assert.equal(state.error, undefined);
+  service.dispose();
+});
+
+test('only discovered model variants can replace the selected precision', async () => {
+  const { service } = setup();
+  await settle();
+  const settings = service.stateSubscription.getValue().selected;
+  assert.equal(service.update({ ...settings, precision: 'int8' }), false);
+  assert.equal(service.update({ ...settings, precision: 'fp32' }), true);
+  await settle();
+  assert.equal(service.stateSubscription.getValue().active.precision, 'fp32');
+  service.dispose();
+});
+
+test('late metadata for an earlier model cannot replace the current model choices', async () => {
+  const base = setup();
+  await settle();
+  const models = [
+    ...metadata.models,
+    { ...metadata.models[0], id: 'example/second-model', label: 'Second model' },
+  ];
+  const pending = [];
+  const delayed = {
+    models,
+    load: (model) => new Promise((resolve) => pending.push({ model, resolve })),
+  };
+  const service = new ConfigurationService(base.repository, base.runtime, delayed);
+  const first = service.stateSubscription.getValue().selected;
+  assert.equal(service.update({ ...first, model: models[1].id }), true);
+  pending[1].resolve({
+    model: models[1].id,
+    revision: models[1].revision,
+    precisions: ['fp16', 'q4'],
+    autoPrecision: { auto: 'fp32', wasm: 'q8', webgpu: 'fp32' },
+  });
+  await settle();
+  pending[0].resolve(await metadata.load(models[0].id));
+  await settle();
+  const state = service.stateSubscription.getValue();
+  assert.equal(state.selected.model, models[1].id);
+  assert.deepEqual(
+    state.choices.precisions.map(({ value }) => value),
+    ['fp16', 'q4'],
+  );
+  service.dispose();
+});
+
+test('restoring defaults uses the configured model profile rather than a fixed model ID', async () => {
+  const base = setup();
+  await settle();
+  const custom = { ...metadata, models: [{ ...metadata.models[0], id: 'example/custom-model' }] };
+  const service = new ConfigurationService(base.repository, base.runtime, custom);
+  await settle();
+  service.update({ ...service.stateSubscription.getValue().selected, maxNewTokens: 32 });
+  await settle();
+  service.restoreDefaults();
+  await settle();
+  assert.equal(service.stateSubscription.getValue().selected.model, 'example/custom-model');
+  assert.equal(service.stateSubscription.getValue().selected.maxNewTokens, 256);
+  service.dispose();
 });

@@ -28,6 +28,7 @@ export interface DatabaseConfig extends InitConfigBase {
 }
 
 export interface LmConfig extends InitConfigBase {
+  revision?: string;
   model: string;
   device: DeviceType;
   dtype: DataType;

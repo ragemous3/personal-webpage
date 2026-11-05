@@ -11,6 +11,7 @@
       import { ConfigurationService } from '/assets/layers/services/configuration.service.ts';
       import { ConfigurationRepository } from '/assets/layers/data/configuration-repository.data.ts';
       import { createStatefulSubscribable } from '/assets/layers/shared/utils/subscribable.ts';
+      const { metadata } = await import('./model-metadata.fixture.js');
       const runtime = {
         select() {},
         stateSubscription: createStatefulSubscribable({ responding: false }),
@@ -24,6 +25,7 @@
       const service = new ConfigurationService(
         new ConfigurationRepository(localStorage, window),
         runtime,
+        metadata,
       );
       document.querySelector('assistant-configuration').configurationService = service;
       globalThis.fixture = { runtime, service };

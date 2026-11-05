@@ -24,6 +24,7 @@ export const defaultRuntimePolicy: RuntimePolicy = {
   stoppingMs: 30_000,
 };
 export interface RuntimeResourceSnapshot {
+  revision?: string;
   role: RuntimeRole;
   status: RuntimeResourceStatus;
   instanceId?: string;

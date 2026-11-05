@@ -13,6 +13,7 @@ import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
 import { requireNonEmptyString, requireRecord } from '@/layers/shared/utils/validation.utility';
 
 interface OfflineConfiguration {
+  modelMetadataBaseURL?: string | undefined;
   baseURL: string;
   systemMessage: string;
   coordinatorSource: string;
@@ -43,8 +44,9 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
     workers[WorkerFileNames.coordinator],
     WorkerFileNames.coordinator,
   );
+  const { metadatabaseurl, ...modelParameters } = rawModel;
   const model = {
-    ...rawModel,
+    ...modelParameters,
     ...modelLocations(rawModel),
     source: requireNonEmptyString(workers[WorkerFileNames.llm], WorkerFileNames.llm),
     generation: rawModel.generation === undefined ? {} : rawModel.generation,
@@ -73,6 +75,10 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
     throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid chatbot.sysmessage configuration`);
   }
   return {
+    modelMetadataBaseURL:
+      metadatabaseurl === undefined
+        ? undefined
+        : requireNonEmptyString(metadatabaseurl, 'metadataBaseUrl'),
     baseURL,
     coordinatorSource,
     systemMessage: chatbot.sysmessage.offline,

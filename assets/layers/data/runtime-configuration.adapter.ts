@@ -1,5 +1,6 @@
 import { type Chat } from '@/layers/data/local-chat-lm.data';
 import { type DB } from '@/layers/data/local-vector-database.data';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
 import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
@@ -9,6 +10,7 @@ import {
   type RuntimeAvailability,
   type RuntimeConfigurationState,
 } from '@/layers/shared/models/assistant-settings.model';
+import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
@@ -47,6 +49,13 @@ const resourceAvailability = (
   return { ready, loading: mode === 'local' && !ready && !error, ...(error ? { error } : {}) };
 };
 
+const sharedRevision = (value: unknown): string | undefined => {
+  if (!Array.isArray(value)) return undefined;
+  const resources: unknown[] = value;
+  const model = resources.find((entry) => isRecord(entry) && entry.role === 'llm');
+  return isRecord(model) && typeof model.revision === 'string' ? model.revision : undefined;
+};
+
 export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterContract {
   readonly stateSubscription = createStatefulSubscribable<RuntimeConfigurationState>({
     responding: false,
@@ -64,6 +73,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     private readonly chat: Pick<Chat, 'configuration' | 'initialize'>,
     private readonly database: Pick<DB, 'configuration' | 'initialize'>,
     readonly setAvailable: (available: boolean) => void,
+    private readonly models: readonly ModelDescriptor[],
   ) {
     this.#model = { ...chat.configuration.payload };
     this.#database = { ...database.configuration.payload };
@@ -80,9 +90,12 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       do_sample: settings.sampling,
       ...(settings.sampling ? { temperature: settings.temperature, top_p: settings.topP } : {}),
     };
+    const profile = this.models.find(({ id }) => id === settings.model);
+    if (!profile) throw new Error(`[${SeverityLevelCodes.ERROR}] - Model is not configured`);
     const model = {
       ...this.#model,
-      model: settings.model,
+      model: profile.id,
+      revision: profile.revision,
       device: settings.execution,
       dtype: settings.precision,
       generation,
@@ -127,7 +140,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     selected: AssistantSettings,
   ): RuntimeAvailability => {
     const active = readSettings(state.activeSelection);
-    const resources = resourceAvailability(state.resources, selected.mode);
+    const resources = this.#resources(state.resources, selected);
     const pending =
       state.configuring === true || !areValuesEqual(selected, active) || resources.loading;
     return {
@@ -140,6 +153,18 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       ...(resources.error ? { error: resources.error } : {}),
     };
   };
+
+  #resources(value: unknown, selected: AssistantSettings): ReturnType<typeof resourceAvailability> {
+    const resources = resourceAvailability(value, selected.mode);
+    const revision = sharedRevision(value);
+    const expected = this.models.find(({ id }) => id === selected.model)?.revision;
+    if (selected.mode === 'local' && resources.ready && revision && revision !== expected) {
+      resources.ready = false;
+      resources.error =
+        'Shared model revision differs from this page. Retry or reload to align the configuration.';
+    }
+    return resources;
+  }
 
   dispose = (): void => {
     this.#disconnect();

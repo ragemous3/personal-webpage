@@ -26,6 +26,7 @@ export class RagService implements ChatbotServiceContract {
   #runtimeFailed = false;
   #configuring = false;
   #available = true;
+  #runtimeAvailable = true;
 
   constructor(
     private readonly chat: StandardCommunicationContract,
@@ -41,7 +42,7 @@ export class RagService implements ChatbotServiceContract {
       if (!isRecord(data) || data.task !== 'runtime:state' || !isRecord(data.payload)) return;
       this.#configuring = data.payload.configuring === true;
       if (isRecord(data.payload.activeSelection))
-        this.#available = data.payload.activeSelection.enabled !== false;
+        this.#runtimeAvailable = data.payload.activeSelection.enabled !== false;
       if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
     });
     this.#transportUnsubscribers = [
@@ -198,7 +199,11 @@ export class RagService implements ChatbotServiceContract {
   readonly #ready = (): void => {
     this.stateSubscription.emit({
       status:
-        this.#available && this.#chatReady && this.#databaseReady && !this.#configuring
+        this.#available &&
+        this.#runtimeAvailable &&
+        this.#chatReady &&
+        this.#databaseReady &&
+        !this.#configuring
           ? 'ready'
           : 'initializing',
     });

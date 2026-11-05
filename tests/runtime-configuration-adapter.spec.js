@@ -4,6 +4,8 @@ import test from 'node:test';
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
 import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
 
+import { modelDescriptors } from './model-metadata.fixture.js';
+
 const disconnect = () => {};
 const channel = (payload) => ({
   configuration: { payload },
@@ -27,8 +29,12 @@ const fixture = () => {
   const chat = channel({ model: 'original', generation: {} });
   const database = channel({ model: 'MiniLM', dtype: 'uint8', dim: 384 });
   const availability = [];
-  const runtime = new RuntimeConfigurationAdapter(coordinator, chat, database, (value) =>
-    availability.push(value),
+  const runtime = new RuntimeConfigurationAdapter(
+    coordinator,
+    chat,
+    database,
+    (value) => availability.push(value),
+    modelDescriptors,
   );
   return {
     runtime,
@@ -202,7 +208,13 @@ test('channel reattachment uses the latest settings rather than the initial star
   const coordinator = new Coordinator(connection);
   const chat = new Chat(coordinator, { name: 'llm', payload: { generation: {} } }, false);
   const database = new DB(coordinator, { name: 'vectordb', payload: {} }, false);
-  const runtime = new RuntimeConfigurationAdapter(coordinator, chat, database, disconnect);
+  const runtime = new RuntimeConfigurationAdapter(
+    coordinator,
+    chat,
+    database,
+    disconnect,
+    modelDescriptors,
+  );
   runtime.select(defaultAssistantSettings);
   await runtime.apply(defaultAssistantSettings);
   const latest = { ...defaultAssistantSettings, execution: 'wasm', maxNewTokens: 48 };
@@ -211,4 +223,20 @@ test('channel reattachment uses the latest settings rather than the initial star
   await coordinator.reconnect();
   assert.equal(hosted.find((m) => m.name === 'llm').payload.device, 'wasm');
   assert.equal(hosted.find((m) => m.name === 'llm').payload.generation.max_new_tokens, 48);
+});
+
+test('a tab cannot report ready against another model revision held by the shared runtime', () => {
+  const { runtime, publish } = fixture();
+  publish({
+    selection: { settings: defaultAssistantSettings },
+    activeSelection: { settings: defaultAssistantSettings },
+    configuring: false,
+    resources: [
+      { role: 'llm', status: 'ready', revision: '0'.repeat(40) },
+      { role: 'vectordb', status: 'ready' },
+    ],
+  });
+  const state = runtime.stateSubscription.getValue();
+  assert.equal(state.runtime.ready, false);
+  assert.match(state.runtime.error, /revision/);
 });

@@ -6,7 +6,10 @@ import { type ConfigurationServiceContract } from '@/layers/shared/contracts/con
 import {
   type AssistantSettings,
   type ConfigurationState,
+  executionChoices,
+  modeChoices,
 } from '@/layers/shared/models/assistant-settings.model';
+import { type SettingChoice } from '@/layers/shared/models/model-metadata.model';
 import { configurationContext } from '@/layers/views/context/configuration.context';
 
 @customElement('assistant-configuration')
@@ -50,7 +53,7 @@ export class AssistantConfiguration extends LitElement {
     if (input instanceof HTMLInputElement) {
       value = input.type === 'checkbox' ? input.checked : input.valueAsNumber;
     }
-    const next = { ...this.configuration.selected, [input.name]: value } as AssistantSettings;
+    const next = { ...this.configuration.selected, [input.name]: value };
     this.feedback = this.configurationService?.update(next) ? '' : `${input.name}: Invalid setting`;
   };
 
@@ -64,32 +67,52 @@ export class AssistantConfiguration extends LitElement {
         <label
           >Mode
           <select name="mode" .value=${settings.mode} @change=${this.#edit}>
-            <option value="local">Local</option>
-            <option value="online">Online</option>
+            ${this.#options(modeChoices, settings.mode)}
           </select></label
         >
         <label
           >Model
           <select name="model" .value=${settings.model} @change=${this.#edit}>
-            <option value="Xenova/Qwen1.5-0.5B-Chat">Qwen1.5 0.5B Chat</option>
+            ${this.#options(
+              state.choices?.models ?? [{ value: settings.model, label: settings.model }],
+              settings.model,
+            )}
           </select></label
         >
         <label
           >Execution
           <select name="execution" .value=${settings.execution} @change=${this.#edit}>
-            <option value="auto">Auto</option>
-            <option value="wasm">CPU</option>
-            <option value="webgpu">WebGPU</option>
+            ${this.#options(executionChoices, settings.execution)}
           </select></label
         >
         ${this.#advanced(settings)}
       </fieldset>
+      ${state.metadataLoading ? html`<p role="status">Loading model options</p>` : html``}
+      ${state.metadataError
+        ? html`
+          <p role="status">${state.metadataError}</p>
+          <button
+            @click=${() => {
+                void this.configurationService?.refreshOptions();
+              }}
+          >
+            Retry model options
+          </button>
+        `
+        : html``}
       ${this.#status(state)}
     `;
   }
 
   protected updated(_changed: PropertyValues): void {
     this.#bind();
+  }
+
+  #options(choices: readonly SettingChoice[], selected: string): TemplateResult[] {
+    return choices.map(
+      ({ value, label }) =>
+        html`<option value=${value} .selected=${value === selected}>${label}</option>`,
+    );
   }
 
   #advanced(settings: AssistantSettings): TemplateResult {
@@ -99,8 +122,21 @@ export class AssistantConfiguration extends LitElement {
         <label
           >Precision
           <select name="precision" .value=${settings.precision} @change=${this.#edit}>
-            <option value="q4">Q4</option>
-            <option value="auto">Auto</option>
+            ${this.#options(
+              this.configuration?.choices?.precisions ?? [
+                { value: settings.precision, label: settings.precision.toUpperCase() },
+              ],
+              settings.precision,
+            )}
+            ${this.configuration?.choices?.precisions.some(
+              ({ value }) => value === settings.precision,
+            ) === false
+              ? html`
+                <option value=${settings.precision} .selected=${true} disabled>
+                  ${settings.precision.toUpperCase()} (unavailable)
+                </option>
+              `
+              : html``}
           </select>
         </label>
         <label

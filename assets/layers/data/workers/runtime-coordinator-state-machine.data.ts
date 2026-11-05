@@ -236,12 +236,17 @@ export class RuntimeCoordinatorStateMachine {
       configurationLoading: Boolean(this.#configuration),
       runtimeId: this.runtimeId,
       configuring: Boolean(this.#configuration) || this.#configurationQueue.length > 0,
-      resources: Object.values(this.#resources).map(({ role, status, instanceId, error }) => ({
-        role,
-        status,
-        ...(instanceId ? { instanceId } : {}),
-        ...(error ? { error } : {}),
-      })),
+      resources: Object.values(this.#resources).map(
+        ({ role, status, instanceId, error, configuration }) => ({
+          role,
+          status,
+          ...(isRecord(configuration) && typeof configuration.revision === 'string'
+            ? { revision: configuration.revision }
+            : {}),
+          ...(instanceId ? { instanceId } : {}),
+          ...(error ? { error } : {}),
+        }),
+      ),
     };
     this.#send(client, 'runtime:state', snapshot);
   };

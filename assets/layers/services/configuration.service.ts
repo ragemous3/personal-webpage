@@ -1,21 +1,27 @@
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ConfigurationRepositoryContract } from '@/layers/shared/contracts/configuration-repository.contract';
 import { type ConfigurationServiceContract } from '@/layers/shared/contracts/configuration-service.contract';
+import { type ModelMetadataRepositoryContract } from '@/layers/shared/contracts/model-metadata-repository.contract';
 import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
 import {
   type AssistantSettings,
   type ConfigurationState,
   defaultAssistantSettings,
   isAssistantSettings,
+  metadataPrecisionChoices,
   type RuntimeAvailability,
   type RuntimeConfigurationState,
 } from '@/layers/shared/models/assistant-settings.model';
+import { type ModelMetadata } from '@/layers/shared/models/model-metadata.model';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
 export class ConfigurationService implements ConfigurationServiceContract {
   readonly #state;
+  readonly #defaults: AssistantSettings;
   readonly stateSubscription;
+  #metadataRevision = 0;
+  readonly #metadata = new Map<string, ModelMetadata>();
   #responding = false;
   #running = false;
   #disposed = false;
@@ -36,19 +42,30 @@ export class ConfigurationService implements ConfigurationServiceContract {
   constructor(
     private readonly repository: ConfigurationRepositoryContract,
     private readonly adapter: RuntimeConfigurationAdapterContract,
+    private readonly metadata: ModelMetadataRepositoryContract,
   ) {
     const saved = repository.load();
+    const profile = metadata.models[0];
+    if (!profile) throw new Error(`[${SeverityLevelCodes.ERROR}] - No models are configured`);
+    const restored = saved.value;
+    const defaults = {
+      ...defaultAssistantSettings,
+      model: profile.id,
+      precision: profile.precision,
+    };
+    this.#defaults = defaults;
+    const savedValid =
+      isAssistantSettings(restored) && metadata.models.some(({ id }) => id === restored.model);
     this.#state = createStatefulSubscribable<ConfigurationState>({
-      selected: Object.freeze(
-        isAssistantSettings(saved.value) ? { ...saved.value } : { ...defaultAssistantSettings },
-      ),
+      selected: Object.freeze(savedValid ? { ...restored } : defaults),
       pending: true,
       loading: true,
       available: false,
       canSwitchBack: false,
+      metadataLoading: false,
       notice:
         saved.notice ??
-        (saved.value === undefined || isAssistantSettings(saved.value)
+        (saved.value === undefined || savedValid
           ? undefined
           : 'Saved settings are invalid. Defaults restored.'),
     });
@@ -57,7 +74,10 @@ export class ConfigurationService implements ConfigurationServiceContract {
     this.#disconnect = [
       repository.observe((record) => {
         if (this.#disposed) return;
-        const valid = isAssistantSettings(record.value);
+        const observed = record.value;
+        const valid =
+          isAssistantSettings(observed) &&
+          this.metadata.models.some(({ id }) => id === observed.model);
         const state = this.#current();
         this.#state.emit({
           ...state,
@@ -67,14 +87,12 @@ export class ConfigurationService implements ConfigurationServiceContract {
               ? 'Saved settings are invalid. Defaults restored.'
               : state.notice),
         });
-        this.#select(
-          valid ? (record.value as AssistantSettings) : { ...defaultAssistantSettings },
-          false,
-        );
+        this.#select(valid ? observed : defaults, false);
       }),
       adapter.stateSubscription.connect(this.#observeRuntime),
     ];
     this.#schedule();
+    void this.refreshOptions(false);
   }
 
   readonly #observeRuntime = (state: RuntimeConfigurationState): void => {
@@ -86,6 +104,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   #publishRuntime(runtime: RuntimeAvailability): void {
     this.#sharedRuntime = runtime;
     this.#captureSelectionIdentity(runtime.selectionId);
+    const previous = this.#current().selected;
     const state = this.#sharedSelection(runtime);
     if (!state) return;
     this.#rememberWorking(runtime);
@@ -100,6 +119,8 @@ export class ConfigurationService implements ConfigurationServiceContract {
       error: this.#runtimeError(runtime, state),
       canSwitchBack: Boolean(this.#lastWorking),
     });
+    if (previous.model !== state.selected.model) void this.refreshOptions();
+    else if (previous.execution !== state.selected.execution) this.#updateChoices();
   }
 
   #captureSelectionIdentity(identity: string | undefined): void {
@@ -129,7 +150,8 @@ export class ConfigurationService implements ConfigurationServiceContract {
       !this.#running &&
       (!state.pending || Boolean(state.error)) &&
       this.#canReplaceFailure(runtime, state) &&
-      isAssistantSettings(runtime.selected)
+      isAssistantSettings(runtime.selected) &&
+      this.metadata.models.some(({ id }) => id === runtime.selected?.model)
     );
   }
 
@@ -153,7 +175,20 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   update(settings: AssistantSettings): boolean {
-    if (this.#disposed || !isAssistantSettings(settings)) return false;
+    if (
+      this.#disposed ||
+      !isAssistantSettings(settings) ||
+      !this.metadata.models.some(({ id }) => id === settings.model)
+    )
+      return false;
+    const previous = this.#current().selected;
+    if (
+      (settings.model !== previous.model ||
+        settings.precision !== previous.precision ||
+        settings.execution !== previous.execution) &&
+      !this.#supports(settings)
+    )
+      return false;
     this.#select(settings);
     return true;
   }
@@ -175,6 +210,8 @@ export class ConfigurationService implements ConfigurationServiceContract {
     this.adapter.select(settings);
     this.adapter.setAvailable(false);
     this.#schedule();
+    this.#updateChoices();
+    if (state.selected.model !== settings.model) void this.refreshOptions();
   }
 
   #schedule(): void {
@@ -232,6 +269,55 @@ export class ConfigurationService implements ConfigurationServiceContract {
     return `Could not apply ${JSON.stringify(settings)}: ${diagnostic}. ${recovery}`;
   }
 
+  #supports(settings: AssistantSettings): boolean {
+    const metadata = this.#metadata.get(settings.model);
+    if (metadata)
+      return metadataPrecisionChoices(metadata, settings.execution).some(
+        ({ value }) => value === settings.precision,
+      );
+    return this.metadata.models.some(
+      ({ id, precision }) => id === settings.model && precision === settings.precision,
+    );
+  }
+
+  #updateChoices(): void {
+    const state = this.#current();
+    const descriptor = this.metadata.models.find(({ id }) => id === state.selected.model);
+    if (!descriptor) return;
+    const metadata = this.#metadata.get(descriptor.id);
+    this.#state.emit({
+      ...state,
+      choices: {
+        models: this.metadata.models.map(({ id, label }) => ({ value: id, label })),
+        precisions: metadata
+          ? metadataPrecisionChoices(metadata, state.selected.execution)
+          : [{ value: descriptor.precision, label: descriptor.precision.toUpperCase() }],
+        revision: descriptor.revision,
+      },
+    });
+  }
+
+  async refreshOptions(refresh = true): Promise<void> {
+    const revision = ++this.#metadataRevision;
+    const model = this.#current().selected.model;
+    this.#updateChoices();
+    this.#state.emit({ ...this.#current(), metadataLoading: true, metadataError: undefined });
+    try {
+      const metadata = await this.metadata.load(model, refresh);
+      if (this.#disposed || revision !== this.#metadataRevision) return;
+      this.#metadata.set(model, metadata);
+      this.#state.emit({ ...this.#current(), metadataLoading: false });
+      this.#updateChoices();
+    } catch (error) {
+      if (this.#disposed || revision !== this.#metadataRevision) return;
+      this.#state.emit({
+        ...this.#current(),
+        metadataLoading: false,
+        metadataError: `Could not retrieve model options: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  }
+
   retry(): void {
     const state = this.#current();
     this.#invalidateSharedSnapshot();
@@ -247,7 +333,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   restoreDefaults(): void {
-    this.#select({ ...defaultAssistantSettings });
+    this.#select({ ...this.#defaults });
     if (this.#state.getValue()?.error) this.retry();
   }
 

@@ -8,6 +8,7 @@ export interface ConfigurationServiceContract {
   readonly stateSubscription: ReadonlyStatefulConnections<ConfigurationState>;
   update(settings: AssistantSettings): boolean;
   retry(): void;
+  refreshOptions(): Promise<void>;
   switchBack(): void;
   restoreDefaults(): void;
   dispose(): void;
