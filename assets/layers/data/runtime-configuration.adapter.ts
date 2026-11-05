@@ -1,13 +1,13 @@
 import { type Chat } from '@/layers/data/local-chat-lm.data';
 import { type DB } from '@/layers/data/local-vector-database.data';
-import { type ConfigurationRuntimeContract } from '@/layers/shared/contracts/configuration-service.contract';
+import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
 import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 import {
   type AssistantSettings,
-  type ConfigurationRuntimeState,
   isAssistantSettings,
   type RuntimeAvailability,
+  type RuntimeConfigurationState,
 } from '@/layers/shared/models/assistant-settings.model';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
@@ -47,8 +47,8 @@ const resourceAvailability = (
   return { ready, loading: mode === 'local' && !ready && !error, ...(error ? { error } : {}) };
 };
 
-export class ConfigurationRuntime implements ConfigurationRuntimeContract {
-  readonly stateSubscription = createStatefulSubscribable<ConfigurationRuntimeState>({
+export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterContract {
+  readonly stateSubscription = createStatefulSubscribable<RuntimeConfigurationState>({
     responding: false,
   });
   readonly #disconnect: () => void;

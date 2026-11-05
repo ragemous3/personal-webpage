@@ -1,16 +1,14 @@
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ConfigurationRepositoryContract } from '@/layers/shared/contracts/configuration-repository.contract';
-import {
-  type ConfigurationRuntimeContract,
-  type ConfigurationServiceContract,
-} from '@/layers/shared/contracts/configuration-service.contract';
+import { type ConfigurationServiceContract } from '@/layers/shared/contracts/configuration-service.contract';
+import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
 import {
   type AssistantSettings,
-  type ConfigurationRuntimeState,
   type ConfigurationState,
   defaultAssistantSettings,
   isAssistantSettings,
   type RuntimeAvailability,
+  type RuntimeConfigurationState,
 } from '@/layers/shared/models/assistant-settings.model';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
@@ -37,7 +35,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
 
   constructor(
     private readonly repository: ConfigurationRepositoryContract,
-    private readonly runtime: ConfigurationRuntimeContract,
+    private readonly adapter: RuntimeConfigurationAdapterContract,
   ) {
     const saved = repository.load();
     this.#state = createStatefulSubscribable<ConfigurationState>({
@@ -55,7 +53,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
           : 'Saved settings are invalid. Defaults restored.'),
     });
     this.stateSubscription = { connect: this.#state.connect, getValue: this.#state.getValue };
-    this.runtime.select(this.#current().selected);
+    this.adapter.select(this.#current().selected);
     this.#disconnect = [
       repository.observe((record) => {
         if (this.#disposed) return;
@@ -74,12 +72,12 @@ export class ConfigurationService implements ConfigurationServiceContract {
           false,
         );
       }),
-      runtime.stateSubscription.connect(this.#observeRuntime),
+      adapter.stateSubscription.connect(this.#observeRuntime),
     ];
     this.#schedule();
   }
 
-  readonly #observeRuntime = (state: ConfigurationRuntimeState): void => {
+  readonly #observeRuntime = (state: RuntimeConfigurationState): void => {
     this.#responding = state.responding;
     if (state.runtime) this.#publishRuntime(state.runtime);
     if (!state.responding) this.#schedule();
@@ -92,7 +90,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
     if (!state) return;
     this.#rememberWorking(runtime);
     const available = runtime.ready && !runtime.pending && !runtime.error;
-    if (state.available !== available) this.runtime.setAvailable(available);
+    if (state.available !== available) this.adapter.setAvailable(available);
     this.#state.emit({
       ...state,
       active: runtime.active ?? state.active,
@@ -174,8 +172,8 @@ export class ConfigurationService implements ConfigurationServiceContract {
       error: undefined,
       notice,
     });
-    this.runtime.select(settings);
-    this.runtime.setAvailable(false);
+    this.adapter.select(settings);
+    this.adapter.setAvailable(false);
     this.#schedule();
   }
 
@@ -197,10 +195,10 @@ export class ConfigurationService implements ConfigurationServiceContract {
     const before = this.#current();
     const revision = this.#revision;
     this.#invalidateSharedSnapshot();
-    this.runtime.setAvailable(false);
+    this.adapter.setAvailable(false);
     this.#state.emit({ ...before, loading: true });
     try {
-      await this.runtime.apply(before.selected);
+      await this.adapter.apply(before.selected);
       if (this.#disposed || revision !== this.#revision) return;
       const available = before.selected.mode === 'local';
       if (available) this.#lastWorking = before.selected;
@@ -213,7 +211,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
         canSwitchBack: Boolean(this.#lastWorking),
         error: undefined,
       });
-      this.runtime.setAvailable(available);
+      this.adapter.setAvailable(available);
     } catch (error) {
       if (this.#disposed || revision !== this.#revision) return;
       this.#state.emit({

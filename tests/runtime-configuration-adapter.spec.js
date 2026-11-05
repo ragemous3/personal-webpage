@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ConfigurationRuntime } from '@/layers/data/configuration-runtime.data';
+import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
 import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
 
 const disconnect = () => {};
@@ -27,7 +27,7 @@ const fixture = () => {
   const chat = channel({ model: 'original', generation: {} });
   const database = channel({ model: 'MiniLM', dtype: 'uint8', dim: 384 });
   const availability = [];
-  const runtime = new ConfigurationRuntime(coordinator, chat, database, (value) =>
+  const runtime = new RuntimeConfigurationAdapter(coordinator, chat, database, (value) =>
     availability.push(value),
   );
   return {
@@ -202,7 +202,7 @@ test('channel reattachment uses the latest settings rather than the initial star
   const coordinator = new Coordinator(connection);
   const chat = new Chat(coordinator, { name: 'llm', payload: { generation: {} } }, false);
   const database = new DB(coordinator, { name: 'vectordb', payload: {} }, false);
-  const runtime = new ConfigurationRuntime(coordinator, chat, database, disconnect);
+  const runtime = new RuntimeConfigurationAdapter(coordinator, chat, database, disconnect);
   runtime.select(defaultAssistantSettings);
   await runtime.apply(defaultAssistantSettings);
   const latest = { ...defaultAssistantSettings, execution: 'wasm', maxNewTokens: 48 };

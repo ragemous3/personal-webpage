@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 100
 - TAGS: task
 
@@ -89,6 +89,16 @@ Pass execution `auto` directly to the pipeline. Label browser `wasm` as CPU. Pas
 - [x] Observe the real application with a clean profile and a returning profile: saved preferences before model startup; Local Auto and explicit CPU behavior; settings changed during a response; preserved history; switching to/from unavailable Online mode; an explicit failing setting and switch-back; and two tabs adopting changes after their own responses. Record unsupported hardware as a limitation, not a successful WebGPU run. Mocks do not establish real model loading or provider fallback.
 - [x] Follow the existing architecture and naming rules. Reuse shared contracts and the stateful subscription pattern. Add no styling and do not add an online inference implementation or additional model profiles.
 - [x] At publication, report the PR and any CI state already available, then hand off without waiting for CI completion. The user explicitly removed the CI wait requirement on 2026-10-28. Do not merge, enable auto-merge, enqueue, or deploy without separate authorization.
+
+### Approved adapter naming follow-up
+
+On 2026-11-05 the user approved retaining the settings/coordinator separation and renaming ConfigurationRuntime to RuntimeConfigurationAdapter. Resume stage 3 on the existing branch and PR #22 under the recorded Autopilot grant. Add the adapter file responsibility to README naming conventions, give the adapter a dedicated matching shared contract, and update callers, state type, documentation and existing tests. Factory consolidation is outside this follow-up. Preserve all configuration, startup, lifecycle and availability behavior.
+
+Previous implementation: 56cedbf4bce3c411abdc120b3ecd5711f6eaea66; fixed review base remains 62ffe3a60a5be907239b8c3d6a6e1427b6105e82. Both reviews, blast-radius assessment and final-suite evidence must be refreshed for the renamed implementation. No new behavioral tests are needed for this mechanical refactor. Reuse the existing adapter/service/coordinator tests, run TypeScript, lint and the production settings browser journey to verify the renamed production imports. Final npm test follows both reviews. Routine evidence stays ignored. Next: rename the adapter and extract its contract, then focused checks and cleanup.
+
+Stage 3 complete: RuntimeConfigurationAdapter now lives in runtime-configuration.adapter.ts and implements the separate RuntimeConfigurationAdapterContract. ConfigurationService depends on that contract. Composition uses the adapter name; RuntimeConfigurationState and runtime-configuration-adapter.spec.js match the new terminology. README lists the adapter responsibility and data-layer placement. No runtime behavior changed. The command node --import ./scripts/typescript-test.loader.js --test tests/runtime-configuration-adapter.spec.js tests/configuration-service.spec.js tests/runtime-coordinator.spec.js tests/configuration-browser.spec.js tests/offline-config.spec.js passes 46 tests. npm run typecheck, npm run lint and git diff --check pass. Stage 4 entered: cleanup review retains the existing configuration and startup logic; run npm run verify:browser -- --mode settings next, then create a signed review snapshot. Real inference/cache behavior is unchanged by this symbol/file/contract rename; earlier model evidence remains historical and is not relabelled as a new exact-source run.
+
+Stage 4 complete: the production settings journey passes with zero cleanup errors and retained evidence at artifacts/verification/settings-2026-11-05T20-14-35-634Z-6b47512f-5cb7-4209-9844-dc187c4fbded/. The runner built the current source and exercised saved startup, shared settings, response boundaries, recovery and storage-denied operation. This uses controlled model drivers and does not claim a fresh real-model/cache result. A read-only comparison confirms the adapter and service bodies differ from 56cedbf only by the approved identifier renames. Cleanup found no further necessary edits; no old implementation/type/import names remain in assets, tests, current documentation or README. Next: signed snapshot, then fresh independent Standards and Spec reviews against the unchanged fixed base. Final npm test and publication remain pending.
 
 ### Historical evidence and resumption
 

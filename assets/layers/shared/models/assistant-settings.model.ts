@@ -30,7 +30,7 @@ export interface RuntimeAvailability {
   error?: string | undefined;
 }
 
-export interface ConfigurationRuntimeState {
+export interface RuntimeConfigurationState {
   responding: boolean;
   runtime?: RuntimeAvailability;
 }

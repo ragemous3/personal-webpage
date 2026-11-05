@@ -1,9 +1,9 @@
 import { ConfigurationRepository } from '@/layers/data/configuration-repository.data';
-import { ConfigurationRuntime } from '@/layers/data/configuration-runtime.data';
 import { ContentRepository } from '@/layers/data/content-repository.data';
 import { Chat } from '@/layers/data/local-chat-lm.data';
 import { DB } from '@/layers/data/local-vector-database.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
+import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
 import { RagService } from '@/layers/services/chatbot.service';
 import { ConfigurationService } from '@/layers/services/configuration.service';
 
@@ -38,15 +38,15 @@ export const buildConfigurableChatbotDeps = (
     new ChatMessageModel({ role: 'system', content: configuration.systemMessage }),
     coordinator,
   );
-  const runtime = new ConfigurationRuntime(coordinator, chat, database, service.setAvailable);
-  const settings = new ConfigurationService(repository, runtime);
+  const adapter = new RuntimeConfigurationAdapter(coordinator, chat, database, service.setAvailable);
+  const settings = new ConfigurationService(repository, adapter);
   service.init();
   return {
     service,
     settings,
     dispose: (): void => {
       settings.dispose();
-      runtime.dispose();
+      adapter.dispose();
       service.dispose();
       chat.dispose();
       database.dispose();
