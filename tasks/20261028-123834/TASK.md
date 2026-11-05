@@ -1,6 +1,6 @@
 # Add persisted assistant configuration UI with live model settings
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
 - TAGS: task
 
@@ -233,3 +233,7 @@ Stages 5–6 complete at signed implementation 874c4fee41196d63c219ae548c2d126de
 Blast radius: no bulk or destructive live-data operation applies. Preferences retain their existing named record/schema; metadata writes are confined to their own versioned cache and never clear unrelated data or weights. Verification creates/closes only its owned browsers, servers, profiles and scratch output. Pinning changes model file URLs and can require an initial download; it preserves the framework cache for later sessions. Stage 7 entered under the existing Autopilot grant and no-CI-wait instruction. Next: final npm test after reviews, then signed metadata/push, current evidence publication and PR handoff.
 
 Final stage 7 gate: npm test passes 137 tests with zero failures/skips after both reviews at implementation 874c4fee41196d63c219ae548c2d126dea5f77f0. Both reviews have zero unresolved findings. All model-choice requirements are implemented; 83 focused checks, lint, TypeScript, actionlint and the exact-source settings/real CPU/cache journeys pass as recorded. The prepared PR body describes that reviewed implementation. Current PR #22 remains OPEN with no auto-merge or merge-queue entry. Publication and the closure push are authorized by the existing Autopilot grant; merge/deploy remain unauthorized. Next: signed verification metadata, push, current artifact workflow dispatch and PR handoff.
+
+Model-metadata PR handoff: PR https://github.com/ragemous3/personal-webpage/pull/22 now contains reviewed implementation 874c4fee41196d63c219ae548c2d126dea5f77f0, CI browser setup 7b4bed7 and verification metadata 39513428f92af60d52d2d9eeebeb7e9c8a0baa64. Both reviews pass with zero unresolved findings; final npm test passes 137 tests, with 83 focused cases and the exact-source settings/real CPU/Auto/cache journeys passing. Model IDs are strings validated against the configured catalog. The adapter and original offline factory remain the agreed composition path.
+
+Current browser evidence publication is in progress at https://github.com/ragemous3/personal-webpage/actions/runs/42118508666 on 3951342. It runs the hosted settings journey and attaches the submitted local real-model JSON only after matching source digest 20f4dac40f97c52bafe446707122c52fbcff5e7e15395d9331fdc0c5b6c748c7. Reports/screenshots have 90-day artifact retention; local-report provenance distinguishes submitted execution from hosted execution. The local real-model screenshot remains local-only. This workflow and the new Chrome setup are not claimed as hosted PASS at handoff. CI is at https://github.com/ragemous3/personal-webpage/pull/22/checks; the user's no-CI-wait instruction applies. Earlier failed/blocked diagnostics and unavailable WebGPU/factual-accuracy checks remain disclosed above. CLOSED denotes completed PR handoff, not merge. PR #22 stays open and unmerged; next action is user review and any subsequently available CI/review findings.
