@@ -47,6 +47,14 @@ Releases: `github-release`. BLOCKED-PR diagnosis: `github-project`.
 | `references/spec-cleanup.md` | Planning artifacts off the base branch |
 | `references/no-editorializing.md` | No self-praise, no narrating the expected |
 
+## Project pull request diagrams
+
+For architecture and feature PR descriptions, use Mermaid to show the complete affected flow grouped by the repository's actual layers. Include the relevant contracts and abstract classes, their concrete implementations, and external services or storage. Show the request and response path, including Local/Online alternatives and configuration flow where affected. Use separate focused diagrams when one graph would become hard to read.
+
+Use solid, labelled arrows for runtime calls or data flow. Use dotted, labelled arrows for contract dependencies, implementation and inheritance; name those relationships accurately. Keep actual class and contract names so a reviewer can find them in the repository. Do not invent layers or imply that a contract is a running component.
+
+Keep composition wiring outside the connected layer flow. It may appear as a separate box containing only the composition entry-point names, with no edges to the layers or their classes. Check the diagram against the current implementation before updating the PR, and preserve the PR's verification and limitation notes.
+
 ## Conventional Commits
 
 ```
