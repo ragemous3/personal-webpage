@@ -53,6 +53,10 @@ For architecture and feature PR descriptions, use Mermaid to show the complete a
 
 Use solid, labelled arrows for runtime calls or data flow. Use dotted, labelled arrows for contract dependencies, implementation and inheritance; name those relationships accurately. Keep actual class and contract names so a reviewer can find them in the repository. Do not invent layers or imply that a contract is a running component.
 
+Use exact names and casing from the code for classes, functions, contracts and abstracts. Identify worker entry points, API routes, packages and storage with their real filenames, route strings or identifiers. Keep role descriptions as secondary annotations, not invented component names. Split boxes that combine distinct implementations when their identity or change status would be unclear.
+
+Give newly introduced components and dependencies a green border, for example `classDef added stroke:#2da44e,stroke-width:3px;` and `class NewComponent added;`. Determine what is new from the PR diff against its fixed review base. Modified or moved existing components keep their default borders. Include a short legend explaining the green border and arrow styles; preserve the theme's default fill.
+
 Keep composition wiring outside the connected layer flow. It may appear as a separate box containing only the composition entry-point names, with no edges to the layers or their classes. Check the diagram against the current implementation before updating the PR, and preserve the PR's verification and limitation notes.
 
 ## Conventional Commits
