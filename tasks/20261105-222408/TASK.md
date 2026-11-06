@@ -18,9 +18,9 @@ Keep this as one end-to-end feature ticket, as requested. Backend setup alone do
 
 ## Prerequisites
 
-- Current stage: stage 3, implementation. The user confirmed the design by requesting implementation under Autopilot on 2026-11-06.
+- Current stage: stage 7, publication and PR handoff. The user confirmed the design by requesting implementation under Autopilot on 2026-11-06.
 - Mode: Autopilot through PR handoff, scoped to implementation, routine design details, tests and data preparation, documentation/ticket updates, cleanup, independent reviews, signed commits, branch push, PR creation and CI/review fixes. Merge and deployment require separate authorization.
-- Branch: feature/20261105-222408-online-generation. Fixed review base: df7fd5597ec6613af55ddba4506ca61ce6109e7c. No implementation snapshot yet; reviews and final suite pending.
+- Branch: feature/20261105-222408-online-generation. Fixed review base: df7fd5597ec6613af55ddba4506ca61ce6109e7c. Latest implementation: ac22203a9ddd0d759712d1b5a8eed6195d41a3ae. Both independent reviews PASS at that SHA; final npm test PASS with 147 tests, zero failures/skips.
 - Finish condition: verified implementation and PR handoff. The user explicitly stated no credentials are available and authorized implementation without them. Replace the live OpenAI verification requirement with a controlled OpenAI HTTP endpoint covering the complete browser-to-Express path; report actual project access and real model output as unverified.
 - Agreed Q1 (2026-11-06): the API belongs to this application, runs locally during development and is hosted for website visitors. Browser requests go through this API to OpenAI; credentials stay server-side. Hosting provider remains undecided.
 - Agreed Q5 (2026-11-06): preserve the existing response controls in both modes, including streaming, Cancel, Reset and applicable recovery actions. Keep conversation history across mode changes and finish accepted responses before applying a pending mode change. Online cancellation requests upstream cancellation; already generated tokens may still incur cost.
@@ -99,3 +99,13 @@ Implementation, cleanup and runtime verification complete; next is the signed sn
 Standards review at 70aae80164482cefab928e5e0d0b4e0db8324545 found missing responsibility suffixes in the new server filenames and a duplicated OnlineModel DTO. Return to stage 3 to align filenames and reuse the shared type. Both review results, blast-radius review and final-suite evidence are invalidated for the fix. The independent Spec review is still assessing that original snapshot.
 
 Spec review at that snapshot PASS with zero findings. The Standards fixes align the server/verification factory filenames, extract GenerationProviderAbstract and reuse the shared OnlineModel DTO through type-only imports. Lint, TypeScript and the ten Online focused checks pass. The final Online browser journey passes at artifacts/verification/online-2026-11-06T06-32-57-998Z-63b599bb-4b73-4718-9558-8b8051b1a130/ and matches the complete revised source digest. Earlier settings and real Local cache reports remain valid for their recorded snapshot; all three production worker hashes are byte-identical to this final build. No inference behavior changed in the naming/type fix, so the heavy Local journey is not repeated. Cleanup passes. Next: sign the revised snapshot and repeat both independent reviews.
+
+### Stages 5–7
+
+Independent Standards and Spec reviews both PASS at ac22203a9ddd0d759712d1b5a8eed6195d41a3ae against the fixed review base, with zero unresolved actionable findings. Source digest: a61ee5df646706ccf73a5ca5b15db4071920c44ad5b82ed4cc87a4514ed2b2c3. The final Online report matches this digest.
+
+Blast radius: no bulk or destructive live-data operation applies. Preference schema remains version 1 with an optional Online model field; unrelated storage and cached weights are preserved. Conversation history is not persisted server-side. Verification owns its disposable browsers, profiles and servers and preserves routine evidence outside cleanup. No credentialed external inference or deployment was performed.
+
+Stage 7 entered: final npm test after both reviews is running. Next: record its result, sign metadata, push and open a PR, publish browser artifacts with 90-day retention, and close this ticket for handoff. Merge and deployment remain unauthorized. The reconnect ticket remains OPEN and scheduled after this feature.
+
+Final full-suite result: npm test PASS, 147 tests, zero failures/skips, after both independent reviews at implementation ac22203a9ddd0d759712d1b5a8eed6195d41a3ae. The prepared PR describes this snapshot. Current source is unchanged apart from ticket records. Publication is authorized by the Autopilot grant; proceed to branch push, PR and artifact workflow dispatch.
