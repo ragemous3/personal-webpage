@@ -1,6 +1,6 @@
 # Switch Local and Online chatbot trees through dependency injection
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task, refactor
 
@@ -16,7 +16,7 @@ Preserve this ticket ID. The previous implementation and PR #23 remain reference
 
 ## Prerequisites
 
-- Current stage: stage 7, final full suite and publication. Application implementation remains e6b713fef5238f13a2aef46d0d3c53b0319d1bb7; verification fix is 5cb1d079b6bdc1dd4208cd26b010c91c5486a5b3. Standards and Spec both pass with zero findings at 1b5e2975d1ad4fdcd5e0a459fe47603b7a1fb2fa. Blast-radius assessment remains unchanged and complete; the final suite repeats before publication.
+- Current stage: stage 7, PR publication complete; CI and hosted evidence in progress. Application implementation remains e6b713fef5238f13a2aef46d0d3c53b0319d1bb7; verification fix is 5cb1d079b6bdc1dd4208cd26b010c91c5486a5b3. Standards and Spec both pass at 1b5e2975d1ad4fdcd5e0a459fe47603b7a1fb2fa; final npm test passes 169/169. [Replacement PR #24](https://github.com/ragemous3/personal-webpage/pull/24) is open and unmerged. Merge, auto-merge, queue and deployment remain unauthorized.
 - Branch: feature/20261105-222408-switchable-chatbot-trees. Created from a8bb49740e4eaceeb6a6552a219c209535e70f41 on the original feature branch, retaining its reusable code and all skill/workflow changes. Fixed review base remains df7fd5597ec6613af55ddba4506ca61ce6109e7c (the main merge-base), so a future PR is assessed as the complete replacement, not only its difference from PR #23.
 - Retain the user's Autopilot through PR handoff grant for this ticket, including routine implementation choices, tests/data preparation, documentation/ticket updates, signed commits, push, PR and CI/review fixes. The latest request authorizes the new branch and revised design. Merge, deployment, and closing the original PR require separate instructions.
 - No OpenAI credentials are available. The user-approved controlled HTTP alternative remains the verification method; actual project/model access and real OpenAI output remain unverified.
@@ -130,7 +130,7 @@ These changes are included by branch ancestry and must remain in the final repla
 - [x] Acceptance criteria pass focused and integration checks on the new branch.
 - [x] Runtime verification exercises the switched trees; cleanup, both independent reviews, blast-radius assessment and the final suite apply to the replacement implementation SHA. Prior reviews and test results are historical and invalidated for this architecture change.
 - [ ] All intended skill/workflow/architecture changes are committed with the replacement. Routine verification screenshots/reports remain ignored artifacts with accessible links and retention.
-- [ ] The new branch is published with its own unmerged PR, an accurate description and updated saved diagrams. Record its PR URL and closure on this branch after handoff.
+- [x] The new branch is published with its own unmerged PR, an accurate description and updated saved diagrams. Record its PR URL and closure on this branch after handoff.
 
 ### Design-run record
 
@@ -211,3 +211,5 @@ Final test-source reviews at `1b5e2975d1ad4fdcd5e0a459fe47603b7a1fb2fa`: Standar
 Final exact-full-source artifact refresh passes for that digest: `online-2026-11-06T19-19-13-971Z-b3fba5ec-800d-479b-b95f-2e33bc1fa732`, `settings-2026-11-06T19-19-26-166Z-0d111b87-511d-4df6-ad71-9f0774318411`, and `cache-2026-11-06T19-19-13-901Z-79ab0b0f-d171-46c6-b848-49d2e4930926`. Their recorded source revision is the reviewed `1b5e297`; cleanup and evidence retention pass. The cache report is prepared for submission with the hosted Online workflow. Full-suite rerun proceeds after these isolated browser/model runs finish.
 
 Final post-review `npm test` rerun: **169 tests, 169 pass, 0 fail**, exit 0, after both final reviews. Reviewed/tested source is `1b5e2975d1ad4fdcd5e0a459fe47603b7a1fb2fa` with application implementation e6b713fef5238f13a2aef46d0d3c53b0319d1bb7 and verification-stub fix5cb1d079b6bdc1dd4208cd26b010c91c5486a5b3. Only ticket/evidence metadata changed during this run; source digest remains e0e9cf218780f963b0ed8316f4d8f948e84033c065908481af9ce733646a64f9. Publication proceeds under the recorded Autopilot grant; no merge or deployment is authorized.
+
+Publication: signed head c73f30ae628aa44ec8ebdbdf67056c4cd223ca30 was pushed and [PR #24](https://github.com/ragemous3/personal-webpage/pull/24) opened against main at df7fd5597ec6613af55ddba4506ca61ce6109e7c. Readback matches the prepared title/body and copied saved diagrams. Auto-merge and merge queue are absent. Ticket is CLOSED on this branch after publication; CI/review findings would reopen it. Hosted artifact publication and current-head CI checks continue through the existing git-workflow watcher. PR #23 is unchanged and unmerged.
