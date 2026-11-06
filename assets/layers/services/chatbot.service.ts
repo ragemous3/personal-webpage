@@ -98,6 +98,10 @@ export class RagService implements ChatbotServiceContract {
 
   setAvailable = (available: boolean): void => {
     this.#available = available;
+    if (available) {
+      this.#runtimeFailed = false;
+      this.#failedWorkers.clear();
+    }
     if (!this.#active) this.#ready();
   };
 
@@ -192,8 +196,8 @@ export class RagService implements ChatbotServiceContract {
 
   #retryGeneration(): void {
     if (!this.#chatReady || !this.#databaseReady) {
-      this.#ready();
       this.#retryFailedWorkers();
+      this.#ready();
       return;
     }
     if (!this.#question) {
@@ -253,6 +257,11 @@ export class RagService implements ChatbotServiceContract {
 
   readonly #ready = (): void => {
     if (this.#lease || this.#storageFailed) return;
+    const failure = this.#resourceFailure();
+    if (failure) {
+      this.stateSubscription.emit(failure);
+      return;
+    }
     this.stateSubscription.emit({
       status:
         this.#available && this.#storageReady() && this.#runtimeAvailable && this.#resourcesReady()
@@ -260,6 +269,18 @@ export class RagService implements ChatbotServiceContract {
           : 'initializing',
     });
   };
+
+  #resourceFailure(): ChatState | undefined {
+    if (this.#runtimeFailed)
+      return { status: 'error', error: 'Something went wrong', runtimeFailure: true };
+    if (this.#failedWorkers.size === 0) return;
+    const current = this.stateSubscription.getValue();
+    const message = 'Model initialization failed. Retry.';
+    return {
+      status: 'error',
+      error: current?.storageFailure ? message : (current?.error ?? message),
+    };
+  }
 
   #storageReady(): boolean {
     return this.#historyReady && !this.#storageFailed && !this.#clearing && !this.#storageRecovery;
@@ -274,6 +295,10 @@ export class RagService implements ChatbotServiceContract {
   };
 
   readonly #interrupt = (error: string): void => {
+    if (this.#storageFailed) {
+      this.#storageFailure();
+      return;
+    }
     const revision = this.#revision;
     const requestId = this.#lease;
     const answer = this.#messages.at(-1);
@@ -312,6 +337,7 @@ export class RagService implements ChatbotServiceContract {
   }
 
   #observeRuntimeFailure(data: Record<string, unknown>): void {
+    if (data.requestId !== undefined && data.requestId !== this.#active) return;
     if (data.runtimeFailure === true && data.error) this.#runtimeFailed = true;
   }
   #handleResponseError(data: Record<string, unknown>, current: boolean): boolean {
@@ -341,6 +367,7 @@ export class RagService implements ChatbotServiceContract {
 
   #handleReady(task: unknown): boolean {
     if (task !== 'llm:ready' && task !== 'vectordb:ready') return false;
+    this.#failedWorkers.delete(task === 'llm:ready' ? 'llm' : 'vectordb');
     if (task === 'llm:ready') this.#chatReady = true;
     else this.#databaseReady = true;
     if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
@@ -451,6 +478,7 @@ export class RagService implements ChatbotServiceContract {
       status: 'error',
       error: 'Could not save conversation. Retry saving before continuing.',
       storageFailure: true,
+      ...(this.#runtimeFailed ? { runtimeFailure: true } : {}),
     });
   }
 

@@ -16,6 +16,8 @@ RagService saves each question before retrieval/generation and commits ordered r
 
 A storage failure blocks Send and cancels generation. Partial displayed text remains visible. Retry saving commits the pending history before chat continues; it does not repeat generation. Reset clears only this conversation. Browser storage remains subject to browser eviction and user clearing. The application server does not store conversations. API requests transmit relevant history and retrieved context to OpenAI, accept bounded user/assistant messages and supply server-owned instructions with `store: false`. Client system messages and unsupported models are rejected. No quotas, spending accounting or visitor tracking are implemented in this scope.
 
+If storage and runtime faults overlap, Retry saving stays available first. After saving succeeds, reconnect remains available for a runtime that still needs recovery. Neither action silently repeats generation.
+
 ## Run locally
 
 Install dependencies with `npm ci`, build the site with `npm run build`, set `OPENAI_API_KEY` in the server environment, and run `npm start`. Express serves the built `public/` site and `/api` from port 3000, or the configured `PORT`. Keep the key out of Hugo parameters and browser code. `OPENAI_MODEL` can select another compatible Responses model configured by the operator; low reasoning effort and the published control bounds must remain compatible with that model. The label defaults to the configured model ID.

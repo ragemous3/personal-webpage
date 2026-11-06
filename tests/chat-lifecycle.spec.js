@@ -475,3 +475,14 @@ test('shared ready snapshots cannot override the application availability gate',
   assert.equal(service.stateSubscription.getValue().status, 'ready');
   service.dispose();
 });
+
+test('explicit configuration recovery enables Send after a failed model reports fresh readiness', async () => {
+  const { service, chat } = await setup();
+  chat.emit({ task: 'llm:init', error: { message: 'WebGPU failed' }, runtimeFailure: true });
+  await settled();
+  service.setAvailable(false);
+  chat.emit({ task: 'llm:loading' });
+  chat.emit({ task: 'llm:ready' });
+  service.setAvailable(true);
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+});

@@ -301,8 +301,21 @@ test('a cancelled begin acknowledgement retains its lease until the Reset clear 
   let acknowledge;
   let commit;
   const finished = [];
-  const history = { load: async () => [], save: async () => {}, clear: () => new Promise((resolve) => { commit = resolve; }) };
-  const { service } = create(history, { begin: () => new Promise((resolve) => { acknowledge = resolve; }), finish: (id) => finished.push(id) });
+  const history = {
+    load: async () => [],
+    save: async () => {},
+    clear: () =>
+      new Promise((resolve) => {
+        commit = resolve;
+      }),
+  };
+  const { service } = create(history, {
+    begin: () =>
+      new Promise((resolve) => {
+        acknowledge = resolve;
+      }),
+    finish: (id) => finished.push(id),
+  });
   await until(() => service.stateSubscription.getValue().status === 'ready');
   service.send('Question');
   service.reset();
@@ -313,4 +326,65 @@ test('a cancelled begin acknowledgement retains its lease until the Reset clear 
   commit();
   await until(() => service.stateSubscription.getValue().status === 'ready');
   assert.equal(finished.length, 1);
+});
+
+test('overlapping storage and runtime failures expose saving first and reconnect afterward without replay', async () => {
+  let fail = false;
+  let recoveries = 0;
+  const history = {
+    load: async () => [],
+    clear: async () => {},
+    save: async () => {
+      if (fail) throw new Error('Quota');
+    },
+  };
+  const { service, chat, database } = create(history, {
+    begin: async () => {},
+    finish() {},
+    reconnect: async () => {
+      recoveries++;
+    },
+  });
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Question');
+  await until(() => database.sent.some(({ action }) => action === 'query'));
+  const { requestId } = database.sent[0];
+  chat.emit({ task: 'llm:stream:response', requestId, payload: 'Visible partial' });
+  await until(
+    () => service.chatMessagesSubscription.getValue().at(-1)?.content === 'Visible partial',
+  );
+  fail = true;
+  chat.emit({ task: 'llm:stream:response', requestId, payload: ' pending save' });
+  await until(() => service.stateSubscription.getValue().storageFailure);
+  chat.emit({ task: 'llm:init', error: { message: 'Worker stopped' }, runtimeFailure: true });
+  assert.equal(service.stateSubscription.getValue().storageFailure, true);
+  fail = false;
+  service.retry();
+  await until(() => !service.stateSubscription.getValue().storageFailure);
+  assert.equal(service.stateSubscription.getValue().runtimeFailure, true);
+  assert.equal(recoveries, 0);
+  chat.emit({ task: 'llm:ready' });
+  await service.reconnect();
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.equal(database.sent.filter(({ action }) => action === 'query').length, 1);
+  assert.match(service.chatMessagesSubscription.getValue().at(-1).content, /^Visible partial/);
+});
+
+test('a stale request failure cannot poison a later response after Reset', async () => {
+  const history = { load: async () => [], clear: async () => {}, save: async () => {} };
+  const { service, chat, database } = create(history, { begin: async () => {}, finish() {} });
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Old question');
+  await until(() => database.sent.some(({ action }) => action === 'query'));
+  const old = database.sent[0].requestId;
+  service.reset();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Current question');
+  await until(() => database.sent.filter(({ action }) => action === 'query').length === 2);
+  const current = database.sent.filter(({ action }) => action === 'query')[1].requestId;
+  chat.emit({ task: 'llm:query', requestId: old, runtimeFailure: true, error: { message: 'Obsolete failure' } });
+  chat.emit({ task: 'llm:message:response', requestId: current, payload: { generated_text: 'Current answer' } });
+  await until(() => service.stateSubscription.getValue().status !== 'responding');
+  assert.equal(service.stateSubscription.getValue().status, 'ready');
+  assert.equal(service.chatMessagesSubscription.getValue().at(-1).content, 'Current answer');
 });
