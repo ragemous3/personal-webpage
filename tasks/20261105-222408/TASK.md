@@ -1,6 +1,6 @@
 # Enable full online assistant mode through an application API for OpenAI
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task
 
@@ -18,7 +18,7 @@ Keep this as one end-to-end feature ticket, as requested. Backend setup alone do
 
 ## Prerequisites
 
-- Current stage: stage 7, publication and PR handoff. The user confirmed the design by requesting implementation under Autopilot on 2026-11-06.
+- Current stage: stage 7, PR handoff; implementation complete. The user confirmed the design by requesting implementation under Autopilot on 2026-11-06.
 - Mode: Autopilot through PR handoff, scoped to implementation, routine design details, tests and data preparation, documentation/ticket updates, cleanup, independent reviews, signed commits, branch push, PR creation and CI/review fixes. Merge and deployment require separate authorization.
 - Branch: feature/20261105-222408-online-generation. Fixed review base: df7fd5597ec6613af55ddba4506ca61ce6109e7c. Latest implementation: ac22203a9ddd0d759712d1b5a8eed6195d41a3ae. Both independent reviews PASS at that SHA; final npm test PASS with 147 tests, zero failures/skips.
 - Finish condition: verified implementation and PR handoff. The user explicitly stated no credentials are available and authorized implementation without them. Replace the live OpenAI verification requirement with a controlled OpenAI HTTP endpoint covering the complete browser-to-Express path; report actual project access and real model output as unverified.
@@ -53,20 +53,20 @@ The Express API accepts at most 40 user/assistant messages, each at most 32,000 
 
 ## Acceptance criteria
 
-- [ ] Selecting Online enables an end-to-end assistant response through the application's API and OpenAI, using the agreed content and conversation policy.
-- [ ] OpenAI credentials remain server-side and are absent from browser assets, browser storage and client responses.
-- [ ] Online retrieves relevant résumé content in the browser and calls the application API only for generation, without starting or downloading the local generation model for an Online-only session.
-- [ ] The backend uses Node.js, Express and TypeScript, with OpenAI behind a replaceable provider integration. Existing browser conversation and retrieval services are reused through injected generation dependencies, with abstract classes sharing core behavior.
-- [ ] Local and Online settings identify the actual selected model and supported choices; switching follows the agreed conversation and in-flight response policy.
-- [ ] Online model choices and supported settings come from the server's allowed configuration and match API validation. DI permits replacement of provider integrations, and abstract classes share core behavior at the reuse boundary confirmed during design.
-- [ ] The initial Online configuration uses gpt-6-luna with reasoning.effort low through the OpenAI Responses API. Tests check the actual outbound model and effort, and the UI reflects this configuration accurately.
-- [ ] Local and Online share the existing Send, Cancel, Reset and applicable recovery controls. Online streams output; Cancel retains partial text and requests upstream cancellation. Reset clears the tab's conversation and prevents stale output from repopulating it. Local cancellation remains functional.
-- [ ] Switching mode preserves the conversation and waits for accepted responses to complete, fail or be explicitly cancelled before applying the new selection. Late output from an old request cannot change the active conversation.
-- [ ] The API accepts the question, bounded relevant history and retrieved passages, supplies trusted server-side assistant instructions, and validates inputs before contacting the provider. Conversation history is not persisted by the backend.
-- [ ] The backend lives in this repository, with a same-origin /api route and a documented equivalent development setup.
-- [ ] An Online failure preserves partial output and permits explicit Retry without automatic provider/mode fallback or silent paid-request replay; API and browser tests verify this behavior.
-- [ ] The agreed development and deployment setup can run the API with server-side OpenAI configuration. No application usage-policy or spending-accounting infrastructure is introduced.
-- [ ] Browser verification demonstrates streaming, Cancel, Retry, Reset and mode switching through the Express API and a controlled OpenAI HTTP endpoint. A real credentialed OpenAI response is explicitly unverified under the user's approved alternative.
+- [x] Selecting Online enables an end-to-end assistant response through the application's API and OpenAI, using the agreed content and conversation policy.
+- [x] OpenAI credentials remain server-side and are absent from browser assets, browser storage and client responses.
+- [x] Online retrieves relevant résumé content in the browser and calls the application API only for generation, without starting or downloading the local generation model for an Online-only session.
+- [x] The backend uses Node.js, Express and TypeScript, with OpenAI behind a replaceable provider integration. Existing browser conversation and retrieval services are reused through injected generation dependencies, with abstract classes sharing core behavior.
+- [x] Local and Online settings identify the actual selected model and supported choices; switching follows the agreed conversation and in-flight response policy.
+- [x] Online model choices and supported settings come from the server's allowed configuration and match API validation. DI permits replacement of provider integrations, and abstract classes share core behavior at the reuse boundary confirmed during design.
+- [x] The initial Online configuration uses gpt-6-luna with reasoning.effort low through the OpenAI Responses API. Tests check the actual outbound model and effort, and the UI reflects this configuration accurately.
+- [x] Local and Online share the existing Send, Cancel, Reset and applicable recovery controls. Online streams output; Cancel retains partial text and requests upstream cancellation. Reset clears the tab's conversation and prevents stale output from repopulating it. Local cancellation remains functional.
+- [x] Switching mode preserves the conversation and waits for accepted responses to complete, fail or be explicitly cancelled before applying the new selection. Late output from an old request cannot change the active conversation.
+- [x] The API accepts the question, bounded relevant history and retrieved passages, supplies trusted server-side assistant instructions, and validates inputs before contacting the provider. Conversation history is not persisted by the backend.
+- [x] The backend lives in this repository, with a same-origin /api route and a documented equivalent development setup.
+- [x] An Online failure preserves partial output and permits explicit Retry without automatic provider/mode fallback or silent paid-request replay; API and browser tests verify this behavior.
+- [x] The agreed development and deployment setup can run the API with server-side OpenAI configuration. No application usage-policy or spending-accounting infrastructure is introduced.
+- [x] Browser verification demonstrates streaming, Cancel, Retry, Reset and mode switching through the Express API and a controlled OpenAI HTTP endpoint. A real credentialed OpenAI response is explicitly unverified under the user's approved alternative.
 
 ## Dependencies
 
@@ -79,10 +79,10 @@ The Express API accepts at most 40 user/assistant messages, each at most 32,000 
 
 ## Definition of Done
 
-- [ ] User confirms the design and verification plan, and this planning ticket is refined to observable agreed criteria before implementation.
-- [ ] All approved acceptance criteria pass focused tests and actual application journeys; limitations are explicit.
-- [ ] Required type, lint, build, independent reviews and final full-suite checks pass through docs/implementation-flow.md.
-- [ ] Reusable verification tooling is committed; routine run evidence is retained as artifacts under docs/verification-evidence.md.
+- [x] User confirms the design and verification plan, and this planning ticket is refined to observable agreed criteria before implementation.
+- [x] All approved acceptance criteria pass focused tests and actual application journeys; limitations are explicit.
+- [x] Required type, lint, build, independent reviews and final full-suite checks pass through docs/implementation-flow.md.
+- [x] Reusable verification tooling is committed; routine run evidence is retained as artifacts under docs/verification-evidence.md.
 
 ### Stages 3–4 verification
 
@@ -109,3 +109,7 @@ Blast radius: no bulk or destructive live-data operation applies. Preference sch
 Stage 7 entered: final npm test after both reviews is running. Next: record its result, sign metadata, push and open a PR, publish browser artifacts with 90-day retention, and close this ticket for handoff. Merge and deployment remain unauthorized. The reconnect ticket remains OPEN and scheduled after this feature.
 
 Final full-suite result: npm test PASS, 147 tests, zero failures/skips, after both independent reviews at implementation ac22203a9ddd0d759712d1b5a8eed6195d41a3ae. The prepared PR describes this snapshot. Current source is unchanged apart from ticket records. Publication is authorized by the Autopilot grant; proceed to branch push, PR and artifact workflow dispatch.
+
+### PR handoff
+
+Published [PR #23](https://github.com/ragemous3/personal-webpage/pull/23). Ticket CLOSED after the branch push and PR creation, as required by the implementation flow. Both reviews and the final 147-test suite apply to ac22203a9ddd0d759712d1b5a8eed6195d41a3ae; subsequent changes are ticket metadata only. Next: closure push, hosted Online evidence and final CI/readback checks. Routine output remains ignored. Merge and deployment are not authorized.
