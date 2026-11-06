@@ -9,17 +9,20 @@ import {
   TextStreamer,
 } from '@huggingface/transformers';
 
-import { GenerationAbstract } from '@/layers/data/abstracts/generation.abstract';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
-export class LocalLLMData extends GenerationAbstract {
+export class LocalLLMData {
   constructor(
     private readonly generator: TextGenerationPipeline,
     private readonly tokenizerUtility: TokenizerUtility,
     private readonly modelMaxTokens = 0,
-    options: Partial<TextGenerationConfig>,
-  ) { super(options); }
+    private options: Partial<TextGenerationConfig>,
+  ) {}
+
+  configure = (options: Partial<TextGenerationConfig>): void => {
+    this.options = options;
+  };
   dispose = async (): Promise<void> => {
     await this.generator.dispose();
   };

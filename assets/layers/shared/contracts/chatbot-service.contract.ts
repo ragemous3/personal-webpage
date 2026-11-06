@@ -19,4 +19,5 @@ export interface ChatState {
   status: 'initializing' | 'ready' | 'responding' | 'error';
   error?: string;
   runtimeFailure?: boolean;
+  storageFailure?: boolean;
 }

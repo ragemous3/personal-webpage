@@ -99,7 +99,7 @@ export class ChatContainer extends LitElement {
     if (this.lifecycle.status !== 'error') return '';
     if (this.lifecycle.runtimeFailure)
       return html`<button @click=${() => this.chatbotService?.reconnect()}>reconnect</button>`;
-    return html`<button @click=${() => this.chatbotService?.retry()}>Retry</button>`;
+    return html`<button @click=${() => this.chatbotService?.retry()}>${this.lifecycle.storageFailure ? 'Retry saving' : 'Retry'}</button>`;
   };
 
   protected updated(_changed: PropertyValues): void {

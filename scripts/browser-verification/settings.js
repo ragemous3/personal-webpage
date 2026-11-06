@@ -1,16 +1,15 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
+import { createPage } from './page.js';
 import { seedVerificationPreferences } from './preferences.js';
 
-const settingsSelector = 'chatbot-offline-provider >>> assistant-configuration';
-const chatSelector = 'chatbot-offline-provider >>> chat-container';
+const settingsSelector = 'chatbot-provider >>> assistant-configuration';
+const chatSelector = 'chatbot-provider >>> chat-container';
 const ready = (page) =>
   page.waitForFunction(
     () => {
-      const input = globalThis.document
-        .querySelector('chatbot-offline-provider')
-        ?.shadowRoot?.querySelector('chat-container')
+      const input = globalThis.verificationChat()
         ?.shadowRoot?.querySelector('input');
       return input && !input.disabled;
     },
@@ -39,8 +38,7 @@ const untilSettings = (page, expected) =>
   page.waitForFunction(
     (expected) => {
       const component = globalThis.document
-        .querySelector('chatbot-offline-provider')
-        ?.shadowRoot?.querySelector('assistant-configuration');
+        .querySelector('chatbot-provider')?.shadowRoot?.querySelector('assistant-configuration');
       const state = component?.configurationService?.stateSubscription.getValue();
       return (
         state && Object.entries(expected).every(([key, value]) => state.selected[key] === value)
@@ -54,9 +52,7 @@ const exerciseChanges = async (first, second) => {
   await first.type(`${chatSelector} >>> input`, 'hold-for-failure');
   await first.click(`${chatSelector} >>> button[type=submit]`);
   await first.waitForFunction(() =>
-    globalThis.document
-      .querySelector('chatbot-offline-provider')
-      .shadowRoot.querySelector('chat-container')
+    globalThis.verificationChat()
       .shadowRoot.querySelector('[role=log] p:last-child')
       ?.textContent.includes('Controlled'),
   );
@@ -87,8 +83,7 @@ const exerciseChanges = async (first, second) => {
   await first.waitForFunction(
     () =>
       globalThis.document
-        .querySelector('chatbot-offline-provider')
-        .shadowRoot.querySelector('assistant-configuration')
+        .querySelector('chatbot-provider')?.shadowRoot?.querySelector('assistant-configuration')
         .configurationService.stateSubscription.getValue().error,
     { polling: 25 },
   );
@@ -105,7 +100,7 @@ const exerciseChanges = async (first, second) => {
 };
 
 const exerciseSessionOnlyTab = async (context, origin, first, second, pageErrors) => {
-  const session = await context.newPage();
+  const session = await createPage(context);
   session.on('pageerror', (error) => pageErrors.push(error.message));
   session.setDefaultTimeout(10_000);
   await session.evaluateOnNewDocument(() => {
@@ -137,7 +132,7 @@ const exerciseDiscoveredOptions = async (first, second, initialized) => {
   await first.bringToFront();
   await first.waitForFunction(
     () => {
-      const provider = globalThis.document.querySelector('chatbot-offline-provider');
+      const provider = globalThis.document.querySelector('chatbot-provider');
       return (
         provider.shadowRoot
           .querySelector('assistant-configuration')
@@ -178,7 +173,7 @@ const exerciseDiscoveredOptions = async (first, second, initialized) => {
 export const runSettings = async (browser, origin, evidence, directory) => {
   const context = await browser.createBrowserContext();
   const pageErrors = [];
-  const first = await context.newPage();
+  const first = await createPage(context);
   first.on('pageerror', (error) => pageErrors.push(error.message));
   first.setDefaultTimeout(10_000);
   const result = {
@@ -191,13 +186,13 @@ export const runSettings = async (browser, origin, evidence, directory) => {
     await seedVerificationPreferences(first, 'online');
     await first.goto(origin);
     await untilSettings(first, { mode: 'online', maxNewTokens: 32 });
-    const second = await context.newPage();
+    const second = await createPage(context);
     second.on('pageerror', (error) => pageErrors.push(error.message));
     second.setDefaultTimeout(10_000);
     await second.goto(origin);
     await untilSettings(second, { mode: 'online' });
     assert.equal(evidence.events.filter((event) => event.type === 'initialized').length, 0);
-    assert.equal(await first.$eval(`${chatSelector} >>> input`, (input) => input.disabled), true);
+    assert.equal(await first.$(`${chatSelector} >>> input`), null);
     result.savedOnlineInitializations = 0;
     await select(first, 'mode', 'local');
     await Promise.all([ready(first), ready(second)]);

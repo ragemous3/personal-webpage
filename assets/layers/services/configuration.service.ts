@@ -100,6 +100,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   readonly #observeRuntime = (state: RuntimeConfigurationState): void => {
+    if (state.mounted) this.#state.emit({ ...this.#current(), mounted: state.mounted });
     this.#responding = state.responding;
     if (state.runtime) this.#publishRuntime(state.runtime);
     if (!state.responding) this.#schedule();

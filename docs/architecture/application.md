@@ -1,20 +1,21 @@
 # Application architecture
 
-The application includes the static Hugo build, all three service slices, shared browser workers, storage and the Express/OpenAI boundary. Detailed contracts and paths are shown in [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md).
+Hugo serves the view layer. The chatbot host switches injected Local and Online trees. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `ac22203a9ddd0d759712d1b5a8eed6195d41a3ae`. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c` (PR #23). The code is verified with controlled Online HTTP/model fixtures and a real Local CPU/cache journey. Live credentialed OpenAI access is unverified. Colors refer to this comparison.
+Implementation: replacement source in the worktree after `aeae011e246f41c94f6cf673053a36e28ae56fae`; final verification pending. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
 
-Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
+Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
 ```mermaid
 flowchart TB
   subgraph Build["Static build"]
-    Content["content/"]
-    Config["config/"]
-    Hugo["Hugo<br/>layouts/"]
+    Hugo["Hugo"]
+    Layout["layouts/home.html"]
+    ContentInput["content/ / config/"]
     Public["public/"]
   end
   subgraph Views["Views layer"]
+    Host["ChatbotHost"]
     ChatUI["ChatContainer"]
     SettingsUI["AssistantConfiguration"]
     ProgressUI["ProgressContainer"]
@@ -24,140 +25,147 @@ flowchart TB
     Settings["ConfigurationService"]
     Progress["ProgressService"]
   end
-  subgraph Shared["Shared layer — contracts"]
-    RagContract["ChatbotServiceContract"]
-    SettingsContract["ConfigurationServiceContract"]
-    ProgressContract["ProgressServiceContract"]
-    PortContract["StandardCommunicationContract"]
-    RuntimeContract["RuntimeCoordinatorContract"]
+  subgraph Shared["Shared contracts"]
+    ChatService["ChatbotServiceContract"]
+    ConfigService["ConfigurationServiceContract"]
+    ProgressService["ProgressServiceContract"]
+    Session["ChatSessionContract"]
+    HistoryContract["ChatHistoryRepositoryContract"]
+    Port["StandardCommunicationContract"]
+    Runtime["RuntimeCoordinatorContract / RuntimeLifecycleContract"]
     AdapterContract["RuntimeConfigurationAdapterContract"]
-    CatalogContract["OnlineModelRepositoryContract"]
   end
   subgraph Data["Data layer — browser tab"]
     Chat["Chat"]
+    Online["OnlineChatClient"]
+    ApiBase["ApiBase"]
     DB["DB"]
-    Standard["StandardCommunication"]
+    Standard["StandardCommunication / StandardCommunicationBaseAbstract"]
     Coordinator["RuntimeCoordinator"]
     CoordinatorBase["RuntimeCoordinatorAbstract"]
     Connection["RuntimeCoordinatorConnection"]
     Transport["SharedWorkerManager"]
-    PassageRepo["ContentRepository"]
-    Prompt["ChatMessageModel"]
-    Preferences["ConfigurationRepository"]
-    Metadata["ModelMetadataRepository"]
+    WorkerBase["WorkerBase — abstract"]
+    Content["ContentRepository / ChatMessageModel"]
+    History["ChatHistoryRepository"]
+    IDB["IndexDBBase"]
+    Preferences["ConfigurationRepository / ModelMetadataRepository"]
     Catalog["OnlineModelRepository"]
     Adapter["RuntimeConfigurationAdapter"]
-    IndexStorage["IndexDBBase"]
   end
-  subgraph Workers["Data layer — three SharedWorkers"]
+  subgraph Workers["SharedWorkers — generation starts only for Local"]
     Hub["RuntimeCoordinatorStateMachine<br/>runtime-coordinator.shared-worker.ts"]
-    Retrieval["SharedModelRuntime<br/>vectordb.shared-worker.ts"]
+    Retrieval["SharedModelRuntime / createRetrievalDriver<br/>vectordb.shared-worker.ts"]
     Index["VectorDBHNSWData"]
     subgraph GenerationWorker["llm.shared-worker.ts"]
-      GenRuntime["SharedModelRuntime"]
-      GenDriver["createLlmMessageHandler"]
-      GenAbstract["GenerationAbstract"]
+      Gen["SharedModelRuntime"]
+      Handler["createLlmMessageHandler"]
       Local["LocalLLMData"]
-      Online["OnlineGeneration"]
     end
   end
-  subgraph Server["Server — Express API and provider integration"]
-    ModelAPI["GET /api/models"]
-    GenerateAPI["generate<br/>POST /api/generate"]
+  subgraph Server["Server — Express and provider integration"]
+    Models["GET /api/models"]
+    Generate["generate — POST /api/generate"]
     Provider["OpenAIProvider"]
     ProviderBase["GenerationProviderAbstract"]
-    SDK["OpenAI.responses.create<br/>openai"]
+    SDK["OpenAI.responses.create — openai"]
   end
-  subgraph Resources["Storage and external resources"]
-    Storage["localStorage"]
-    Cache["CacheStorage"]
-    IndexedDB["indexedDB"]
-    Files["/content-data/chunks.json<br/>contents.bin / vector-metadata.json"]
-    HF["huggingface.co"]
-    OpenAI["gpt-6-luna<br/>reasoning.effort: low"]
+  subgraph Resources["Storage, content and external resources"]
+    Storage["localStorage — settings"]
+    Cache["CacheStorage — models / metadata"]
+    IndexedDB["indexedDB — retrieval index / chat history"]
+    Files["chunks.json / contents.bin / vector-metadata.json"]
+    HF["huggingface.co — metadata / model files"]
+    OpenAI["gpt-6-luna — low reasoning effort"]
   end
-  subgraph Composition["Composition — entry-point names only"]
-    ChatProvider["ChatbotOfflineProvider"]
-    ChatFactory["buildChatbotOfflineDeps"]
-    ProgressProvider["ProgressProvider"]
-    ProgressFactory["progressFactory"]
+  subgraph Composition["Composition — names only"]
+    Root["ChatbotProvider / buildChatbotDeps"]
+    Offline["ChatbotOfflineProvider / buildChatbotOfflineDeps"]
+    OnlineProvider["ChatbotOnlineProvider / buildChatbotOnlineDeps"]
+    BaseProvider["ChatbotModeProviderAbstract"]
+    ServiceFactory["buildRagService / getConversationId"]
+    ProgressProvider["ProgressProvider / progressFactory"]
     RuntimeFactory["getRuntimeCoordinator"]
-    ServerEntry["server/main.composition.ts"]
-    APIFactory["createApp"]
+    Context["chatbotCompositionContext"]
+    ExistingContext["configurationContext / chatbotContext"]
+    Entry["server/main.composition.ts / createApp"]
   end
-
-  Content --> Hugo
-  Config --> Hugo
-  Hugo -->|"build"| Public
-  Public -->|"load view modules"| ChatUI
-  Public -->|"load view modules"| SettingsUI
-  Public -->|"load view modules"| ProgressUI
-  ChatUI <-->|"actions and conversation state"| Rag
+  Hugo --> Public
+  Layout --> Hugo
+  ContentInput --> Hugo
+  Public --> Host
+  Public --> SettingsUI
+  Public --> ProgressUI
+  Host <-->|"mounted mode"| Settings
+  Host -->|"one injected tree"| ChatUI
+  ChatUI <-->|"actions and response state"| Rag
   SettingsUI <-->|"edits and settings state"| Settings
-  Progress -->|"progress state"| ProgressUI
-  ProgressUI -->|"connect"| Progress
-  ChatUI -.->|"uses"| RagContract
-  Rag -.->|"implements"| RagContract
-  SettingsUI -.->|"uses"| SettingsContract
-  Settings -.->|"implements"| SettingsContract
-  ProgressUI -.->|"uses"| ProgressContract
-  Progress -.->|"implements"| ProgressContract
-  Rag <-->|"generation"| Chat
+  ProgressUI <-->|"loading state"| Progress
+  ChatUI -.->|"uses"| ChatService
+  Rag -.->|"implements"| ChatService
+  Host -.->|"uses"| ConfigService
+  Settings -.->|"implements"| ConfigService
+  Progress -.->|"implements"| ProgressService
+  Rag -.->|"uses"| Session
+  Session -.->|"history dependency"| HistoryContract
+  Session -.->|"runtime dependency"| Runtime
+  Rag -.->|"uses"| Port
+  Rag <-->|"Local generation"| Chat
+  Rag <-->|"Online generation"| Online
   Rag <-->|"retrieval"| DB
-  Rag <-->|"selected passages"| PassageRepo
-  Rag <-->|"prompt and history"| Prompt
-  Rag <-->|"response leases"| Coordinator
-  Rag -.->|"uses"| PortContract
+  Rag <-->|"prompt and passages"| Content
+  Rag <-->|"load/save/reset"| History
+  History -.->|"implements"| HistoryContract
+  History -->|"versioned store"| IDB
+  History <-->|"transaction commit"| IndexedDB
+  IDB --> IndexedDB
   Chat -.->|"extends"| Standard
   DB -.->|"extends"| Standard
-  Chat <-->|"messages"| Coordinator
-  DB <-->|"messages"| Coordinator
-  Coordinator -->|"progress events"| Progress
-  Progress -.->|"uses"| RuntimeContract
+  Standard -.->|"implements"| Port
+  Online -.->|"implements"| Port
+  Online -.->|"extends"| ApiBase
+  Content --> Files
+  Rag <-->|"response lease / recovery"| Coordinator
+  Rag -->|"successful explicit reconnect retries availability"| Settings
+  Settings <-->|"saved choices and Local metadata"| Preferences
+  Settings <-->|"allowed Online choices"| Catalog
+  Settings <-->|"configure and observe"| Adapter
+  Adapter -.->|"implements"| AdapterContract
+  Adapter -->|"availability"| Rag
+  Adapter <-->|"settings; mount permission after drain"| Coordinator
+  Preferences <-->|"settings"| Storage
+  Preferences <-->|"metadata cache"| Cache
+  Preferences <-->|"pinned metadata"| HF
+  Catalog <-->|"allowed model catalog"| Models
+  Progress <-->|"model progress"| Coordinator
+  Chat <-->|"Local messages"| Coordinator
+  DB <-->|"retrieval messages"| Coordinator
   Coordinator -.->|"extends"| CoordinatorBase
-  CoordinatorBase -.->|"implements"| RuntimeContract
+  CoordinatorBase -.->|"implements"| Runtime
   Coordinator <-->|"transport"| Connection
   Connection -.->|"extends"| Transport
+  Transport -.->|"extends"| WorkerBase
   Connection <-->|"MessagePort"| Hub
   Hub <-->|"retrieval"| Retrieval
   Retrieval <-->|"embed and search"| Index
-  Hub <-->|"generation and confirmed stop"| GenRuntime
-  GenRuntime <-->|"handle and publish"| GenDriver
-  GenDriver -.->|"uses"| GenAbstract
-  GenDriver -->|"Local selection"| Local
-  GenDriver -->|"Online selection"| Online
-  Local -.->|"extends"| GenAbstract
-  Online -.->|"extends"| GenAbstract
-  Local -->|"model files"| HF
-  Local <-->|"cached weights"| Cache
-  Index -->|"embedding model"| HF
-  Index <-->|"cached embedding weights"| Cache
-  Index <-->|"persist index"| IndexStorage
-  IndexStorage <-->|"read and write"| IndexedDB
-  Index -->|"load index assets"| Files
-  PassageRepo -->|"load passages"| Files
-  Settings <-->|"load, save and observe"| Preferences
-  Preferences <-->|"persist preferences"| Storage
-  Settings <-->|"Local options"| Metadata
-  Metadata <-->|"pinned model metadata"| HF
-  Metadata <-->|"cached metadata"| Cache
-  Settings <-->|"Online options"| Catalog
-  Catalog -.->|"implements"| CatalogContract
-  Catalog <-->|"fetch choices"| ModelAPI
-  Settings <-->|"apply and observe"| Adapter
-  Adapter -.->|"implements"| AdapterContract
-  Adapter <-->|"configure runtime"| Coordinator
-  Adapter -->|"setAvailable"| Rag
-  Online <-->|"HTTP stream and abort"| GenerateAPI
-  GenerateAPI -->|"injected provider"| Provider
-  GenerateAPI -.->|"depends on"| ProviderBase
+  Index --> Files
+  Index --> HF
+  Index --> Cache
+  Index --> IndexedDB
+  Hub <-->|"Local FIFO generation"| Gen
+  Gen <-->|"handle and publish"| Handler
+  Handler <-->|"inference"| Local
+  Local --> HF
+  Local --> Cache
+  Online <-->|"HTTP stream / abort"| Generate
+  Generate -.->|"provider contract"| ProviderBase
+  Generate <-->|"injected provider"| Provider
   Provider -.->|"extends"| ProviderBase
-  Provider <-->|"stream and cancellation"| SDK
-  SDK <-->|"Responses API"| OpenAI
-
+  Provider <-->|"stream / AbortSignal"| SDK
+  SDK <-->|"generation"| OpenAI
   classDef added stroke:#2da44e,stroke-width:3px;
+  class Host,Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class CatalogContract,Catalog,GenAbstract,Online,ModelAPI,GenerateAPI,Provider,ProviderBase,SDK,OpenAI,ServerEntry,APIFactory added;
-  class SettingsUI,Settings,Adapter,GenDriver,Local,ChatFactory modified;
+  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Handler,Offline modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

@@ -9,6 +9,7 @@
       import '/assets/layers/views/chatbot.component.ts';
       import { RagService } from '/assets/layers/services/chatbot.service.ts';
       import { ChatMessageModel } from '/assets/layers/data/models/chat.model.ts';
+      import { ChatHistoryRepository } from '/assets/layers/data/chat-history-repository.data.ts';
 
       const transport = () => {
         const listeners = new Set();
@@ -33,6 +34,7 @@
         database,
         { getChunksAsync: async () => [{ index: 0, text: 'Résumé evidence' }] },
         new ChatMessageModel({ role: 'system', content: 'Use evidence.' }),
+        { history: new ChatHistoryRepository(indexedDB), conversationId: crypto.randomUUID() },
       );
       const element = document.createElement('chat-container');
       document.body.append(element);

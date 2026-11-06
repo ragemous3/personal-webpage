@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: `ac22203a9ddd0d759712d1b5a8eed6195d41a3ae`. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c` (PR #23). The code is verified with controlled Online HTTP/model fixtures and a real Local CPU/cache journey. Live credentialed OpenAI access is unverified. Colors refer to this comparison.
+Implementation: replacement source in the worktree after `aeae011e246f41c94f6cf673053a36e28ae56fae`; final verification pending. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified. Colors refer to this comparison.
 
 Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
 
@@ -25,6 +25,7 @@ flowchart TB
     CoordinatorBase["RuntimeCoordinatorAbstract"]
     Connection["RuntimeCoordinatorConnection"]
     Transport["SharedWorkerManager"]
+    WorkerBase["WorkerBase — abstract"]
   end
   subgraph Workers["Data layer — SharedWorkers"]
     Hub["RuntimeCoordinatorStateMachine<br/>runtime-coordinator.shared-worker.ts"]
@@ -56,6 +57,7 @@ flowchart TB
   CoordinatorBase -.->|"implements"| CoordinatorContract
   Coordinator <-->|"native worker transport"| Connection
   Connection -.->|"extends"| Transport
+  Transport -.->|"extends"| WorkerBase
   Connection <-->|"MessagePort"| Hub
   RetrievalDriver -.->|"returns"| DriverContract
   Generation -.->|"uses driver"| DriverContract
@@ -67,6 +69,6 @@ flowchart TB
 
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class GenerationDriver modified;
+  class GenerationDriver,CoordinatorBase,Connection,Hub modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

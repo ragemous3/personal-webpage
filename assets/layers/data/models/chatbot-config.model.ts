@@ -28,7 +28,6 @@ export interface DatabaseConfig extends InitConfigBase {
 }
 
 export interface LmConfig extends InitConfigBase {
-  online?: boolean;
   revision?: string;
   model: string;
   device: DeviceType;

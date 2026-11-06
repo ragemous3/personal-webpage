@@ -1,130 +1,164 @@
 # RagService
 
-[Source](../../assets/layers/services/chatbot.service.ts). The answering slice reuses browser retrieval and history for Local or Online generation. Streamed output and cancellation return through the coordinator; the API uses OpenAI only for generation.
+[Source](../../assets/layers/services/chatbot.service.ts). The host mounts one injected mode tree after accepted work drains. Both trees reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
 
-Implementation: `ac22203a9ddd0d759712d1b5a8eed6195d41a3ae`. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c` (PR #23). The code is verified with controlled Online HTTP/model fixtures and a real Local CPU/cache journey. Live credentialed OpenAI access is unverified. Colors refer to this comparison.
+Implementation: replacement source in the worktree after `aeae011e246f41c94f6cf673053a36e28ae56fae`; final verification pending. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
 
-Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
+Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
 ```mermaid
 flowchart TB
   subgraph Views["Views layer — browser tab"]
+    Host["ChatbotHost"]
     UI["ChatContainer"]
   end
   subgraph Services["Services layer — browser tab"]
-    Rag["RagService<br/>retrieval, history and response lifecycle"]
+    Settings["ConfigurationService"]
+    Rag["RagService"]
   end
   subgraph Contracts["Shared layer — contracts"]
-    ChatServiceContract["ChatbotServiceContract"]
-    PortContract["StandardCommunicationContract<br/>alias of StandardCommunicationBaseContract"]
-    LifecycleContract["RuntimeLifecycleContract"]
-    CoordinatorContract["RuntimeCoordinatorContract"]
+    ServiceContract["ChatbotServiceContract"]
+    SettingsContract["ConfigurationServiceContract"]
+    Port["StandardCommunicationContract<br/>StandardCommunicationBaseContract"]
+    Session["ChatSessionContract"]
+    HistoryContract["ChatHistoryRepositoryContract"]
+    Lifecycle["RuntimeLifecycleContract"]
+    RuntimeContract["RuntimeCoordinatorContract"]
     ContentContract["ContentRepositoryContract"]
+    PromptContract["ChatMessageModelContract"]
     DriverContract["SharedModelDriverContract"]
+    ApiContract["ApiContract"]
+    StoreContract["StoreContract"]
+    MessagingContract["MessagingBaseContract"]
   end
   subgraph Data["Data layer — browser tab"]
     Chat["Chat"]
+    Online["OnlineChatClient"]
+    ApiBase["ApiBase"]
     DB["DB"]
     Standard["StandardCommunication<br/>abstract"]
     StandardBase["StandardCommunicationBaseAbstract"]
+    History["ChatHistoryRepository"]
+    IDB["IndexDBBase"]
     Content["ContentRepository"]
-    Prompt["ChatMessageModel<br/>history and retrieved-context prompt"]
-    PromptContract["ChatMessageModelContract"]
+    Prompt["ChatMessageModel"]
     Coordinator["RuntimeCoordinator"]
     CoordinatorBase["RuntimeCoordinatorAbstract"]
     Connection["RuntimeCoordinatorConnection"]
     Transport["SharedWorkerManager"]
+    WorkerBase["WorkerBase — abstract"]
   end
-  subgraph Workers["Data layer — three SharedWorkers"]
+  subgraph Workers["Data layer — SharedWorkers"]
     Hub["RuntimeCoordinatorStateMachine<br/>runtime-coordinator.shared-worker.ts"]
     Retrieval["SharedModelRuntime<br/>createRetrievalDriver<br/>vectordb.shared-worker.ts"]
-    Index["VectorDBHNSWData<br/>embedding pipeline and index"]
+    Index["VectorDBHNSWData"]
     subgraph GenerationWorker["llm.shared-worker.ts"]
-      GenerationRuntime["SharedModelRuntime"]
+      Generation["SharedModelRuntime"]
       GenerationFactory["createLlmDriver"]
-      Generation["createLlmMessageHandler"]
-      GenerationBase["GenerationAbstract"]
+      Handler["createLlmMessageHandler"]
       Local["LocalLLMData"]
-      Online["OnlineGeneration"]
     end
   end
   subgraph Server["Server — Express API and provider integration"]
-    API["generate<br/>POST /api/generate<br/>server/app.factory.ts"]
-    RequestDTO["GenerationRequest"]
-    Instructions["assistantInstructions"]
-    ProviderBase["GenerationProviderAbstract"]
+    API["generate — POST /api/generate"]
+    DTO["GenerationRequest"]
     Provider["OpenAIProvider"]
-    SDK["OpenAI.responses.create<br/>openai"]
+    ProviderBase["GenerationProviderAbstract"]
+    Instructions["assistantInstructions"]
+    SDK["OpenAI.responses.create — openai"]
   end
-  subgraph Resources["Content and external resources"]
+  subgraph Resources["Storage, content and external resources"]
+    IndexedDB["indexedDB — assistant-chat-history / conversations"]
     Chunks["/content-data/chunks.json"]
-    LocalWeights["Xenova/Qwen1.5-0.5B-Chat<br/>browser model cache"]
     RetrievalAssets["Xenova/all-MiniLM-L6-v2<br/>contents.bin / vector-metadata.json"]
-    OpenAI["gpt-6-luna<br/>reasoning.effort: low"]
+    LocalWeights["Xenova/Qwen1.5-0.5B-Chat"]
+    Cache["CacheStorage — model files"]
+    OpenAI["gpt-6-luna — low reasoning effort"]
   end
-  subgraph Composition["Composition — entry-point names only"]
-    BrowserProvider["ChatbotOfflineProvider"]
-    BrowserFactory["buildChatbotOfflineDeps"]
-    ServerComposition["server/main.composition.ts"]
-    AppFactory["createApp"]
+  subgraph Composition["Composition — names only"]
+    Root["ChatbotProvider / buildChatbotDeps"]
+    OfflineProvider["ChatbotOfflineProvider"]
+    OnlineProvider["ChatbotOnlineProvider"]
+    ModeBase["ChatbotModeProviderAbstract"]
+    LocalFactory["buildChatbotOfflineDeps"]
+    Factories["buildChatbotOnlineDeps / buildRagService"]
+    Context["chatbotCompositionContext"]
+    ExistingContext["configurationContext / chatbotContext"]
+    Identity["getConversationId — sessionStorage reload identity"]
+    ServerComposition["server/main.composition.ts / createApp"]
   end
-
-  UI <-->|"actions, state and answer text"| Rag
-  UI -.->|"uses"| ChatServiceContract
-  Rag -.->|"implements"| ChatServiceContract
-  Rag -.->|"uses"| PortContract
-  Rag -.->|"uses"| LifecycleContract
+  Host <-->|"mounted settings"| Settings
+  Host -->|"one mode tree reuses"| UI
+  Host -.->|"uses"| SettingsContract
+  Settings -.->|"implements"| SettingsContract
+  UI <-->|"Send, Cancel, Reset, Retry; state and text"| Rag
+  UI -.->|"uses"| ServiceContract
+  Rag -.->|"implements"| ServiceContract
+  Rag -.->|"uses"| Port
+  Rag -.->|"uses"| Session
+  Session -.->|"history dependency"| HistoryContract
+  Session -.->|"optional runtime dependency"| Lifecycle
+  RuntimeContract -.->|"extends"| Lifecycle
+  Rag <-->|"Local generation"| Chat
+  Rag <-->|"Online generation"| Online
+  Rag <-->|"retrieve passages; cancel"| DB
+  Rag <-->|"load, ordered save, clear"| History
+  History -.->|"implements"| HistoryContract
+  History -->|"versioned open"| IDB
+  History <-->|"transaction commit"| IndexedDB
+  IDB -->|"open store"| IndexedDB
+  IDB -.->|"implements"| StoreContract
+  Rag <-->|"begin; finish after writes drain; reconnect"| Coordinator
+  Rag -->|"successful explicit reconnect retries availability"| Settings
+  Rag <-->|"load passages"| Content
   Rag -.->|"uses"| ContentContract
-  CoordinatorContract -.->|"extends"| LifecycleContract
-  Rag <-->|"generate; Cancel"| Chat
-  Rag <-->|"retrieve; Cancel"| DB
-  Rag <-->|"begin, finish and reconnect"| Coordinator
-  Rag <-->|"load selected passages"| Content
+  Content -.->|"implements"| ContentContract
   Content -->|"read"| Chunks
-  Rag <-->|"prepare prompt"| Prompt
+  Content -.->|"extends"| ApiBase
+  Rag <-->|"prepare context and completed history"| Prompt
   Rag -.->|"uses"| PromptContract
   Prompt -.->|"implements"| PromptContract
   Chat -.->|"extends"| Standard
   DB -.->|"extends"| Standard
   Standard -.->|"extends"| StandardBase
-  StandardBase -.->|"implements"| PortContract
-  Content -.->|"implements"| ContentContract
-  Chat <-->|"route generation messages"| Coordinator
-  DB <-->|"route retrieval messages"| Coordinator
+  StandardBase -.->|"implements"| Port
+  Online -.->|"implements"| Port
+  Online -.->|"extends"| ApiBase
+  ApiBase -.->|"implements"| ApiContract
+  Chat <-->|"Local generation messages"| Coordinator
+  DB <-->|"retrieval messages"| Coordinator
   Coordinator -.->|"extends"| CoordinatorBase
-  CoordinatorBase -.->|"implements"| CoordinatorContract
-  Coordinator <-->|"native worker transport"| Connection
+  CoordinatorBase -.->|"implements"| RuntimeContract
+  Coordinator <-->|"native transport"| Connection
   Connection -.->|"extends"| Transport
+  Transport -.->|"extends"| WorkerBase
+  WorkerBase -.->|"implements"| MessagingContract
   Connection <-->|"MessagePort"| Hub
-  Hub <-->|"retrieval request and result"| Retrieval
-  Retrieval <-->|"embed and search"| Index
+  Hub <-->|"retrieval"| Retrieval
   Retrieval -.->|"driver satisfies"| DriverContract
-  Index -->|"load or reuse"| RetrievalAssets
-  Hub <-->|"generation, stream and confirmed stop"| GenerationRuntime
-  GenerationRuntime -->|"create or reset driver"| GenerationFactory
-  GenerationFactory -->|"returns handler"| Generation
-  GenerationRuntime <-->|"handle and publish"| Generation
+  Retrieval <-->|"embed and search"| Index
+  Index -->|"load"| RetrievalAssets
+  Hub <-->|"Local FIFO generation and confirmed stop"| Generation
+  Generation -->|"create driver"| GenerationFactory
+  GenerationFactory -->|"return handler"| Handler
   GenerationFactory -.->|"returns"| DriverContract
-  Generation -.->|"uses"| GenerationBase
-  Generation -->|"selected implementation"| Local
-  Generation -->|"selected implementation"| Online
-  Local -.->|"extends"| GenerationBase
-  Online -.->|"extends"| GenerationBase
-  Local -->|"load or reuse"| LocalWeights
-  Online <-->|"HTTP stream; abort on Cancel"| API
-  API -.->|"depends on"| ProviderBase
-  API -->|"generate through injected provider"| Provider
+  Generation <-->|"handle and publish"| Handler
+  Handler <-->|"generate"| Local
+  Local -->|"load"| LocalWeights
+  Local -->|"Transformers.js cache"| Cache
+  Index -->|"Transformers.js cache"| Cache
+  Online <-->|"POST stream; AbortSignal"| API
+  API -.->|"uses"| DTO
+  API -.->|"provider contract"| ProviderBase
+  API <-->|"injected provider"| Provider
   Provider -.->|"extends"| ProviderBase
-  API -.->|"uses"| RequestDTO
-  Provider -.->|"uses"| RequestDTO
-  Provider -->|"server-owned instructions"| Instructions
+  Provider -.->|"uses"| DTO
+  Provider -->|"trusted instructions"| Instructions
   Provider <-->|"stream; AbortSignal"| SDK
   SDK <-->|"request and streamed response"| OpenAI
-
   classDef added stroke:#2da44e,stroke-width:3px;
-  class GenerationBase,Online,API,RequestDTO,Instructions,ProviderBase,Provider,SDK,OpenAI,ServerComposition,AppFactory added;
-
+  class Host,Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,ServerComposition added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class GenerationFactory,Generation,Local,BrowserFactory modified;
+  class UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory,GenerationFactory,Handler modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

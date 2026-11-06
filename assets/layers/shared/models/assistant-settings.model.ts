@@ -17,6 +17,7 @@ export interface AssistantSettings {
 }
 
 export interface ConfigurationState {
+  mounted?: AssistantSettings | undefined;
   selected: AssistantSettings;
   active?: AssistantSettings | undefined;
   pending: boolean;
@@ -41,6 +42,7 @@ export interface RuntimeAvailability {
 }
 
 export interface RuntimeConfigurationState {
+  mounted?: AssistantSettings | undefined;
   responding: boolean;
   runtime?: RuntimeAvailability;
 }

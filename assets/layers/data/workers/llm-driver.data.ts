@@ -5,11 +5,9 @@ import {
   type TextGenerationPipeline,
 } from '@huggingface/transformers';
 
-import { type GenerationAbstract } from '@/layers/data/abstracts/generation.abstract';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
-import { OnlineGeneration } from '@/layers/data/online-generation.data';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
@@ -59,8 +57,7 @@ const loadModel = async (
   dependencies: LlmWorkerDependencies,
   config: LmConfig,
   request: MessageBase<unknown>,
-): Promise<GenerationAbstract> => {
-  if (config.online) return new OnlineGeneration(config.model, config.generation);
+): Promise<LocalLLMData> => {
   const generator = await dependencies.loadGeneratorPipeline(config, (progress) => {
     dependencies.publish({
       id: request.id,
@@ -80,14 +77,13 @@ const loadModel = async (
 
 const createGenerationQueue = (
   dependencies: LlmWorkerDependencies,
-  getModel: () => GenerationAbstract | undefined,
+  getModel: () => LocalLLMData | undefined,
 ) => {
-  const pending = new Map<string, { owner: string; stopping: InterruptableStoppingCriteria; abort: AbortController }>();
+  const pending = new Map<string, { owner: string; stopping: InterruptableStoppingCriteria }>();
   let generation: Promise<unknown> = Promise.resolve();
   const runQuery = async (
     request: MessageBase<unknown>,
     stopping: InterruptableStoppingCriteria,
-    signal: AbortSignal,
   ): Promise<void> => {
     const interrupted = (): boolean => stopping.interrupted;
     if (interrupted()) return;
@@ -112,7 +108,6 @@ const createGenerationQueue = (
         });
       },
       stopping,
-      signal,
     );
     if (interrupted()) return;
     dependencies.publish({
@@ -128,13 +123,12 @@ const createGenerationQueue = (
     const key = `${request.id}:${request.requestId ?? request.id}`;
     if (request.task === 'llm:cancel') {
       const entry = pending.get(key);
-      if (entry?.owner === request.id) { entry.stopping.interrupt(); entry.abort.abort(); }
+      if (entry?.owner === request.id) entry.stopping.interrupt();
       return;
     }
     const stopping = new InterruptableStoppingCriteria();
-    const abort = new AbortController();
-    pending.set(key, { owner: request.id, stopping, abort });
-    const next = generation.then(() => runQuery(request, stopping, abort.signal));
+    pending.set(key, { owner: request.id, stopping });
+    const next = generation.then(() => runQuery(request, stopping));
     generation = next.catch(Boolean);
     try {
       await next;
@@ -149,8 +143,8 @@ const identity = ({ generation: _generation, ...value }: LmConfig): unknown => v
 export const createLlmMessageHandler = (
   dependencies: LlmWorkerDependencies,
 ): SharedModelDriverContract['handle'] & { dispose: SharedModelDriverContract['dispose'] } => {
-  let localLLM: GenerationAbstract | undefined;
-  let initialization: Promise<GenerationAbstract> | undefined;
+  let localLLM: LocalLLMData | undefined;
+  let initialization: Promise<LocalLLMData> | undefined;
   let activeConfiguration: LmConfig | undefined;
   const handleGeneration = createGenerationQueue(dependencies, () => localLLM);
 

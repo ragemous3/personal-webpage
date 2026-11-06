@@ -24,13 +24,29 @@ export const mime = (file) =>
     '.css': 'text/css',
   })[path.extname(file)] ?? 'application/octet-stream';
 
+const heldInitializations = new WeakMap();
+export const holdLocalInitialization = (evidence) => {
+  const responses = new Set();
+  heldInitializations.set(evidence, responses);
+  return () => {
+    heldInitializations.delete(evidence);
+    for (const response of responses) response.end('ok');
+  };
+};
+
 const receiveEvent = async (request, response, evidence) => {
   let body = '';
   for await (const chunk of request) {
     body += chunk;
     if (body.length > 65_536) throw new Error('Event too large');
   }
-  evidence.events.push(JSON.parse(body));
+  const event = JSON.parse(body);
+  evidence.events.push(event);
+  const held = heldInitializations.get(evidence);
+  if (held && event.type === 'local-pipeline-loaded') {
+    held.add(response);
+    return;
+  }
   response.end('ok');
 };
 const streamAsset = (file, response) => {

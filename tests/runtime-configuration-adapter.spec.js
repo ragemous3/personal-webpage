@@ -58,7 +58,7 @@ test('saved Online mode configures shared availability without hosting model cha
   assert.equal(calls[0].selection.enabled, false);
 });
 
-test('Local settings map Auto unchanged, retain retrieval precision and host channels only once', async () => {
+test('Local settings map Auto unchanged, retain retrieval precision and leave generation hosting to the mode composition', async () => {
   const { runtime, calls, chat, database } = fixture();
   runtime.select(defaultAssistantSettings);
   await runtime.apply(defaultAssistantSettings);
@@ -72,7 +72,7 @@ test('Local settings map Auto unchanged, retain retrieval precision and host cha
   runtime.select({ ...defaultAssistantSettings, sampling: true, maxNewTokens: 32 });
   await runtime.apply({ ...defaultAssistantSettings, sampling: true, maxNewTokens: 32 });
   assert.equal(calls[1].configurations.llm.generation.temperature, 0.7);
-  assert.equal(chat.initialized, 1);
+  assert.equal(chat.initialized, 0);
   assert.equal(database.initialized, 1);
 });
 
@@ -148,6 +148,31 @@ test('a delayed Local connection cannot submit configuration after a newer Onlin
   assert.deepEqual(dispatched, ['online']);
 });
 
+test('cancelling before the response lease acknowledgement cannot create a later local timeout', async () => {
+  const { RuntimeCoordinatorAbstract } = await import('@/layers/data/abstracts/runtime-coordinator.abstract');
+  class Coordinator extends RuntimeCoordinatorAbstract {}
+  let receive;
+  let acknowledge;
+  const connection = {
+    policy: { requestMs: 20 }, carrier: {},
+    ensureModels: async () => {},
+    listen(listener) { receive = listener; },
+    control(task, _payload, requestId) {
+      if (task === 'runtime:begin') acknowledge = () => receive({ id: 'client', name: 'coordinator', task: 'runtime:begun', requestId });
+    },
+  };
+  const coordinator = new Coordinator(connection);
+  coordinator.host({ id: 'chat', name: 'llm', task: 'llm:init', payload: {} });
+  const messages = [];
+  coordinator.onData((message) => messages.push(message));
+  const beginning = coordinator.begin('cancel-before-ack');
+  coordinator.finish('cancel-before-ack');
+  acknowledge();
+  await beginning;
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  assert.equal(messages.some((message) => message.runtimeFailure), false);
+});
+
 test('shared model recovery remains pending and unavailable until resource readiness returns', () => {
   const { runtime, publish } = fixture();
   publish({
@@ -217,12 +242,26 @@ test('channel reattachment uses the latest settings rather than the initial star
   );
   runtime.select(defaultAssistantSettings);
   await runtime.apply(defaultAssistantSettings);
+  chat.initialize();
   const latest = { ...defaultAssistantSettings, execution: 'wasm', maxNewTokens: 48 };
   runtime.select(latest);
   await runtime.apply(latest);
   await coordinator.reconnect();
   assert.equal(hosted.find((m) => m.name === 'llm').payload.device, 'wasm');
   assert.equal(hosted.find((m) => m.name === 'llm').payload.generation.max_new_tokens, 48);
+});
+
+test('Online configures retrieval alone and ignores a failed Local generation resource', async () => {
+  const { runtime, calls, chat, publish } = fixture();
+  const settings = { ...defaultAssistantSettings, mode: 'online', onlineModel: 'gpt-6-luna' };
+  runtime.select(settings);
+  await runtime.apply(settings);
+  assert.deepEqual(Object.keys(calls[0].configurations), ['vectordb']);
+  assert.equal(chat.initialized, 0);
+  publish({ selection: { settings }, activeSelection: { settings }, mountSelection: { settings }, configuring: false,
+    resources: [{ role: 'llm', status: 'failed' }, { role: 'vectordb', status: 'ready' }] });
+  assert.equal(runtime.stateSubscription.getValue().runtime.ready, true);
+  assert.deepEqual(runtime.stateSubscription.getValue().mounted, settings);
 });
 
 test('a tab cannot report ready against another model revision held by the shared runtime', () => {

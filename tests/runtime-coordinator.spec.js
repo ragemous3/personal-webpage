@@ -31,6 +31,32 @@ const waitFor = async (predicate) => {
   assert.fail('Expected runtime observation before deadline');
 };
 
+test('switching Online can admit responses while a previous Local model is still initializing', async (context) => {
+  const runtime = new RuntimeCoordinatorStateMachine();
+  context.after(() => runtime.dispose());
+  const a = client(runtime, context);
+  let loadingLocal = false;
+  for (const role of ['llm', 'vectordb']) {
+    const { port1, port2 } = new MessageChannel();
+    const instanceId = crypto.randomUUID();
+    port2.addEventListener('message', ({ data }) => {
+      if (data.task === 'runtime:bind') port2.postMessage({ ...data, task: 'runtime:bound', payload: { instanceId, loaded: false } });
+      if (data.task === 'llm:init') loadingLocal = true;
+      if (data.task === 'vectordb:init') port2.postMessage({ ...data, task: 'vectordb:ready', payload: null });
+    });
+    port2.start();
+    context.after(() => port2.close());
+    a.send('runtime:register', { role, port: port1, instanceId });
+  }
+  a.send('runtime:configure', { configurations: { llm: { model: 'local' }, vectordb: { model: 'retrieval' } }, selection: { enabled: true, settings: { mode: 'local' } } }, 'local');
+  await waitFor(() => loadingLocal);
+  a.send('runtime:configure', { configurations: { vectordb: { model: 'retrieval' } }, selection: { enabled: true, settings: { mode: 'online' } } }, 'online');
+  await waitFor(() => a.messages.some((message) => message.task === 'runtime:configured' && message.requestId === 'online'));
+  a.send('runtime:begin', { requestId: 'http-response' }, 'begin');
+  await waitFor(() => a.messages.some((message) => message.requestId === 'begin'));
+  assert.equal(a.messages.find((message) => message.requestId === 'begin').task, 'runtime:accepted');
+});
+
 test('joining tabs observe one model initialization and their own readiness', async (context) => {
   const runtime = new RuntimeCoordinatorStateMachine();
   context.after(() => runtime.dispose());

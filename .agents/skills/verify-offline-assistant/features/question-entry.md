@@ -15,7 +15,7 @@ Open `/` and verify the visible form for entry-open. For entry-type, wait for `r
 
 For entry-open, Doctor --journey entry passes and the owned production build renders the actual components. Run npm run verify:browser -- --mode entry --evidence <new-directory>. The offline initial condition permits disabled controls and proves only the visible entry surface. For entry-type, Doctor --journey answer passes and both model resources must actually reach ready.
 
-- **Open.** Run the skill's `open` command. Expect title `Rasmus Moberg` and visible `chatbot-offline-provider >>> chat-container >>> input` and `chatbot-offline-provider >>> chat-container >>> button[type="submit"]`.
+- **Open.** Run the skill's `open` command. Expect title `Rasmus Moberg` and visible `chatbot-provider >>> chat-container >>> input` and `chatbot-provider >>> chat-container >>> button[type="submit"]`.
 - **Type.** Run `type`. Inspect `after.png` and `observations.json`; expect the exact question in the input and an unchanged page URL.
 - **Proof.** Compare before/after screenshots and the action log. Runtime errors that prevent usable controls fail this journey, even if the HTML contains the element names.
 

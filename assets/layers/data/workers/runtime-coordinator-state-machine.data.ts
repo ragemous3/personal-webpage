@@ -229,7 +229,9 @@ export class RuntimeCoordinatorStateMachine {
   };
 
   readonly #sendSnapshot = (client: RuntimeClient): void => {
+    const mountSelection = this.#configuration?.selection ?? this.#activeSelection;
     const snapshot: RuntimeSnapshot = {
+      ...(mountSelection ? { mountSelection } : {}),
       ...(this.#selection ? { selection: this.#selection } : {}),
       ...(this.#activeSelection ? { activeSelection: this.#activeSelection } : {}),
       responding: this.#leases.size > 0 || this.#requests.size > 0,
@@ -605,7 +607,8 @@ export class RuntimeCoordinatorStateMachine {
       });
     }
     this.#publishFailure(model);
-    for (const lease of this.#leases.values()) this.#cancelLease(lease);
+    if (this.#requiredRole(model.role))
+      for (const lease of this.#leases.values()) this.#cancelLease(lease);
     this.#advance();
     this.#broadcastState();
   };
@@ -615,8 +618,13 @@ export class RuntimeCoordinatorStateMachine {
     Boolean(this.#configuration) ||
     this.#configurationQueue.length > 0 ||
     Object.values(this.#resources).some(
-      (model) => model.configuration !== undefined && model.status === 'failed',
+      (model) => model.configuration !== undefined && model.status === 'failed' && this.#requiredRole(model.role),
     );
+
+  #requiredRole(role: RuntimeRole): boolean {
+    const settings = this.#activeSelection?.settings;
+    return role !== 'llm' || !isRecord(settings) || settings.mode !== 'online';
+  }
 
   readonly #begin = (client: RuntimeClient, message: RuntimeMessage): void => {
     const payload = message.payload;
@@ -711,9 +719,18 @@ export class RuntimeCoordinatorStateMachine {
     const command = this.#command(client, message, configurations);
     if (!command) return;
     this.#selectCommand(command, message.payload.selection);
+    this.#supersedeLocalInitialization(command);
     this.#configurationQueue.push(command);
     this.#broadcastState();
   };
+
+  #supersedeLocalInitialization(command: RuntimeCommand): void {
+    const current = this.#configuration;
+    if (!current || !isRecord(command.selection?.settings)) return;
+    if (command.selection.settings.mode !== 'online' || current.configurations.llm === undefined) return;
+    this.#replyCommand(current, 'runtime:failed', 'Configuration superseded by Online selection');
+    this.#configuration = undefined;
+  }
 
   readonly #selectCommand = (command: RuntimeCommand, selection: unknown): void => {
     if (!isRecord(selection) || typeof selection.enabled !== 'boolean') return;
@@ -753,7 +770,7 @@ export class RuntimeCoordinatorStateMachine {
     this.#startConfiguration();
     this.#checkConfiguration();
     const configured = Object.values(this.#resources).filter(
-      (model) => model.configuration !== undefined,
+      (model) => model.configuration !== undefined && this.#requiredRole(model.role),
     );
     for (const [key, command] of this.#recoveries) {
       if (configured.every((model) => ['ready', 'busy', 'stopping'].includes(model.status))) {
@@ -778,6 +795,7 @@ export class RuntimeCoordinatorStateMachine {
 
   readonly #changeConfiguration = (model: RuntimeResource, configuration: unknown): void => {
     if (!model.port && model.status === 'failed') return;
+    if (['loading', 'connecting'].includes(model.status) && areValuesEqual(configuration, model.configuration)) return;
     model.configuration = configuration;
     if (areValuesEqual(configuration, model.activeConfiguration) && model.status === 'ready')
       return;
