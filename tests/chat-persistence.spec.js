@@ -388,3 +388,51 @@ test('a stale request failure cannot poison a later response after Reset', async
   assert.equal(service.stateSubscription.getValue().status, 'ready');
   assert.equal(service.chatMessagesSubscription.getValue().at(-1).content, 'Current answer');
 });
+
+for (const fault of [
+  { name: 'runtime', storage: false, runtime: true },
+  { name: 'storage and runtime', storage: true, runtime: true },
+  { name: 'storage and model', storage: true, runtime: false },
+]) {
+  test(`Reset preserves ${fault.name} recovery after its clear commits`, async () => {
+    let failSaving = false;
+    let clears = 0;
+    let reconnects = 0;
+    const history = {
+      load: async () => [], clear: async () => { clears++; },
+      save: async () => { if (failSaving) throw new Error('Quota'); },
+    };
+    const { service, chat, database } = create(history, {
+      begin: async () => {}, finish() {}, reconnect: async () => { reconnects++; },
+    });
+    chat.initialize = () => chat.emit({ task: 'llm:ready' });
+    await until(() => service.stateSubscription.getValue().status === 'ready');
+    service.send('Question');
+    await until(() => database.sent.some(({ action }) => action === 'query'));
+    const { requestId } = database.sent[0];
+    if (fault.storage) {
+      failSaving = true;
+      chat.emit({ task: 'llm:stream:response', requestId, payload: 'Pending save' });
+      await until(() => service.stateSubscription.getValue().storageFailure);
+    }
+    chat.emit({ task: fault.storage ? 'llm:init' : 'llm:query', requestId: fault.storage ? undefined : requestId,
+      error: { message: 'Model failed' }, runtimeFailure: fault.runtime });
+    await service.whenSettled();
+    service.reset();
+    await service.whenSettled();
+    await tick();
+    const state = service.stateSubscription.getValue();
+    assert.equal(clears, 1);
+    assert.deepEqual(service.chatMessagesSubscription.getValue(), []);
+    assert.equal(state.status, 'error');
+    assert.notEqual(state.storageFailure, true);
+    assert.equal(Boolean(state.runtimeFailure), fault.runtime);
+    if (fault.runtime) {
+      chat.emit({ task: 'llm:ready' });
+      await service.reconnect();
+    } else service.retry();
+    assert.equal(service.stateSubscription.getValue().status, 'ready');
+    assert.equal(reconnects, fault.runtime ? 1 : 0);
+    assert.equal(database.sent.filter(({ action }) => action === 'query').length, 1);
+  });
+}

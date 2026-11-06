@@ -173,7 +173,7 @@ export class RagService implements ChatbotServiceContract {
       this.#historyReady = true;
       this.#clearing = false;
       this.#finishResponse(requestId);
-      if (this.#failedWorkers.size === 0 && !this.#runtimeFailed) this.#ready();
+      this.#ready();
     });
   };
 
