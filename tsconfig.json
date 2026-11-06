@@ -5,7 +5,8 @@
       "@/*": ["assets/*"]
     },
     "lib": ["es2022", "dom", "webworker"],
-    "types": [],
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
     "target": "es2022",
     "module": "esnext",
     "noUnusedLocals": true,

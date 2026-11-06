@@ -19,6 +19,8 @@ const selectionIdentity = (selection: unknown): Pick<RuntimeAvailability, 'selec
     ? { selectionId: selection.selectionId }
     : {};
 
+const isEnabled = (settings: AssistantSettings): boolean => settings.mode === 'local' || Boolean(settings.onlineModel);
+
 const readSettings = (selection: unknown): AssistantSettings | undefined =>
   isRecord(selection) && isAssistantSettings(selection.settings) ? selection.settings : undefined;
 
@@ -42,11 +44,11 @@ const resourcesReady = (resources: unknown): boolean => {
 };
 const resourceAvailability = (
   resources: unknown,
-  mode: AssistantSettings['mode'],
+  _mode: AssistantSettings['mode'],
 ): { ready: boolean; loading: boolean; error?: string } => {
-  const error = mode === 'local' ? resourceFailure(resources) : undefined;
+  const error = resourceFailure(resources);
   const ready = resourcesReady(resources);
-  return { ready, loading: mode === 'local' && !ready && !error, ...(error ? { error } : {}) };
+  return { ready, loading: !ready && !error, ...(error ? { error } : {}) };
 };
 
 const sharedRevision = (value: unknown): string | undefined => {
@@ -100,19 +102,22 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       device: settings.execution,
       dtype: settings.precision,
       generation,
+      online: !local,
+      ...(local ? {} : { model: settings.onlineModel ?? profile.id }),
     };
     const database = { ...this.#database, device: settings.execution };
     Object.assign(this.chat.configuration.payload, model);
     Object.assign(this.database.configuration.payload, database);
     this.#applying = true;
-    const configured = this.coordinator.configure(local ? { llm: model, vectordb: database } : {}, {
-      enabled: local,
+    const enabled = isEnabled(settings);
+    const configured = this.coordinator.configure(enabled ? { llm: model, vectordb: database } : {}, {
+      enabled,
       settings,
     });
     const application = configured.then(() => {
       if (this.#application !== application) return;
       this.#applying = false;
-      if (!local || this.#hosted) return;
+      if (!enabled || this.#hosted) return;
       this.#hosted = true;
       this.chat.initialize();
       this.database.initialize();
@@ -159,7 +164,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       ...(active ? { active } : {}),
       pending,
       loading: state.configurationLoading === true || resources.loading,
-      ready: selected.mode === 'local' && !pending && resources.ready,
+      ready: isEnabled(selected) && !pending && resources.ready,
       error: resources.error,
     };
   };

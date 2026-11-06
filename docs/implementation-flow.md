@@ -20,6 +20,7 @@ This workflow owns stage order, check timing, reviews, commits, publication, and
 - Follow stages 0–7. After a stage passes, continue without another approval pause. Skip, replace, or reorder a required step only with explicit user approval recorded in the ticket.
 - Use the TATR ticket as the spec. Resume its recorded stage after the ticket gate. Return to stage 1 for unresolved requirements or changed scope/interfaces. Reuse recorded approvals; silence or elapsed time is not approval.
 - On stage entry and completion, record the stage, latest implementation SHA, checks and review SHAs, and next action. Commit these records with work snapshots. Keep the review-base SHA fixed.
+- Before each workflow run or fix pass ends, follow [Architecture diagrams](architecture/README.md): check every service diagram and the application overview against the resulting code, update affected diagrams in docs/architecture/, and record the check in the ticket. Include diagram updates in the source snapshot; apply this check again after subsequent changes and before PR handoff.
 - Before an implementation fix, invalidate both code-review results, blast-radius review, and the final test result. Return through stages 3–7. Ticket status/evidence updates and PR-text edits alone do not invalidate them.
 - A failed or blocked requirement cannot pass. Follow the stage's failure route. If a required decision has no rule, or an action exceeds authorization, stop that action, record the blocker, and ask the user.
 

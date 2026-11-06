@@ -24,6 +24,7 @@ Install each skill with its supporting files. Do not edit installed skill caches
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `mattpocock/skills`        | `skills/engineering/grill-with-docs`                                                                                       | Design interview and domain documentation      |
 | `mattpocock/skills`        | `skills/productivity/grilling`                                                                                             | Interview dependency                           |
+| `mattpocock/skills`        | [`skills/productivity/writing-for-agents`](https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-for-agents/SKILL.md) | Writing or revising agent workflows and skills |
 | `mattpocock/skills`        | `skills/engineering/domain-modeling`                                                                                       | Glossary and ADR rules                         |
 | `mattpocock/skills`        | `skills/engineering/codebase-design`                                                                                       | Interface and seam design reference            |
 | `cursor/plugins`           | `pstack/skills/create-verification-skill`                                                                                  | Runtime verification instructions when missing |

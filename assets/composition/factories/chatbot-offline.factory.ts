@@ -5,6 +5,7 @@ import { Chat } from '@/layers/data/local-chat-lm.data';
 import { DB } from '@/layers/data/local-vector-database.data';
 import { ModelMetadataRepository } from '@/layers/data/model-metadata-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
+import { OnlineModelRepository } from '@/layers/data/online-model-repository.data';
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
 import { RagService } from '@/layers/services/chatbot.service';
 import { ConfigurationService } from '@/layers/services/configuration.service';
@@ -63,7 +64,7 @@ export const buildChatbotOfflineDeps = (
     service.setAvailable,
     models,
   );
-  const settings = new ConfigurationService(repository, adapter, metadata);
+  const settings = new ConfigurationService(repository, adapter, metadata, new OnlineModelRepository());
   service.init();
   return {
     service,

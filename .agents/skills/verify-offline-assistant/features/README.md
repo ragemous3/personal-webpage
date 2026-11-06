@@ -23,4 +23,4 @@ The form is inside `chatbot-offline-provider` then `chat-container`, each with a
 
 Report each entry point separately. A typing check does not verify submission, retrieval, generation, or answers. A skipped path is not covered by another passing path.
 
-Local/Online selection is pending product work. Rendered history, cancellation, reset, and retry are part of the shared response lifecycle; verify each affected action against the real model before claiming a full journey.
+Local/Online selection is available through assistant settings. Online keeps retrieval in the browser and uses the application API for generation. The `online` verification journey exercises the production application against a controlled OpenAI HTTP endpoint and labelled model fixtures. Rendered history, cancellation, reset and retry remain part of the shared response lifecycle. Controlled transport checks do not establish real model performance or answer quality.

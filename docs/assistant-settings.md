@@ -1,6 +1,6 @@
 # Assistant settings
 
-The unstyled assistant settings component uses an injected ConfigurationService. Mode and Model are separate controls. Local runs Qwen; Online is saved but unavailable and disables Send. Auto is passed to the model framework, CPU maps to WASM, and WebGPU is an explicit request. Generation controls use a 256-token default, with sampling off. No hardware fallback is selected by the application.
+The unstyled assistant settings component uses an injected ConfigurationService. Mode and Model are separate controls. Local runs Qwen; [Online generation](online-assistant.md) keeps browser retrieval and calls the application API. Online choices come from the server and Local-only controls are hidden. Auto is passed to the local model framework, CPU maps to WASM, and WebGPU is an explicit request. Generation controls use a 256-token default, with sampling off. No hardware fallback is selected by the application.
 
 Composition supplies browser storage and events to ConfigurationRepository. The repository owns the versioned preference record and reads current storage on relevant events; services and views never access storage keys. Missing preferences use defaults. Invalid or inaccessible storage produces a visible notice and valid session settings. Nothing clears unrelated storage or persists conversations.
 
