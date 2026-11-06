@@ -143,7 +143,7 @@ test('valid normalized site params produce configured model and database startup
     .filter((message) => message.task === 'runtime:host')
     .map(({ payload: { name, task, payload } }) => ({ name, task, payload }));
   assert.deepEqual(startup, [
-    { name: 'llm', task: 'llm:init', payload: { ...modelConfig, device: defaultAssistantSettings.execution, generation: { max_new_tokens: 256, do_sample: false } } },
+    { name: 'llm', task: 'llm:init', payload: { ...modelConfig, online: false, device: defaultAssistantSettings.execution, generation: { max_new_tokens: 256, do_sample: false } } },
     { name: 'vectordb', task: 'vectordb:init', payload: { ...databaseConfig, device: defaultAssistantSettings.execution } },
   ]);
   dependencies.dispose();

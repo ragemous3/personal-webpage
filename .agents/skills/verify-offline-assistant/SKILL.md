@@ -86,6 +86,8 @@ The runner closes its own browser contexts/browser and server and removes only i
 
 ## Publishing routine runs
 
+`npm run verify:browser -- --mode online` verifies the production UI, coordinator and generation handler through the real Express API and OpenAI SDK against a controlled OpenAI HTTP endpoint. Retrieval and Local inference are labelled fixtures. It requires no credentials and covers streaming, cancellation, explicit retry, reset, failure and mode switching. This is not live OpenAI inference or a real-model performance check. The manual workflow accepts `online` and retains the report and screenshot for 90 days. Server source is included in the evidence digest. See [Online generation](../../../docs/online-assistant.md).
+
 The manual Browser verification workflow publishes entry/controlled reports and screenshots with 90-day retention; ordinary CI uploads test execution output even after test failure. Artifact links are included in the workflow summary. Real-model cache/performance runs need their existing local prerequisites and a separately published artifact/archive link. Record results and skipped/unattempted checks concisely in the ticket; do not commit routine reports or scratch notes. Approved baselines stay under reviewed test assets, outside the ignored artifact directory.
 
 ## Helpers

@@ -4,6 +4,9 @@ The assistant answers questions about Rasmus using information from his résumé
 
 ## Language
 
+**Online assistant**:
+The assistant that retrieves résumé content in the browser and uses a hosted language model to generate its answer.
+
 **Offline assistant**:
 The assistant that answers using a locally run language model and the available résumé content.
 _Avoid_: Online assistant

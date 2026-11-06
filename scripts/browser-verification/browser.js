@@ -9,6 +9,7 @@ import { runCache } from './cache.js';
 import { closeResources } from './cleanup.js';
 import { createSite, launch, root } from './environment.js';
 import { defaultEvidenceDirectory, finalizeEvidence } from './evidence.js';
+import { runOnline } from './online.js';
 import { runPerformance } from './performance.js';
 import { runControlled } from './scenarios.js';
 import { runSettings } from './settings.js';
@@ -39,6 +40,7 @@ const exercise = async (state, evidence, directory) => {
   if (mode === 'cache') return runCache(restart, state.site.origin, evidence, directory);
   const browser = await restart(mode === 'entry');
   if (mode === 'performance') return runPerformance(browser, state.site.origin, evidence);
+  if (mode === 'online') return runOnline(browser, state.site.origin, evidence, directory);
   if (mode === 'settings') return runSettings(browser, state.site.origin, evidence, directory);
   if (mode === 'controlled') return runControlled(browser, state.site.origin, evidence);
   return runEntry(browser, state.site.origin, evidence, directory);
