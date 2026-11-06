@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/chatbot.service.ts). The host mounts one injected mode tree after accepted work drains. Both trees reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
 
-Implementation: `f5ceddb05456b4fa696fa2dddf954ca28c9c66e2`. Primary Online, settings and real Local CPU/cache journeys are verified; the supplemental forced-close limitation is recorded in the ticket. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
+Implementation: `e6b713fef5238f13a2aef46d0d3c53b0319d1bb7`. Primary Online, settings and real Local CPU/cache journeys are verified; the supplemental forced-close limitation is recorded in the ticket. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
