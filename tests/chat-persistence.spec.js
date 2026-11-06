@@ -157,9 +157,21 @@ test('Reset drains old writes and late output cannot resurrect history', async (
 
 test('a model failure during restoration cannot replace saved history with an empty conversation', async () => {
   let restore;
-  const saved = [{ role: 'user', content: 'Saved question' }, { role: 'assistant', content: 'Saved answer' }];
+  const saved = [
+    { role: 'user', content: 'Saved question' },
+    { role: 'assistant', content: 'Saved answer' },
+  ];
   let writes = 0;
-  const history = { load: () => new Promise((resolve) => { restore = resolve; }), save: async () => { writes++; }, clear: async () => {} };
+  const history = {
+    load: () =>
+      new Promise((resolve) => {
+        restore = resolve;
+      }),
+    save: async () => {
+      writes++;
+    },
+    clear: async () => {},
+  };
   const { service, chat } = create(history);
   chat.emit({ task: 'llm:init', error: { message: 'GPU failed' } });
   await tick();
@@ -168,4 +180,137 @@ test('a model failure during restoration cannot replace saved history with an em
   await tick();
   assert.deepEqual(service.chatMessagesSubscription.getValue(), saved);
   assert.equal(service.stateSubscription.getValue().status, 'error');
+});
+
+test('a stale lease acknowledgement cannot finish the new response after Reset', async () => {
+  let oldBegin;
+  const finished = [];
+  let attempts = 0;
+  const history = { load: async () => [], save: async () => {}, clear: async () => {} };
+  const { service, database } = create(history, {
+    begin: () =>
+      ++attempts === 1
+        ? new Promise((resolve) => {
+            oldBegin = resolve;
+          })
+        : Promise.resolve(),
+    finish: (id) => finished.push(id),
+  });
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Old question');
+  service.reset();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('New question');
+  await until(() => database.sent.some(({ action }) => action === 'query'));
+  const current = database.sent.find(({ action }) => action === 'query').requestId;
+  oldBegin();
+  await service.whenSettled();
+  await tick();
+  assert.equal(finished.includes(current), false);
+  assert.equal(service.stateSubscription.getValue().status, 'responding');
+});
+
+test('an older Reset completion cannot enable Send while the current clear is pending', async () => {
+  let commit;
+  const history = {
+    load: async () => [],
+    save: async () => {},
+    clear: () =>
+      new Promise((resolve) => {
+        commit = resolve;
+      }),
+  };
+  const { service, database } = create(history);
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.reset();
+  service.reset();
+  await until(() => commit);
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  service.send('Blocked until current clear commits');
+  assert.equal(database.sent.length, 0);
+  commit();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  assert.deepEqual(service.chatMessagesSubscription.getValue(), []);
+});
+
+test('a failed restoration from before Reset cannot cancel the new conversation', async () => {
+  let rejectRestore;
+  const history = {
+    load: () =>
+      new Promise((_resolve, reject) => {
+        rejectRestore = reject;
+      }),
+    save: async () => {},
+    clear: async () => {},
+  };
+  const { service, database } = create(history);
+  service.reset();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('New question');
+  await until(() => database.sent.some(({ action }) => action === 'query'));
+  rejectRestore(new Error('Obsolete load failure'));
+  await tick();
+  assert.equal(service.stateSubscription.getValue().status, 'responding');
+  assert.equal(
+    database.sent.some(({ action }) => action === 'cancel'),
+    false,
+  );
+});
+
+test('Retry saving keeps Send blocked and cannot override a later Reset clear', async () => {
+  let fail = true;
+  let saveCommit;
+  let clearCommit;
+  const history = {
+    load: async () => [],
+    save: () =>
+      fail
+        ? Promise.reject(new Error('Quota'))
+        : new Promise((resolve) => {
+            saveCommit = resolve;
+          }),
+    clear: () =>
+      new Promise((resolve) => {
+        clearCommit = resolve;
+      }),
+  };
+  const { service, database } = create(history);
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Not sent before storage works');
+  await until(() => service.stateSubscription.getValue().storageFailure);
+  fail = false;
+  service.retry();
+  await until(() => saveCommit);
+  service.setAvailable(true);
+  assert.notEqual(service.stateSubscription.getValue().status, 'ready');
+  service.send('Blocked during saving');
+  assert.equal(
+    database.sent.some(({ action }) => action === 'query'),
+    false,
+  );
+  service.reset();
+  saveCommit();
+  await until(() => clearCommit);
+  assert.equal(service.stateSubscription.getValue().status, 'initializing');
+  clearCommit();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  assert.deepEqual(service.chatMessagesSubscription.getValue(), []);
+});
+
+test('a cancelled begin acknowledgement retains its lease until the Reset clear commits', async () => {
+  let acknowledge;
+  let commit;
+  const finished = [];
+  const history = { load: async () => [], save: async () => {}, clear: () => new Promise((resolve) => { commit = resolve; }) };
+  const { service } = create(history, { begin: () => new Promise((resolve) => { acknowledge = resolve; }), finish: (id) => finished.push(id) });
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  service.send('Question');
+  service.reset();
+  await until(() => commit);
+  acknowledge();
+  await tick();
+  assert.equal(finished.length, 0);
+  commit();
+  await until(() => service.stateSubscription.getValue().status === 'ready');
+  assert.equal(finished.length, 1);
 });

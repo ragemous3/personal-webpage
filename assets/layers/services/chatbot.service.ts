@@ -30,6 +30,7 @@ export class RagService implements ChatbotServiceContract {
   #historyReady = false;
   #restoring = false;
   #storageFailed = false;
+  #storageRecovery = false;
   #clearing = false;
   #revision = 0;
   #writes: Promise<void> = Promise.resolve();
@@ -119,7 +120,7 @@ export class RagService implements ChatbotServiceContract {
     try {
       await this.runtime?.begin(requestId);
       if (this.#active !== requestId) {
-        this.#finishResponse();
+        this.#finishObsoleteRequest(requestId);
         return;
       }
       await this.#persist();
@@ -132,6 +133,11 @@ export class RagService implements ChatbotServiceContract {
     }
   }
 
+  #finishObsoleteRequest(requestId: string): void {
+    if (this.#lease === requestId) return;
+    this.runtime?.finish(requestId);
+  }
+
   cancel = (): void => {
     if (!this.#active) return;
     const requestId = this.#active;
@@ -141,25 +147,28 @@ export class RagService implements ChatbotServiceContract {
   };
 
   reset = (): void => {
+    const requestId = this.#lease;
     const failure = this.stateSubscription.getValue();
     const active = this.#active;
     this.#active = undefined;
     if (active) this.#cancelWork(active);
     this.#revision++;
+    const revision = this.#revision;
     this.#question = undefined;
     this.#messages = [];
     this.chatModel.reset();
     this.#clearing = true;
     this.#storageFailed = false;
+    this.#storageRecovery = false;
     this.#publish();
     this.stateSubscription.emit(
       this.#failedWorkers.size > 0 && failure ? failure : { status: 'initializing' },
     );
     void this.#persist(true).then(() => {
-      if (this.#storageFailed) return;
+      if (revision !== this.#revision || this.#storageFailed) return;
       this.#historyReady = true;
       this.#clearing = false;
-      this.#finishResponse();
+      this.#finishResponse(requestId);
       if (this.#failedWorkers.size === 0 && !this.#runtimeFailed) this.#ready();
     });
   };
@@ -253,7 +262,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   #storageReady(): boolean {
-    return this.#historyReady && !this.#storageFailed && !this.#clearing;
+    return this.#historyReady && !this.#storageFailed && !this.#clearing && !this.#storageRecovery;
   }
 
   #resourcesReady(): boolean {
@@ -265,6 +274,8 @@ export class RagService implements ChatbotServiceContract {
   };
 
   readonly #interrupt = (error: string): void => {
+    const revision = this.#revision;
+    const requestId = this.#lease;
     const answer = this.#messages.at(-1);
     if (answer?.role === 'assistant') answer.interrupted = true;
     this.stateSubscription.emit({
@@ -276,7 +287,7 @@ export class RagService implements ChatbotServiceContract {
     void this.#persist()
       .then(() => this.whenSettled())
       .then(() => {
-        if (!this.#storageFailed) this.#finishResponse();
+        if (revision === this.#revision && !this.#storageFailed) this.#finishResponse(requestId);
       });
   };
 
@@ -367,14 +378,16 @@ export class RagService implements ChatbotServiceContract {
     if (data.task === 'llm:stream:response' && typeof data.payload === 'string')
       answer.content += data.payload;
     if (data.task === 'llm:message:response') {
+      const revision = this.#revision;
+      const requestId = this.#active;
       const text = this.#finalText(data.payload);
       if (text !== undefined) answer.content = text;
       this.#active = undefined;
       void this.#persist()
         .then(() => this.whenSettled())
         .then(() => {
-          if (this.#storageFailed) return;
-          this.#finishResponse();
+          if (revision !== this.#revision || this.#storageFailed) return;
+          this.#finishResponse(requestId);
           if (this.stateSubscription.getValue()?.status === 'responding') this.#ready();
         });
       return;
@@ -382,9 +395,10 @@ export class RagService implements ChatbotServiceContract {
     void this.#persist();
   };
 
-  readonly #finishResponse = (): void => {
-    if (this.#lease) this.runtime?.finish(this.#lease);
-    this.#lease = undefined;
+  readonly #finishResponse = (requestId: string | undefined): void => {
+    if (!requestId) return;
+    this.runtime?.finish(requestId);
+    if (this.#lease === requestId) this.#lease = undefined;
   };
 
   async #restore(): Promise<void> {
@@ -400,7 +414,7 @@ export class RagService implements ChatbotServiceContract {
       this.#publish();
       if (this.#failedWorkers.size === 0 && !this.#runtimeFailed) this.#ready();
     } catch {
-      this.#storageFailure();
+      if (revision === this.#revision) this.#storageFailure();
     } finally {
       this.#restoring = false;
     }
@@ -441,22 +455,33 @@ export class RagService implements ChatbotServiceContract {
   }
 
   async #retrySaving(): Promise<void> {
+    if (this.#storageRecovery) return;
+    const revision = this.#revision;
+    const requestId = this.#lease;
+    this.#storageRecovery = true;
+    try {
+      await this.#recoverStorage(revision);
+      if (revision !== this.#revision || this.#storageFailed) return;
+      this.#clearing = false;
+      this.#historyReady = true;
+      this.#finishResponse(requestId);
+    } finally {
+      if (revision === this.#revision) {
+        this.#storageRecovery = false;
+        this.#ready();
+      }
+    }
+  }
+
+  async #recoverStorage(revision: number): Promise<void> {
     if (!this.#historyReady && !this.#clearing) {
       await this.#restore();
       return;
     }
     await this.#writes;
+    if (revision !== this.#revision) return;
     this.#storageFailed = false;
     await this.#persist(this.#clearing);
-    if (!this.#storageReadyAfterWrite()) return;
-    this.#clearing = false;
-    this.#historyReady = true;
-    this.#finishResponse();
-    this.#ready();
-  }
-
-  #storageReadyAfterWrite(): boolean {
-    return !this.#storageFailed;
   }
 
   #finalText(payload: unknown): string | undefined {

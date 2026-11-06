@@ -166,6 +166,6 @@ flowchart TB
   classDef added stroke:#2da44e,stroke-width:3px;
   class Host,Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Handler,Offline modified;
+  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

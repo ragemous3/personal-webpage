@@ -69,6 +69,6 @@ flowchart TB
 
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class GenerationDriver,CoordinatorBase,Connection,Hub modified;
+  class CoordinatorBase,Connection,Hub modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

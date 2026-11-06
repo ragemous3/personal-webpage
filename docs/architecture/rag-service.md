@@ -159,6 +159,6 @@ flowchart TB
   classDef added stroke:#2da44e,stroke-width:3px;
   class Host,Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,ServerComposition added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory,GenerationFactory,Handler modified;
+  class UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

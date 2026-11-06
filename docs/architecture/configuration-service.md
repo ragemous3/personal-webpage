@@ -102,6 +102,6 @@ flowchart TB
   Settings -.->|"uses"| SettingsDTO
   Adapter -.->|"uses"| SettingsDTO
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class UI,Settings,Adapter,SettingsDTO,CoordinatorBase,Connection,Hub,LocalComposition modified;
+  class UI,Settings,Rag,Adapter,SettingsDTO,CoordinatorBase,Connection,Hub,LocalComposition modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```
