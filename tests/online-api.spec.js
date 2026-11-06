@@ -5,8 +5,8 @@ import { test } from 'node:test';
 import express from 'express';
 import OpenAI from 'openai';
 
-import { createApp } from '#server/app';
-import { OpenAIProvider } from '#server/openai-provider';
+import { createApp } from '#server/app.factory';
+import { OpenAIProvider } from '#server/openai-provider.data';
 
 const listen = async (t, app) => {
   const server = app.listen(0, '127.0.0.1');

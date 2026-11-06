@@ -1,8 +1,9 @@
 import type OpenAI from 'openai';
 
-import { assistantInstructions, GenerationProvider,type GenerationRequest } from './generation.ts';
+import { GenerationProviderAbstract } from './generation.abstract.ts';
+import { assistantInstructions, type GenerationRequest } from './generation.model.ts';
 
-export class OpenAIProvider extends GenerationProvider {
+export class OpenAIProvider extends GenerationProviderAbstract {
   constructor(private readonly client: OpenAI) { super(); }
 
   async *generate(request: GenerationRequest, signal: AbortSignal): AsyncIterable<string> {

@@ -2,7 +2,7 @@
 
 Select Online to keep résumé retrieval in the browser and generate answers through the application's Express API. The retrieval model and index remain necessary. An Online-only visit does not initialize the local language model.
 
-The existing RagService owns retrieval, conversation history and response controls. RuntimeCoordinator retains response leases, routing and configuration changes. The same generation SharedWorker uses either LocalLLMData or OnlineGeneration, which share GenerationAbstract. No additional application worker is created. OnlineGeneration streams the application API; the server injects its GenerationProvider, initially OpenAIProvider. Abstract classes share core behavior and DI selects the implementation.
+The existing RagService owns retrieval, conversation history and response controls. RuntimeCoordinator retains response leases, routing and configuration changes. The same generation SharedWorker uses either LocalLLMData or OnlineGeneration, which share GenerationAbstract. No additional application worker is created. OnlineGeneration streams the application API; the server injects its GenerationProviderAbstract, initially OpenAIProvider. Abstract classes share core behavior and DI selects the implementation.
 
 The browser fetches `/api/models` for the allowed Online model and supported controls. Local preferences remain separate. The initial model is `gpt-6-luna` with low reasoning effort, using the OpenAI Responses API. Online output-token limits include reasoning tokens; a small limit can produce an incomplete response. Local-only execution, precision and sampling controls are hidden in Online mode. The server does not forward those settings to OpenAI.
 

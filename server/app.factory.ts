@@ -2,7 +2,8 @@ import { once } from 'node:events';
 
 import express, { type Request, type Response } from 'express';
 
-import { defaultModel, type GenerationProvider, type GenerationRequest, type OnlineModel } from './generation.ts';
+import { type GenerationProviderAbstract } from './generation.abstract.ts';
+import { defaultModel, type GenerationRequest, type OnlineModel } from './generation.model.ts';
 
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -28,7 +29,7 @@ const write = async (response: Response, value: unknown, signal: AbortSignal): P
 
 const generate = async (
   request: Request, response: Response,
-  provider: GenerationProvider, model: OnlineModel,
+  provider: GenerationProviderAbstract, model: OnlineModel,
 ): Promise<void> => {
   if (!validRequest(request.body, model)) {
     response.status(400).json({ error: 'Invalid generation request.' });
@@ -53,7 +54,7 @@ const generate = async (
   }
 };
 
-export const createApp = (provider: GenerationProvider, model: OnlineModel = defaultModel): express.Express => {
+export const createApp = (provider: GenerationProviderAbstract, model: OnlineModel = defaultModel): express.Express => {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_request, response, next) => {

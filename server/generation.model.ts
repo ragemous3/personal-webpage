@@ -1,18 +1,11 @@
-export interface OnlineModel {
-  id: string;
-  label: string;
-  reasoningEffort: 'low';
-  maxOutputTokens: number;
-}
+import { type OnlineModel } from '@/layers/shared/models/online-model.model';
+
+export { type OnlineModel } from '@/layers/shared/models/online-model.model';
 
 export interface GenerationRequest {
   model: string;
   maxOutputTokens: number;
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
-}
-
-export abstract class GenerationProvider {
-  abstract generate(request: GenerationRequest, signal: AbortSignal): AsyncIterable<string>;
 }
 
 export const defaultModel: OnlineModel = {

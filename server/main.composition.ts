@@ -3,9 +3,9 @@ import path from 'node:path';
 import express from 'express';
 import OpenAI from 'openai';
 
-import { createApp } from './app.ts';
-import { defaultModel } from './generation.ts';
-import { OpenAIProvider } from './openai-provider.ts';
+import { createApp } from './app.factory.ts';
+import { defaultModel } from './generation.model.ts';
+import { OpenAIProvider } from './openai-provider.data.ts';
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('Set OPENAI_API_KEY in the server environment.');

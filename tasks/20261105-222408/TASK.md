@@ -40,7 +40,7 @@ Keep this as one end-to-end feature ticket, as requested. Backend setup alone do
 
 ### Implementation design and verification mapping
 
-The user confirmed the combined plan by requesting implementation under Autopilot. Keep all three native SharedWorkers. RuntimeCoordinator retains leases, routing and response-boundary configuration changes. Its generation worker selects LocalLLMData or OnlineGeneration behind GenerationAbstract. RagService, conversation handling and retrieval are reused. The Node server injects OpenAIProvider through its abstract GenerationProvider. The model catalogue remains independent of preference persistence.
+The user confirmed the combined plan by requesting implementation under Autopilot. Keep all three native SharedWorkers. RuntimeCoordinator retains leases, routing and response-boundary configuration changes. Its generation worker selects LocalLLMData or OnlineGeneration behind GenerationAbstract. RagService, conversation handling and retrieval are reused. The Node server injects OpenAIProvider through GenerationProviderAbstract. The model catalogue remains independent of preference persistence.
 
 The Express API accepts at most 40 user/assistant messages, each at most 32,000 characters, within a 128 KiB JSON request. It supplies server-owned instructions and rejects client system roles and unsupported models/output limits. A two-minute operation deadline and browser disconnect abort the upstream request. SDK retries are disabled. These are input/operation correctness bounds, not usage quotas.
 
@@ -93,3 +93,9 @@ Implementation, cleanup and runtime verification complete; next is the signed sn
 - Existing two-tab settings journey PASS: artifacts/verification/settings-2026-11-06T06-25-58-271Z-29f297e2-52cb-4fbc-b453-7a9308ca00b1/.
 - Real Local CPU/Auto/cache journey PASS: artifacts/verification/cache-2026-11-06T06-26-25-071Z-42ee58f8-bd80-440e-8be6-df8351471032/. Tests actual inference, two-tab/surviving-tab behavior, Cancel/Reset, requested Auto and CPU restoration, and browser restart with zero returning model requests. This does not prove live OpenAI access or factual answer quality.
 - All three reports match the implementation source digest; cleanup closes owned browsers/servers, removes scratch and retains evidence. Reports/screenshots are ignored local artifacts pending hosted publication. No run output is committed.
+
+### Stage 5 findings
+
+Standards review at 70aae80164482cefab928e5e0d0b4e0db8324545 found missing responsibility suffixes in the new server filenames and a duplicated OnlineModel DTO. Return to stage 3 to align filenames and reuse the shared type. Both review results, blast-radius review and final-suite evidence are invalidated for the fix. The independent Spec review is still assessing that original snapshot.
+
+Spec review at that snapshot PASS with zero findings. The Standards fixes align the server/verification factory filenames, extract GenerationProviderAbstract and reuse the shared OnlineModel DTO through type-only imports. Lint, TypeScript and the ten Online focused checks pass. The final Online browser journey passes at artifacts/verification/online-2026-11-06T06-32-57-998Z-63b599bb-4b73-4718-9558-8b8051b1a130/ and matches the complete revised source digest. Earlier settings and real Local cache reports remain valid for their recorded snapshot; all three production worker hashes are byte-identical to this final build. No inference behavior changed in the naming/type fix, so the heavy Local journey is not repeated. Cleanup passes. Next: sign the revised snapshot and repeat both independent reviews.

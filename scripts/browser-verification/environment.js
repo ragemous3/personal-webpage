@@ -238,7 +238,7 @@ export const createSite = async (scratch, mode, evidence) => {
   const origin = `http://127.0.0.1:${server.address().port}`;
   try {
     if (mode === 'online') {
-      const { createControlledApi } = await import('./online-server.ts');
+      const { createControlledApi } = await import('./online-server.factory.ts');
       state.api = createControlledApi(origin, evidence);
     }
     const configDirectory = await prepareConfiguration(scratch, origin, state, evidence);

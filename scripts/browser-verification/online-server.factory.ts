@@ -1,8 +1,8 @@
 import express, { type Express } from 'express';
 import OpenAI from 'openai';
 
-import { createApp } from '#server/app';
-import { OpenAIProvider } from '#server/openai-provider';
+import { createApp } from '#server/app.factory';
+import { OpenAIProvider } from '#server/openai-provider.data';
 
 interface Evidence { events: unknown[] }
 
