@@ -21,6 +21,7 @@ Preserve this ticket ID. The previous implementation and PR #23 remain reference
 - Retain the user's Autopilot through PR handoff grant for this ticket, including routine implementation choices, tests/data preparation, documentation/ticket updates, signed commits, push, PR and CI/review fixes. The latest request authorizes the new branch and revised design. Merge, deployment, and closing the original PR require separate instructions.
 - No OpenAI credentials are available. The user-approved controlled HTTP alternative remains the verification method; actual project/model access and real OpenAI output remain unverified.
 - Confirm the revised service/transport interfaces and focused check mapping before implementation. Preserve the existing mode-change and history guarantees while replacing the DI boundary.
+- Clarification pending: does the new Online tree's "only a data repository" mean HTTP generation with the previously agreed browser retrieval, or an API-only tree with retrieval also moved server-side? The plan below retains the prior browser-retrieval agreement until the user changes it. This decision determines the Online tree's worker dependencies and API scope.
 
 ### Revised responsibility plan
 
