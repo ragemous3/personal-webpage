@@ -24,13 +24,29 @@ export const mime = (file) =>
     '.css': 'text/css',
   })[path.extname(file)] ?? 'application/octet-stream';
 
+const heldInitializations = new WeakMap();
+export const holdLocalInitialization = (evidence) => {
+  const responses = new Set();
+  heldInitializations.set(evidence, responses);
+  return () => {
+    heldInitializations.delete(evidence);
+    for (const response of responses) response.end('ok');
+  };
+};
+
 const receiveEvent = async (request, response, evidence) => {
   let body = '';
   for await (const chunk of request) {
     body += chunk;
     if (body.length > 65_536) throw new Error('Event too large');
   }
-  evidence.events.push(JSON.parse(body));
+  const event = JSON.parse(body);
+  evidence.events.push(event);
+  const held = heldInitializations.get(evidence);
+  if (held && event.type === 'local-pipeline-loaded') {
+    held.add(response);
+    return;
+  }
   response.end('ok');
 };
 const streamAsset = (file, response) => {
@@ -102,7 +118,7 @@ const modelAsset = (pathname, response, state, evidence) => {
   return false;
 };
 const serveControlled = (pathname, response, state) => {
-  if (!['controlled', 'settings'].includes(state.mode)) return false;
+  if (!['controlled', 'settings', 'online'].includes(state.mode)) return false;
   if (pathname === '/content-data/chunks.json') {
     response.setHeader('content-type', 'application/json');
     response.end(
@@ -113,8 +129,12 @@ const serveControlled = (pathname, response, state) => {
   const role = Object.keys(state.workers).find((name) => state.workers[name] === pathname);
   if (!['llm.shared-worker.ts', 'vectordb.shared-worker.ts'].includes(role)) return false;
   response.setHeader('content-type', 'text/javascript');
+  if (state.mode === 'online' && role === 'llm.shared-worker.ts') {
+    response.end(readFileSync(path.join(state.scratch, 'online-model.js'), 'utf8'));
+    return true;
+  }
   response.end(
-    `globalThis.verificationSettings = ${state.mode === 'settings'};\nglobalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
+    `globalThis.verificationSettings = ${state.mode !== 'controlled'};\nglobalThis.verificationRole = ${JSON.stringify(role.split('.')[0])};\n${readFileSync(path.join(state.scratch, 'controlled-model.js'), 'utf8')}`,
   );
   return true;
 };
@@ -150,6 +170,10 @@ const serveFile = (pathname, response, state) => {
 const requestHandler = (state, evidence) => async (request, response) => {
   try {
     const pathname = new URL(request.url, 'http://localhost').pathname;
+    if (state.api && (pathname.startsWith('/api/') || pathname.startsWith('/__verify/openai/'))) {
+      state.api(request, response);
+      return;
+    }
     if (pathname === '/__verify/events') await receiveEvent(request, response, evidence);
     else if (!modelAsset(pathname, response, state, evidence)) serveFile(pathname, response, state);
   } catch {
@@ -161,7 +185,7 @@ const requestHandler = (state, evidence) => async (request, response) => {
 const prepareConfiguration = async (scratch, origin, state, evidence) => {
   const configDirectory = path.join(scratch, 'config');
   await cp(path.join(root, 'config'), configDirectory, { recursive: true });
-  if (state.models || ['settings', 'controlled'].includes(state.mode)) {
+  if (state.models || ['settings', 'controlled', 'online'].includes(state.mode)) {
     const parametersFile = path.join(configDirectory, '_default/params.toml');
     const locations = `modelBaseUrl = '${origin}/models/'\nwasmBaseUrl = '${origin}/lib/'\n`;
     const metadataLocation = `metadataBaseUrl = '${origin}/__verify/model-metadata/'\n`;
@@ -198,6 +222,7 @@ const buildFixtures = async (scratch) => {
     ['runtime-client.js', 'client.js'],
     ['controlled-model.js', 'controlled-model.js'],
     ['dedicated-model.js', 'dedicated-model.js'],
+    ['online-model.js', 'online-model.js'],
   ])
     await build({
       entryPoints: [path.join(directory, entry)],
@@ -223,11 +248,15 @@ export const createSite = async (scratch, mode, evidence) => {
         : undefined,
   };
   evidence.modelRequests = [];
-  if (['controlled', 'settings', 'performance'].includes(mode)) await buildFixtures(scratch);
+  if (['controlled', 'settings', 'performance', 'online'].includes(mode)) await buildFixtures(scratch);
   const server = createServer(requestHandler(state, evidence));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;
   try {
+    if (mode === 'online') {
+      const { createControlledApi } = await import('./online-server.factory.ts');
+      state.api = createControlledApi(origin, evidence);
+    }
     const configDirectory = await prepareConfiguration(scratch, origin, state, evidence);
     const result = spawnSync(
       'hugo',

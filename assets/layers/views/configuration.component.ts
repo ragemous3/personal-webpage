@@ -70,22 +70,14 @@ export class AssistantConfiguration extends LitElement {
             ${this.#options(modeChoices, settings.mode)}
           </select></label
         >
-        <label
-          >Model
-          <select name="model" .value=${settings.model} @change=${this.#edit}>
-            ${this.#options(
-              state.choices?.models ?? [{ value: settings.model, label: settings.model }],
-              settings.model,
-            )}
-          </select></label
-        >
-        <label
+        ${this.#modelControl(state)}
+        <label ?hidden=${settings.mode === 'online'}
           >Execution
           <select name="execution" .value=${settings.execution} @change=${this.#edit}>
             ${this.#options(executionChoices, settings.execution)}
           </select></label
         >
-        ${this.#advanced(settings)}
+        ${settings.mode === 'online' ? this.#onlineControls(settings) : this.#advanced(settings)}
       </fieldset>
       ${state.metadataLoading ? html`<p role="status">Loading model options</p>` : html``}
       ${state.metadataError
@@ -115,6 +107,23 @@ export class AssistantConfiguration extends LitElement {
     );
   }
 
+  #modelControl(state: ConfigurationState): TemplateResult {
+    const online = state.selected.mode === 'online';
+    const selected = online ? state.selected.onlineModel ?? '' : state.selected.model;
+    return html`
+      <label>Model<select name=${online ? 'onlineModel' : 'model'} @change=${this.#edit}>
+            ${this.#options(state.choices?.models ?? [{ value: selected, label: selected }], selected)}
+          </select></label>
+    `;
+  }
+
+  #onlineControls(settings: AssistantSettings): TemplateResult {
+    return html`
+      <p>Reasoning effort: ${this.configuration?.choices?.reasoningEffort ?? 'low'}</p>
+      ${this.#tokens(settings)}
+    `;
+  }
+
   #advanced(settings: AssistantSettings): TemplateResult {
     return html`
       <details>
@@ -139,19 +148,7 @@ export class AssistantConfiguration extends LitElement {
               : html``}
           </select>
         </label>
-        <label
-          >Maximum new tokens
-          <input
-            name="maxNewTokens"
-            type="number"
-            min="1"
-            max="1024"
-            step="1"
-            required
-            .value=${String(settings.maxNewTokens)}
-            @input=${this.#edit}
-          />
-        </label>
+        ${this.#tokens(settings)}
         <label
           ><input
             name="sampling"
@@ -199,7 +196,7 @@ export class AssistantConfiguration extends LitElement {
       ${this.feedback ? html`<p role="alert">${this.feedback}</p>` : ''}
       ${state.notice ? html`<p role="status">${state.notice}</p>` : ''}
       ${this.#pendingStatus(state)}
-      ${state.selected.mode === 'online'
+      ${state.selected.mode === 'online' && !state.selected.onlineModel
         ? html`<p role="status">Online mode is not available yet</p>`
         : ''}
       ${state.error
@@ -216,6 +213,16 @@ export class AssistantConfiguration extends LitElement {
         `
         : ''}
       <button @click=${() => this.configurationService?.restoreDefaults()}>Restore defaults</button>
+    `;
+  }
+
+  #tokens(settings: AssistantSettings): TemplateResult {
+    return html`
+      <label>${settings.mode === 'online' ? 'Maximum output tokens (includes reasoning)' : 'Maximum new tokens'}
+            <input name="maxNewTokens" type="number" min="1"
+              max=${this.configuration?.choices?.maxOutputTokens ?? 1024} step="1" required
+              .value=${String(settings.maxNewTokens)} @input=${this.#edit} />
+          </label>
     `;
   }
 

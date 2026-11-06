@@ -19,6 +19,9 @@ const selectionIdentity = (selection: unknown): Pick<RuntimeAvailability, 'selec
     ? { selectionId: selection.selectionId }
     : {};
 
+const isEnabled = (settings: AssistantSettings): boolean =>
+  settings.mode === 'local' || Boolean(settings.onlineModel);
+
 const readSettings = (selection: unknown): AssistantSettings | undefined =>
   isRecord(selection) && isAssistantSettings(selection.settings) ? selection.settings : undefined;
 
@@ -44,9 +47,15 @@ const resourceAvailability = (
   resources: unknown,
   mode: AssistantSettings['mode'],
 ): { ready: boolean; loading: boolean; error?: string } => {
-  const error = mode === 'local' ? resourceFailure(resources) : undefined;
-  const ready = resourcesReady(resources);
-  return { ready, loading: mode === 'local' && !ready && !error, ...(error ? { error } : {}) };
+  const required = Array.isArray(resources)
+    ? resources.filter(
+        (resource: unknown) =>
+          isRecord(resource) && (mode === 'local' || resource.role === 'vectordb'),
+      )
+    : resources;
+  const error = resourceFailure(required);
+  const ready = resourcesReady(required);
+  return { ready, loading: !ready && !error, ...(error ? { error } : {}) };
 };
 
 const sharedRevision = (value: unknown): string | undefined => {
@@ -65,13 +74,13 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
   readonly #database;
   #selected: AssistantSettings | undefined;
   #application: Promise<void> = Promise.resolve();
-  #hosted = false;
+  #databaseHosted = false;
   #failed = false;
   #applying = false;
 
   constructor(
     private readonly coordinator: RuntimeCoordinatorContract,
-    private readonly chat: Pick<Chat, 'configuration' | 'initialize'>,
+    private readonly chat: Pick<Chat, 'configuration'>,
     private readonly database: Pick<DB, 'configuration' | 'initialize'>,
     readonly setAvailable: (available: boolean) => void,
     private readonly models: readonly ModelDescriptor[],
@@ -105,17 +114,21 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     Object.assign(this.chat.configuration.payload, model);
     Object.assign(this.database.configuration.payload, database);
     this.#applying = true;
-    const configured = this.coordinator.configure(local ? { llm: model, vectordb: database } : {}, {
-      enabled: local,
-      settings,
-    });
+    const enabled = isEnabled(settings);
+    const configured = this.coordinator.configure(
+      enabled ? { ...(local ? { llm: model } : {}), vectordb: database } : {},
+      {
+        enabled,
+        settings,
+      },
+    );
     const application = configured.then(() => {
       if (this.#application !== application) return;
       this.#applying = false;
-      if (!local || this.#hosted) return;
-      this.#hosted = true;
-      this.chat.initialize();
-      this.database.initialize();
+      if (enabled && !this.#databaseHosted) {
+        this.#databaseHosted = true;
+        this.database.initialize();
+      }
     });
     this.#application = application;
     this.stateSubscription.emit({
@@ -140,10 +153,18 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     const state = message.payload;
     if (!isRecord(state.selection) || !isAssistantSettings(state.selection.settings)) return;
     this.stateSubscription.emit({
+      mounted: this.#mountSettings(state),
       responding: state.responding === true,
       runtime: this.#availability(state, state.selection.settings),
     });
   };
+
+  #mountSettings(state: Record<string, unknown>): AssistantSettings | undefined {
+    if (!isRecord(state.mountSelection) || state.mountSelection.enabled === false) return undefined;
+    const mounted = readSettings(state.mountSelection);
+    if (this.#applying && !areValuesEqual(mounted, this.#selected)) return undefined;
+    return mounted;
+  }
 
   readonly #availability = (
     state: Record<string, unknown>,
@@ -159,7 +180,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
       ...(active ? { active } : {}),
       pending,
       loading: state.configurationLoading === true || resources.loading,
-      ready: selected.mode === 'local' && !pending && resources.ready,
+      ready: isEnabled(selected) && !pending && resources.ready,
       error: resources.error,
     };
   };

@@ -7,6 +7,7 @@ import {
 export interface AssistantSettings {
   mode: 'local' | 'online';
   model: string;
+  onlineModel?: string;
   execution: 'auto' | 'wasm' | 'webgpu';
   precision: keyof typeof modelPrecisionSuffixes | 'auto';
   maxNewTokens: number;
@@ -16,6 +17,7 @@ export interface AssistantSettings {
 }
 
 export interface ConfigurationState {
+  mounted?: AssistantSettings | undefined;
   selected: AssistantSettings;
   active?: AssistantSettings | undefined;
   pending: boolean;
@@ -24,7 +26,7 @@ export interface ConfigurationState {
   notice?: string | undefined;
   error?: string | undefined;
   canSwitchBack: boolean;
-  choices?: { models: SettingChoice[]; precisions: SettingChoice[]; revision: string };
+  choices?: { models: SettingChoice[]; precisions: SettingChoice[]; revision: string; reasoningEffort?: string; maxOutputTokens?: number };
   metadataLoading?: boolean;
   metadataError?: string | undefined;
 }
@@ -40,6 +42,7 @@ export interface RuntimeAvailability {
 }
 
 export interface RuntimeConfigurationState {
+  mounted?: AssistantSettings | undefined;
   responding: boolean;
   runtime?: RuntimeAvailability;
 }
@@ -61,6 +64,7 @@ const inRange = (value: unknown, min: number, max: number): value is number =>
 const settingsValidators: Record<keyof AssistantSettings, (value: unknown) => boolean> = {
   mode: (value) => value === 'local' || value === 'online',
   model: (value) => typeof value === 'string' && /^[\w.-]+\/[\w.-]+$/.test(value),
+  onlineModel: (value) => value === undefined || (typeof value === 'string' && /^[\w.-]+$/.test(value)),
   execution: (value) => value === 'auto' || value === 'wasm' || value === 'webgpu',
   precision: (value) =>
     typeof value === 'string' && (value === 'auto' || Object.hasOwn(modelPrecisionSuffixes, value)),

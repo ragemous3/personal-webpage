@@ -16,6 +16,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
   readonly #registrations = new Map<RuntimeRole, { attempt: number; promise: Promise<void> }>();
   #attempt = 0;
   #attached = false;
+  #roles: RuntimeRole[] = [];
   constructor(
     scriptPath: string,
     private readonly sources: Record<RuntimeRole, string>,
@@ -39,7 +40,7 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
     this.#attached = true;
     this.emit({ id: this.clientId, name: 'coordinator', task: 'runtime:attach', payload: null });
     this.control('runtime:attach', { policy: this.policy });
-    for (const role of ['llm', 'vectordb'] as const) this.#connectModel(role, this.#attempt);
+    for (const role of this.#roles) this.#connectModel(role, this.#attempt);
   };
 
   reconnect = (): void => {
@@ -75,8 +76,9 @@ export class RuntimeCoordinatorConnection extends SharedWorkerManager<RuntimeMes
     this.#models.clear();
   };
 
-  ensureModels = async (): Promise<void> => {
-    await Promise.all((['llm', 'vectordb'] as const).map((role) => this.#ensureModel(role)));
+  ensureModels = async (roles: RuntimeRole[] = ['llm', 'vectordb']): Promise<void> => {
+    this.#roles = [...new Set([...this.#roles, ...roles])];
+    await Promise.all(roles.map((role) => this.#ensureModel(role)));
   };
 
   readonly #ensureModel = (role: RuntimeRole): Promise<void> => {

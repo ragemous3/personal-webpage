@@ -97,9 +97,13 @@ export class ChatContainer extends LitElement {
 
   readonly #recoveryControl = (): TemplateResult | string => {
     if (this.lifecycle.status !== 'error') return '';
-    if (this.lifecycle.runtimeFailure)
+    if (this.lifecycle.runtimeFailure && !this.lifecycle.storageFailure)
       return html`<button @click=${() => this.chatbotService?.reconnect()}>reconnect</button>`;
-    return html`<button @click=${() => this.chatbotService?.retry()}>Retry</button>`;
+    return html`
+      <button @click=${() => this.chatbotService?.retry()}>
+            ${this.lifecycle.storageFailure ? 'Retry saving' : 'Retry'}
+          </button>
+    `;
   };
 
   protected updated(_changed: PropertyValues): void {

@@ -4,6 +4,7 @@ import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runti
 import { isRecord } from '@/layers/shared/guards/guards';
 import {
   defaultRuntimePolicy,
+  isRuntimeRole,
   type RuntimeMessage,
   type RuntimeRole,
   type RuntimeSelection,
@@ -47,7 +48,11 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
       this.#channelFailure(message);
       return;
     }
-    if (this.$isReady.getValue()) this.connection.control('runtime:host', message);
+    if (!isRuntimeRole(message.name)) return;
+    void this.connection.ensureModels([message.name]).then(() => {
+      if (this.#channels.get(message.id) === message && this.$isReady.getValue())
+        this.connection.control('runtime:host', message);
+    }).catch(() => this.#channelFailure(message));
   };
   send = (message: RuntimeMessage): void => {
     if (!this.$isReady.getValue()) throw new Error('Something went wrong');
@@ -63,7 +68,6 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
     if (this.connection.carrier) this.connection.control('runtime:release', { id, role });
   };
   begin = async (requestId: string): Promise<void> => {
-    await this.#command('runtime:begin', { requestId });
     clearTimeout(this.#operations.get(requestId));
     this.#operations.set(
       requestId,
@@ -72,6 +76,8 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
         this.connection.policy.requestMs ?? defaultRuntimePolicy.requestMs,
       ),
     );
+    try { await this.#command('runtime:begin', { requestId }); }
+    catch (error) { this.finish(requestId); throw error; }
   };
   finish = (requestId: string): void => {
     clearTimeout(this.#operations.get(requestId));
@@ -83,7 +89,7 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
     selection?: RuntimeSelection,
   ): Promise<void> => {
     const revision = ++this.#configurationRevision;
-    if (selection?.enabled) await this.connection.ensureModels();
+    if (selection?.enabled) await this.connection.ensureModels(Object.keys(configurations) as RuntimeRole[]);
     if (selection && revision !== this.#configurationRevision) return;
     await this.#command(
       'runtime:configure',

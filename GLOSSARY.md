@@ -4,6 +4,9 @@ The assistant answers questions about Rasmus using information from his résumé
 
 ## Language
 
+**Online assistant**:
+The assistant that retrieves résumé content in the browser and uses a hosted language model to generate its answer.
+
 **Offline assistant**:
 The assistant that answers using a locally run language model and the available résumé content.
 _Avoid_: Online assistant
@@ -11,6 +14,9 @@ _Avoid_: Online assistant
 **Retrieved context**:
 The résumé or site passages selected as evidence for answering a visitor's question.
 _Avoid_: Model knowledge
+
+**Chat history**:
+The ordered visitor questions and assistant answers that make up a conversation. It includes partial answers marked as interrupted.
 
 **Selected settings**:
 The latest valid assistant preferences requested by the visitor or observed from another tab. They may still be pending.

@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import { createPage } from './page.js';
+
 export const runEntry = async (browser, origin, evidence, directory) => {
   evidence.artifacts.push('entry-open.png');
-  const page = await browser.newPage();
+  const page = await createPage(browser);
   const events = [];
   page.on('pageerror', (error) => events.push({ type: 'pageerror', message: error.message }));
   page.on('requestfailed', (request) =>
@@ -19,18 +21,16 @@ export const runEntry = async (browser, origin, evidence, directory) => {
   };
   try {
     await page.goto(origin, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('chatbot-offline-provider >>> chat-container >>> input', {
+    await page.waitForSelector('chatbot-provider >>> chat-container >>> input', {
       visible: true,
       timeout: 10_000,
     });
     await page.waitForSelector(
-      'chatbot-offline-provider >>> chat-container >>> button[type=submit]',
+      'chatbot-provider >>> chat-container >>> button[type=submit]',
       { visible: true, timeout: 10_000 },
     );
     result.state = await page.evaluate(() => {
-      const chat = globalThis.document
-        .querySelector('chatbot-offline-provider')
-        .shadowRoot.querySelector('chat-container').shadowRoot;
+      const chat = globalThis.verificationChat().shadowRoot;
       return {
         title: globalThis.document.title,
         inputDisabled: chat.querySelector('input').disabled,

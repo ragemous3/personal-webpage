@@ -99,6 +99,7 @@ for (const screenshotAvailable of [true, false]) {
     let closed = false;
     const page = {
       on() {},
+      async evaluateOnNewDocument() {},
       async goto() {},
       async waitForSelector() {},
       async evaluate() {

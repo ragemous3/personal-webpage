@@ -1,17 +1,15 @@
 import assert from 'node:assert/strict';
 
-const input = 'chatbot-offline-provider >>> chat-container >>> input';
-const submit = 'chatbot-offline-provider >>> chat-container >>> button[type=submit]';
+const input = 'chatbot-provider >>> chat-container >>> input';
+const submit = 'chatbot-provider >>> chat-container >>> button[type=submit]';
 const cancelAndReset = async (survivor) => {
-  const buttons = await survivor.$$('chatbot-offline-provider >>> chat-container >>> button');
+  const buttons = await survivor.$$('chatbot-provider >>> chat-container >>> button');
   for (const button of buttons) {
     const text = await button.evaluate((element) => element.textContent);
     if (text.trim() === 'Cancel') await button.click();
   }
   await survivor.waitForFunction(() =>
-    globalThis.document
-      .querySelector('chatbot-offline-provider')
-      .shadowRoot.querySelector('chat-container')
+    globalThis.verificationChat()
       .shadowRoot.querySelector('[role=alert]')
       ?.textContent.includes('Response interrupted'),
   );
@@ -59,9 +57,7 @@ export const exerciseRealTabs = async (browser, origin, evidence, ask) => {
   await survivor.click(submit);
   await survivor.waitForFunction(
     () => {
-      const chat = globalThis.document
-        .querySelector('chatbot-offline-provider')
-        .shadowRoot.querySelector('chat-container').shadowRoot;
+      const chat = globalThis.verificationChat().shadowRoot;
       return (
         chat.querySelector('[role=status]').textContent.trim() === 'responding' &&
         chat.querySelector('[role=log] p:last-child')?.textContent.trim().length > 11
@@ -72,9 +68,7 @@ export const exerciseRealTabs = async (browser, origin, evidence, ask) => {
   await cancelAndReset(survivor);
   const resetCount = await survivor.evaluate(
     () =>
-      globalThis.document
-        .querySelector('chatbot-offline-provider')
-        .shadowRoot.querySelector('chat-container')
+      globalThis.verificationChat()
         .shadowRoot.querySelectorAll('[role=log] p').length,
   );
   assert.equal(resetCount, 0);

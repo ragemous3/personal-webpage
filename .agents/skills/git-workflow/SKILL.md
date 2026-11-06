@@ -47,6 +47,10 @@ Releases: `github-release`. BLOCKED-PR diagnosis: `github-project`.
 | `references/spec-cleanup.md` | Planning artifacts off the base branch |
 | `references/no-editorializing.md` | No self-praise, no narrating the expected |
 
+## Project pull request diagrams
+
+When preparing or updating an architecture or feature PR, read [Architecture diagrams](../../../docs/architecture/README.md). Refresh the saved service and application diagrams, then use the affected service diagrams in the PR. That document owns the layer layout, exact code names, contracts/abstracts, green added borders, yellow modified borders, disconnected composition, comparison metadata and validation rules. Keep the PR diagrams consistent with the saved versions and preserve its verification and limitation notes.
+
 ## Conventional Commits
 
 ```

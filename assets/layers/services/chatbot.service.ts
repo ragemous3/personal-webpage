@@ -1,13 +1,13 @@
 import { type ChatMessageModelContract } from '@/layers/data/contracts/chat-model.contract';
 import { type ChatMessage, type Chunk } from '@/layers/data/models/models';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { type ChatSessionContract } from '@/layers/shared/contracts/chat-session.contract';
 import {
   type ChatbotServiceContract,
   type ChatState,
 } from '@/layers/shared/contracts/chatbot-service.contract';
 import { type ContentRepositoryContract } from '@/layers/shared/contracts/content-repository.contract';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
-import { type RuntimeLifecycleContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
@@ -27,17 +27,30 @@ export class RagService implements ChatbotServiceContract {
   #configuring = false;
   #available = true;
   #runtimeAvailable = true;
+  #historyReady = false;
+  #restoring = false;
+  #storageFailed = false;
+  #storageRecovery = false;
+  #clearing = false;
+  #revision = 0;
+  #writes: Promise<void> = Promise.resolve();
+  #lease: string | undefined;
 
   constructor(
     private readonly chat: StandardCommunicationContract,
     private readonly database: StandardCommunicationContract,
     private readonly repo: ContentRepositoryContract,
     private readonly chatModel: ChatMessageModelContract,
-    private readonly runtime?: RuntimeLifecycleContract,
+    private readonly session: ChatSessionContract,
   ) {}
+
+  get runtime(): ChatSessionContract['runtime'] {
+    return this.session.runtime;
+  }
 
   init = (): void => {
     if (this.#transportUnsubscribers.length > 0) return;
+    if (!this.#historyReady) void this.#restore();
     const status = this.runtime?.onData?.((data) => {
       if (!isRecord(data) || data.task !== 'runtime:state' || !isRecord(data.payload)) return;
       this.#configuring = data.payload.configuring === true;
@@ -70,13 +83,25 @@ export class RagService implements ChatbotServiceContract {
 
   dispose = (): void => {
     if (this.#attachedClients > 0) return;
-    this.reset();
+    this.cancel();
     for (const disconnect of this.#transportUnsubscribers) disconnect();
     this.#transportUnsubscribers = [];
   };
 
+  whenSettled = async (): Promise<void> => {
+    let pending;
+    do {
+      pending = this.#writes;
+      await pending;
+    } while (pending !== this.#writes);
+  };
+
   setAvailable = (available: boolean): void => {
     this.#available = available;
+    if (available) {
+      this.#runtimeFailed = false;
+      this.#failedWorkers.clear();
+    }
     if (!this.#active) this.#ready();
   };
 
@@ -90,28 +115,32 @@ export class RagService implements ChatbotServiceContract {
   readonly #start = (): void => {
     this.#active = crypto.randomUUID();
     this.stateSubscription.emit({ status: 'responding' });
-    this.#publish();
+    const requestId = this.#active;
+    this.#lease = requestId;
+    void this.#begin(requestId);
+  };
+
+  async #begin(requestId: string): Promise<void> {
     try {
-      const requestId = this.#active;
-      if (this.runtime)
-        void this.runtime
-          .begin(requestId)
-          .then(() => {
-            if (this.#active === requestId)
-              this.database.send({ query: this.#question }, requestId);
-            else this.runtime?.finish(requestId);
-          })
-          .catch((error: unknown) => {
-            if (this.#active === requestId) {
-              this.#runtimeFailed = true;
-              this.#fail(error);
-            }
-          });
-      else this.database.send({ query: this.#question }, requestId);
+      await this.runtime?.begin(requestId);
+      if (this.#active !== requestId) {
+        this.#finishObsoleteRequest(requestId);
+        return;
+      }
+      await this.#persist();
+      if (this.#active === requestId && !this.#storageFailed)
+        this.database.send({ query: this.#question }, requestId);
     } catch (error) {
+      if (this.#active !== requestId) return;
+      this.#runtimeFailed = true;
       this.#fail(error);
     }
-  };
+  }
+
+  #finishObsoleteRequest(requestId: string): void {
+    if (this.#lease === requestId) return;
+    this.runtime?.finish(requestId);
+  }
 
   cancel = (): void => {
     if (!this.#active) return;
@@ -122,23 +151,53 @@ export class RagService implements ChatbotServiceContract {
   };
 
   reset = (): void => {
-    this.cancel();
+    const requestId = this.#lease;
+    const failure = this.stateSubscription.getValue();
+    const active = this.#active;
+    this.#active = undefined;
+    if (active) this.#cancelWork(active);
+    this.#revision++;
+    const revision = this.#revision;
     this.#question = undefined;
     this.#messages = [];
     this.chatModel.reset();
+    this.#clearing = true;
+    this.#storageFailed = false;
+    this.#storageRecovery = false;
     this.#publish();
-    if (this.#chatReady && this.#databaseReady && !this.#runtimeFailed) this.#ready();
+    this.stateSubscription.emit(
+      this.#failedWorkers.size > 0 && failure ? failure : { status: 'initializing' },
+    );
+    void this.#persist(true).then(() => {
+      if (revision !== this.#revision || this.#storageFailed) return;
+      this.#historyReady = true;
+      this.#clearing = false;
+      this.#finishResponse(requestId);
+      this.#ready();
+    });
   };
 
   retry = (): void => {
     if (this.stateSubscription.getValue()?.status !== 'error') return;
+    if (this.#storageFailed) {
+      void this.#retrySaving();
+      return;
+    }
+    if (this.#lease) {
+      void this.#writes.then(() => this.retry());
+      return;
+    }
     if (this.#runtimeFailed) {
       void this.reconnect();
       return;
     }
+    this.#retryGeneration();
+  };
+
+  #retryGeneration(): void {
     if (!this.#chatReady || !this.#databaseReady) {
-      this.#ready();
       this.#retryFailedWorkers();
+      this.#ready();
       return;
     }
     if (!this.#question) {
@@ -148,7 +207,7 @@ export class RagService implements ChatbotServiceContract {
     }
     this.#messages[this.#messages.length - 1] = { role: 'assistant', content: '' };
     this.#start();
-  };
+  }
 
   reconnect = (): Promise<void> => {
     this.#recovery ??= this.#reconnect().finally(() => {
@@ -163,6 +222,7 @@ export class RagService implements ChatbotServiceContract {
       return;
     }
     try {
+      await this.whenSettled();
       await this.runtime.reconnect();
       this.#runtimeFailed = false;
       this.#failedWorkers.clear();
@@ -184,7 +244,6 @@ export class RagService implements ChatbotServiceContract {
     } catch {
       /* Transport failure is already reported. */
     }
-    this.runtime?.finish(requestId);
   };
 
   #retryFailedWorkers(): void {
@@ -197,23 +256,51 @@ export class RagService implements ChatbotServiceContract {
   }
 
   readonly #ready = (): void => {
+    if (this.#lease || this.#storageFailed) return;
+    const failure = this.#resourceFailure();
+    if (failure) {
+      this.stateSubscription.emit(failure);
+      return;
+    }
     this.stateSubscription.emit({
       status:
-        this.#available &&
-        this.#runtimeAvailable &&
-        this.#chatReady &&
-        this.#databaseReady &&
-        !this.#configuring
+        this.#available && this.#storageReady() && this.#runtimeAvailable && this.#resourcesReady()
           ? 'ready'
           : 'initializing',
     });
   };
+
+  #resourceFailure(): ChatState | undefined {
+    if (this.#runtimeFailed)
+      return { status: 'error', error: 'Something went wrong', runtimeFailure: true };
+    if (this.#failedWorkers.size === 0) return;
+    const current = this.stateSubscription.getValue();
+    const message = 'Model initialization failed. Retry.';
+    return {
+      status: 'error',
+      error: current?.storageFailure ? message : (current?.error ?? message),
+    };
+  }
+
+  #storageReady(): boolean {
+    return this.#historyReady && !this.#storageFailed && !this.#clearing && !this.#storageRecovery;
+  }
+
+  #resourcesReady(): boolean {
+    return this.#chatReady && this.#databaseReady && !this.#configuring;
+  }
 
   readonly #publish = (): void => {
     this.chatMessagesSubscription.emit(this.#messages.map((message) => ({ ...message })));
   };
 
   readonly #interrupt = (error: string): void => {
+    if (this.#storageFailed) {
+      this.#storageFailure();
+      return;
+    }
+    const revision = this.#revision;
+    const requestId = this.#lease;
     const answer = this.#messages.at(-1);
     if (answer?.role === 'assistant') answer.interrupted = true;
     this.stateSubscription.emit({
@@ -221,7 +308,12 @@ export class RagService implements ChatbotServiceContract {
       error,
       ...(this.#runtimeFailed ? { runtimeFailure: true } : {}),
     });
-    this.#publish();
+    if (!this.#historyReady) return;
+    void this.#persist()
+      .then(() => this.whenSettled())
+      .then(() => {
+        if (revision === this.#revision && !this.#storageFailed) this.#finishResponse(requestId);
+      });
   };
 
   readonly #fail = (error: unknown): void => {
@@ -245,6 +337,7 @@ export class RagService implements ChatbotServiceContract {
   }
 
   #observeRuntimeFailure(data: Record<string, unknown>): void {
+    if (data.requestId !== undefined && data.requestId !== this.#active) return;
     if (data.runtimeFailure === true && data.error) this.#runtimeFailed = true;
   }
   #handleResponseError(data: Record<string, unknown>, current: boolean): boolean {
@@ -274,6 +367,7 @@ export class RagService implements ChatbotServiceContract {
 
   #handleReady(task: unknown): boolean {
     if (task !== 'llm:ready' && task !== 'vectordb:ready') return false;
+    this.#failedWorkers.delete(task === 'llm:ready' ? 'llm' : 'vectordb');
     if (task === 'llm:ready') this.#chatReady = true;
     else this.#databaseReady = true;
     if (!this.#active && this.stateSubscription.getValue()?.status !== 'error') this.#ready();
@@ -311,18 +405,112 @@ export class RagService implements ChatbotServiceContract {
     if (data.task === 'llm:stream:response' && typeof data.payload === 'string')
       answer.content += data.payload;
     if (data.task === 'llm:message:response') {
+      const revision = this.#revision;
+      const requestId = this.#active;
       const text = this.#finalText(data.payload);
       if (text !== undefined) answer.content = text;
-      this.#finishResponse();
       this.#active = undefined;
-      this.#ready();
+      void this.#persist()
+        .then(() => this.whenSettled())
+        .then(() => {
+          if (revision !== this.#revision || this.#storageFailed) return;
+          this.#finishResponse(requestId);
+          if (this.stateSubscription.getValue()?.status === 'responding') this.#ready();
+        });
+      return;
     }
-    this.#publish();
+    void this.#persist();
   };
 
-  readonly #finishResponse = (): void => {
-    if (this.#active) this.runtime?.finish(this.#active);
+  readonly #finishResponse = (requestId: string | undefined): void => {
+    if (!requestId) return;
+    this.runtime?.finish(requestId);
+    if (this.#lease === requestId) this.#lease = undefined;
   };
+
+  async #restore(): Promise<void> {
+    if (this.#restoring) return;
+    this.#restoring = true;
+    const revision = this.#revision;
+    try {
+      const messages = await this.session.history.load(this.session.conversationId);
+      if (revision !== this.#revision) return;
+      this.#messages = messages;
+      this.#historyReady = true;
+      this.#storageFailed = false;
+      this.#publish();
+      if (this.#failedWorkers.size === 0 && !this.#runtimeFailed) this.#ready();
+    } catch {
+      if (revision === this.#revision) this.#storageFailure();
+    } finally {
+      this.#restoring = false;
+    }
+  }
+
+  #persist(clear = false): Promise<void> {
+    const revision = this.#revision;
+    const snapshot = this.#messages.map((message) => ({ ...message }));
+    const stored = structuredClone(snapshot);
+    const last = stored.at(-1);
+    if (this.#active && last?.role === 'assistant') last.interrupted = true;
+    this.#writes = this.#writes
+      .then(async () => {
+        if (revision !== this.#revision || this.#storageFailed) return;
+        await (clear
+          ? this.session.history.clear(this.session.conversationId)
+          : this.session.history.save(this.session.conversationId, stored));
+        if (revision === this.#revision) this.chatMessagesSubscription.emit(snapshot);
+      })
+      .catch(() => {
+        if (revision === this.#revision) this.#storageFailure();
+      });
+    return this.#writes;
+  }
+
+  #storageFailure(): void {
+    this.#storageFailed = true;
+    const active = this.#active;
+    this.#active = undefined;
+    if (active) this.#cancelWork(active);
+    const answer = this.#messages.at(-1);
+    if (answer?.role === 'assistant') answer.interrupted = true;
+    this.stateSubscription.emit({
+      status: 'error',
+      error: 'Could not save conversation. Retry saving before continuing.',
+      storageFailure: true,
+      ...(this.#runtimeFailed ? { runtimeFailure: true } : {}),
+    });
+  }
+
+  async #retrySaving(): Promise<void> {
+    if (this.#storageRecovery) return;
+    const revision = this.#revision;
+    const requestId = this.#lease;
+    this.#storageRecovery = true;
+    try {
+      await this.#recoverStorage(revision);
+      if (revision !== this.#revision || this.#storageFailed) return;
+      this.#clearing = false;
+      this.#historyReady = true;
+      this.#finishResponse(requestId);
+    } finally {
+      if (revision === this.#revision) {
+        this.#storageRecovery = false;
+        this.#ready();
+      }
+    }
+  }
+
+  async #recoverStorage(revision: number): Promise<void> {
+    if (!this.#historyReady && !this.#clearing) {
+      await this.#restore();
+      return;
+    }
+    await this.#writes;
+    if (revision !== this.#revision) return;
+    this.#storageFailed = false;
+    await this.#persist(this.#clearing);
+  }
 
   #finalText(payload: unknown): string | undefined {
     if (!isRecord(payload)) return undefined;

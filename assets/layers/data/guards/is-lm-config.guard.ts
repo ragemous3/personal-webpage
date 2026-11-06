@@ -14,7 +14,7 @@ export function isLmConfig(value: unknown): value is LmConfig {
   }
   const generation = value.generation;
   const revision = value.revision;
-  if (!validRevision(revision)) return false;
+  if (![validRevision(revision), value.online === undefined].every(Boolean)) return false;
   if (!hasStringProperties(value, lmConfigKeys)) {
     return false;
   }

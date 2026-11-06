@@ -13,7 +13,7 @@ export const sourceSnapshot = (root) => {
   const entries = [...new Set(files)]
     .filter(
       (file) =>
-        /^(assets\/|scripts\/|tests\/|config\/|package.*\.json$|tsconfig\.json$|eslint\.config\.js$)/.test(
+        /^(assets\/|server\/|scripts\/|tests\/|config\/|package.*\.json$|tsconfig\.json$|eslint\.config\.js$)/.test(
           file,
         ) && existsSync(path.join(root, file)),
     )
@@ -26,7 +26,7 @@ export const sourceSnapshot = (root) => {
     ]);
   return {
     algorithm:
-      'SHA-256 of sorted path/content-hash pairs for existing assets, scripts, tests, config and toolchain configuration',
+      'SHA-256 of sorted path/content-hash pairs for existing assets, server, scripts, tests, config and toolchain configuration',
     files: entries.length,
     digest: createHash('sha256').update(JSON.stringify(entries)).digest('hex'),
   };
