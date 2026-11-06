@@ -236,6 +236,9 @@ api-base.service.ts
 - **adapter**
   Data-layer entity that implements a contract and translates between application-facing operations and a technical interface.
 
+- **client**
+  Data-layer entity that makes typed requests to an external service and handles its responses, streams and cancellation. Use the `.client.ts` file suffix, for example `online-chat.client.ts`.
+
 - **spec**  
   Test files.
 
