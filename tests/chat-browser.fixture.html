@@ -11,6 +11,8 @@
       import { ChatMessageModel } from '/assets/layers/data/models/chat.model.ts';
       import { ChatHistoryRepository } from '/assets/layers/data/chat-history-repository.data.ts';
 
+      import { createChatGenerationFixture } from '/tests/chat-generation.fixture.js';
+
       const transport = () => {
         const listeners = new Set();
         return {
@@ -21,13 +23,21 @@
           },
           send(payload, requestId, action = 'query') {
             this.sent.push({ payload, requestId, action });
+            if (action === 'query')
+              queueMicrotask(() =>
+                this.emit({
+                  task: 'vectordb:query:response',
+                  requestId,
+                  payload: { response: { neighbors: [0] } },
+                }),
+              );
           },
           emit(message) {
             for (const listener of listeners) listener(message);
           },
         };
       };
-      const chat = transport();
+      const chat = createChatGenerationFixture();
       const database = transport();
       const service = new RagService(
         chat,

@@ -5,7 +5,17 @@ import { ContentRepository } from '@/layers/data/content-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { RagService } from '@/layers/services/rag.service';
 
+import { createChatGenerationFixture } from './chat-generation.fixture.js';
+
 const settled = () => new Promise((resolve) => setImmediate(resolve));
+const completeRetrieval = async (database, requestId) => {
+  database.emit({
+    task: 'vectordb:query:response',
+    requestId,
+    payload: { response: { neighbors: [0] } },
+  });
+  await settled();
+};
 const createService = (chat, database, repo, model, runtime) =>
   new RagService(chat, database, repo, model, {
     runtime,
@@ -38,7 +48,7 @@ const transport = () => {
 };
 
 const setup = async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const service = createService(
     chat,
@@ -98,6 +108,7 @@ test('cancel retains partial text; retry replaces the attempt and reset rejects 
   service.send('Question');
   await settled();
   const first = database.sent[0].requestId;
+  await completeRetrieval(database, first);
   chat.emit({ task: 'llm:stream:response', requestId: first, payload: 'Partial' });
   await settled();
   service.send('Must not send twice');
@@ -166,6 +177,7 @@ test('a failed partial answer remains visible until explicit retry', async () =>
   service.send('Question');
   await settled();
   const { requestId } = database.sent[0];
+  await completeRetrieval(database, requestId);
   chat.emit({ task: 'llm:stream:response', requestId, payload: 'Partial' });
   await settled();
   chat.emit({ task: 'llm:query', requestId, error: { message: 'Generation failed' } });
@@ -186,7 +198,7 @@ test('a failed partial answer remains visible until explicit retry', async () =>
 });
 
 test('reset preserves a failed initialization and retry restarts only the failed worker', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const initialized = [];
   chat.initialize = () => initialized.push('chat');
@@ -220,7 +232,7 @@ test('reset preserves a failed initialization and retry restarts only the failed
 });
 
 test('retry after both workers fail requires fresh readiness from both', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const initialized = [];
   chat.initialize = () => initialized.push('chat');
@@ -249,7 +261,7 @@ test('retry after both workers fail requires fresh readiness from both', async (
 });
 
 test('initialization retry preserves a healthy worker that is still loading', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const initialized = [];
   chat.initialize = () => initialized.push('chat');
@@ -276,7 +288,7 @@ test('initialization retry preserves a healthy worker that is still loading', as
 });
 
 test('a cached client recovers on retry after another client repairs its worker', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const service = createService(
     chat,
@@ -304,7 +316,7 @@ test('a cached client recovers on retry after another client repairs its worker'
 });
 
 test('runtime reconnect preserves partial history, coalesces attempts and never replays the interrupted question', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   let complete;
   let recoveries = 0;
@@ -336,6 +348,7 @@ test('runtime reconnect preserves partial history, coalesces attempts and never 
   await settled();
   await new Promise((resolve) => setImmediate(resolve));
   const { requestId } = database.sent[0];
+  await completeRetrieval(database, requestId);
   chat.emit({ task: 'llm:stream:response', requestId, payload: 'Partial' });
   await settled();
   chat.emit({ task: 'llm:init', error: { message: 'Something went wrong' }, runtimeFailure: true });
@@ -359,7 +372,7 @@ test('runtime reconnect preserves partial history, coalesces attempts and never 
 });
 
 test('detaching and remounting a runtime-backed service releases all subscriptions and restores answer delivery', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   const runtimeListeners = new Set();
   const service = createService(
@@ -395,6 +408,7 @@ test('detaching and remounting a runtime-backed service releases all subscriptio
   await settled();
   await new Promise((resolve) => setImmediate(resolve));
   const requestId = database.sent.find((entry) => entry.action === 'query').requestId;
+  await completeRetrieval(database, requestId);
   chat.emit({
     task: 'llm:message:response',
     requestId,
@@ -411,6 +425,7 @@ test('settings availability blocks new questions without cancelling accepted wor
   service.send('Keep this question');
   await settled();
   const { requestId } = database.sent[0];
+  await completeRetrieval(database, requestId);
   service.setAvailable(false);
   await settled();
   assert.equal(service.stateSubscription.getValue().status, 'responding');
@@ -432,7 +447,7 @@ test('settings availability blocks new questions without cancelling accepted wor
 });
 
 test('shared ready snapshots cannot override the application availability gate', async () => {
-  const chat = transport();
+  const chat = createChatGenerationFixture();
   const database = transport();
   let observe;
   const runtime = {

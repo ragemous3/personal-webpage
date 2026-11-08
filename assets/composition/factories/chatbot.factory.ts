@@ -13,7 +13,7 @@ import { OnlineModelRepository } from '@/layers/data/online-model-repository.dat
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
 import { ConfigurationService } from '@/layers/services/configuration.service';
 import { RagService } from '@/layers/services/rag.service';
-import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
+import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-generation.contract';
 import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 
 import { getVectorDatabase } from './local-vector-database.factory';
@@ -90,7 +90,7 @@ export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): Chat
 };
 
 export const buildRagService = (
-  chat: StandardCommunicationContract,
+  chat: ChatGenerationContract,
   shared: ChatbotDependencies,
 ): RagDependencies => {
   const service = new RagService(

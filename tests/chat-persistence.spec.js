@@ -7,6 +7,8 @@ import { ChatHistoryRepository } from '@/layers/data/chat-history-repository.dat
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { RagService } from '@/layers/services/rag.service';
 
+import { createChatGenerationFixture } from './chat-generation.fixture.js';
+
 const tick = () => new Promise((resolve) => setTimeout(resolve, 15));
 const until = async (condition) => {
   const deadline = Date.now() + 5000;
@@ -27,6 +29,14 @@ const port = (name) => {
     },
     send(payload, requestId, action = 'query') {
       this.sent.push({ payload, requestId, action });
+      if (action === 'query')
+        queueMicrotask(() =>
+          this.emit({
+            task: `${name}:query:response`,
+            requestId,
+            payload: { response: { neighbors: [] } },
+          }),
+        );
     },
     emit(data) {
       for (const listener of listeners) listener(data);
@@ -34,7 +44,7 @@ const port = (name) => {
   };
 };
 const create = (history, runtime) => {
-  const chat = port('llm');
+  const chat = createChatGenerationFixture(true);
   const database = port('vectordb');
   const service = new RagService(
     chat,
@@ -382,8 +392,17 @@ test('a stale request failure cannot poison a later response after Reset', async
   service.send('Current question');
   await until(() => database.sent.filter(({ action }) => action === 'query').length === 2);
   const current = database.sent.filter(({ action }) => action === 'query')[1].requestId;
-  chat.emit({ task: 'llm:query', requestId: old, runtimeFailure: true, error: { message: 'Obsolete failure' } });
-  chat.emit({ task: 'llm:message:response', requestId: current, payload: { generated_text: 'Current answer' } });
+  chat.emit({
+    task: 'llm:query',
+    requestId: old,
+    runtimeFailure: true,
+    error: { message: 'Obsolete failure' },
+  });
+  chat.emit({
+    task: 'llm:message:response',
+    requestId: current,
+    payload: { generated_text: 'Current answer' },
+  });
   await until(() => service.stateSubscription.getValue().status !== 'responding');
   assert.equal(service.stateSubscription.getValue().status, 'ready');
   assert.equal(service.chatMessagesSubscription.getValue().at(-1).content, 'Current answer');
@@ -399,11 +418,20 @@ for (const fault of [
     let clears = 0;
     let reconnects = 0;
     const history = {
-      load: async () => [], clear: async () => { clears++; },
-      save: async () => { if (failSaving) throw new Error('Quota'); },
+      load: async () => [],
+      clear: async () => {
+        clears++;
+      },
+      save: async () => {
+        if (failSaving) throw new Error('Quota');
+      },
     };
     const { service, chat, database } = create(history, {
-      begin: async () => {}, finish() {}, reconnect: async () => { reconnects++; },
+      begin: async () => {},
+      finish() {},
+      reconnect: async () => {
+        reconnects++;
+      },
     });
     chat.initialize = () => chat.emit({ task: 'llm:ready' });
     await until(() => service.stateSubscription.getValue().status === 'ready');
@@ -415,8 +443,12 @@ for (const fault of [
       chat.emit({ task: 'llm:stream:response', requestId, payload: 'Pending save' });
       await until(() => service.stateSubscription.getValue().storageFailure);
     }
-    chat.emit({ task: fault.storage ? 'llm:init' : 'llm:query', requestId: fault.storage ? undefined : requestId,
-      error: { message: 'Model failed' }, runtimeFailure: fault.runtime });
+    chat.emit({
+      task: fault.storage ? 'llm:init' : 'llm:query',
+      requestId: fault.storage ? undefined : requestId,
+      error: { message: 'Model failed' },
+      runtimeFailure: fault.runtime,
+    });
     await service.whenSettled();
     service.reset();
     await service.whenSettled();

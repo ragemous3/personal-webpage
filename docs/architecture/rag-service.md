@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). ChatbotProvider renders AssistantConfiguration and one mode component directly in its tree after accepted work drains. Both modes reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
 
-Implementation: `94d623f1c02be5e7b75998c841ce7276c59e7d36`. Focused checks, typecheck, lint, production build and primary runtime journeys pass. Source-matched real Local cache verification passes; both independent reviews pass at `c8121960ce811989aa99a5b2a968dd2171badf2e`, followed by 171/171 full-suite tests. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
+Implementation: generation-contract refactor is uncommitted. Focused generation, lifecycle, persistence, browser, configuration and coordinator checks pass. Runtime verification and independent reviews are pending for this change. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
@@ -18,6 +18,8 @@ flowchart TB
   subgraph Contracts["Shared layer — contracts"]
     ServiceContract["ChatbotServiceContract"]
     SettingsContract["ConfigurationServiceContract"]
+    GenerationContract["ChatGenerationContract"]
+    GenerationState["ChatGenerationState"]
     Port["StandardCommunicationContract<br/>StandardCommunicationBaseContract"]
     Session["ChatSessionContract"]
     HistoryContract["ChatHistoryRepositoryContract"]
@@ -92,13 +94,15 @@ flowchart TB
   UI <-->|"Send, Cancel, Reset, Retry; state and text"| Rag
   UI -.->|"uses"| ServiceContract
   Rag -.->|"implements"| ServiceContract
-  Rag -.->|"uses"| Port
+  Rag -.->|"retrieval dependency"| Port
+  Rag -.->|"generation dependency"| GenerationContract
+  GenerationContract -.->|"typed readiness and errors"| GenerationState
   Rag -.->|"uses"| Session
   Session -.->|"history dependency"| HistoryContract
   Session -.->|"optional runtime dependency"| Lifecycle
   RuntimeContract -.->|"extends"| Lifecycle
-  Rag <-->|"Local generation"| Chat
-  Rag <-->|"Online generation"| Online
+  Rag <-->|"generate / text updates / cancel"| Chat
+  Rag <-->|"generate / text updates / cancel"| Online
   Rag <-->|"retrieve passages; cancel"| DB
   Rag <-->|"load, ordered save, clear"| History
   Identity -.->|"extends"| StorageBase
@@ -122,7 +126,8 @@ flowchart TB
   DB -.->|"extends"| Standard
   Standard -.->|"extends"| StandardBase
   StandardBase -.->|"implements"| Port
-  Online -.->|"implements"| Port
+  Online -.->|"implements"| GenerationContract
+  Chat -.->|"implements"| GenerationContract
   Online -.->|"extends"| ApiBase
   ApiBase -.->|"implements"| ApiContract
   Chat <-->|"Local generation messages"| Coordinator
@@ -157,8 +162,8 @@ flowchart TB
   Provider <-->|"stream; AbortSignal"| SDK
   SDK <-->|"request and streamed response"| OpenAI
   classDef added stroke:#2da44e,stroke-width:3px;
-  class Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,StorageBase,TabStorage,ServerComposition added;
+  class GenerationContract,GenerationState,Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,StorageBase,TabStorage,ServerComposition added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory modified;
+  class Chat,UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

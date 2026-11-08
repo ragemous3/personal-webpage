@@ -17,3 +17,42 @@ ModelMetadataRepository reads the pinned model revision's file inventory and con
 The site configuration pins the model revision. RuntimeConfigurationAdapter passes it to generation; the generation pipeline and tokenizer load that same revision. RuntimeCoordinator reports the resource revision, and a tab does not report readiness against a different shared revision. Refreshing metadata never upgrades the revision, replaces preferences or downloads weights. A custom model mirror must supply its metadata endpoint. Introducing a pinned URL can require an initial download even when an older main URL was cached; subsequent sessions reuse the framework cache for the pinned files.
 
 Both catalogs share ModelOption identity and the modelChoices projection. Local metadata adds pinned revisions and precision variants; Online options add reasoning and output-token controls. Saved selections remain separate so each mode can restore its previous choice.
+
+## RuntimeConfigurationAdapter and its connections
+
+RuntimeConfigurationAdapter runs in the browser tab. It converts assistant settings into commands for RuntimeCoordinator. It also converts coordinator status into settings status. It implements RuntimeConfigurationAdapterContract.
+
+The adapter does not generate answers. RagService receives a ChatGenerationContract dependency for that task. Composition supplies Chat for Local mode or OnlineChatClient for Online mode. Chat converts Local worker messages into readiness, text updates and final text. OnlineChatClient uses HTTP and an AbortController. RagService uses the same generation methods in both modes. Retrieval still uses DB and StandardCommunicationContract.
+
+### Creation and ownership
+
+The buildChatbotDeps function creates the shared dependencies for one chatbot tree. It creates one RuntimeConfigurationAdapter with these inputs:
+
+- RuntimeCoordinator, to submit settings and receive runtime status.
+- An object with the Local model's configuration envelope. This object contains configuration data. It is not a running Chat instance.
+- The shared DB instance, to update retrieval configuration and initialize its channel.
+- A setAvailable callback, to enable or block new questions on the currently bound RagService.
+- The configured Local model descriptors, to find the model ID and pinned revision.
+
+The factory then creates ConfigurationService. It gives the service the adapter, ConfigurationRepository, ModelMetadataRepository and OnlineModelRepository. ConfigurationRepository stores preferences. The two model repositories supply model choices. The adapter does not store preferences or fetch model catalogs.
+
+ChatbotProvider owns these shared dependencies. It supplies ConfigurationService through configurationContext. AssistantConfiguration reads that context and sends settings changes to the service. The active mode provider creates its generation dependency and RagService. The buildRagService function binds that service as the target of the adapter's availability callback. When the mode provider leaves the tree, it removes its binding. The next mode provider binds its own service. The shared adapter stays in place during this change.
+
+### Settings change
+
+1. AssistantConfiguration calls ConfigurationService.update. The service validates the choice and saves it through ConfigurationRepository.
+2. ConfigurationService calls adapter.select. This records the requested settings immediately and blocks new questions. It also schedules adapter.apply. The apply method waits for the latest submitted configuration. It submits again only when the previous application failed or the settings differ.
+3. The adapter builds the Local model configuration. It includes the model ID, pinned revision, execution backend, precision and generation controls. It also builds the retrieval configuration with the requested execution backend. It updates the shared configuration envelopes. A later Local Chat instance reads that same model envelope.
+4. The adapter calls RuntimeCoordinator.configure. Local sends language-model and retrieval configurations. Online sends retrieval configuration only. A disabled selection sends no model configurations. The selection record still contains the complete settings.
+5. RuntimeCoordinator controls when the selection can take effect. An accepted response holds its lease until its history writes finish. The coordinator waits for accepted work to drain and gives permission to mount the destination mode. The adapter does not cancel that response to force a settings change.
+6. After the current configuration command completes, the adapter initializes the shared DB channel if it has not hosted that channel before. Mode composition owns creation and initialization of the generation dependency.
+
+### Status and recovery
+
+The adapter listens for runtime:state messages. It publishes the permitted mounted settings, whether a response is active, and resource availability. Requested settings, active settings and mount permission have different meanings. Mount permission lets the destination component create its dependencies. It does not mean those dependencies are ready to answer.
+
+Availability includes pending work, loading, readiness and resource errors. Local needs generation and retrieval resources. Online needs retrieval resources here; the Online client handles API requests separately. The adapter also checks the shared Local model revision against the configured revision. A mismatch blocks readiness and reports an error.
+
+ConfigurationService combines this status with the valid model choices. Its calls to adapter.setAvailable reach the bound RagService through the factory callback. RagService also checks generation readiness, retrieval readiness and history storage. Send remains blocked until all required checks pass.
+
+Retry is explicit. The adapter can resubmit a failed selection. It does not choose another execution backend or model. On root disposal, adapter.dispose removes its runtime subscription. The other shared dependencies have their own cleanup. The adapter does not own the physical worker lifetime.

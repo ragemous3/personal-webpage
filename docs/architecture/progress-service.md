@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: `94d623f1c02be5e7b75998c841ce7276c59e7d36`. Focused checks, typecheck, lint, production build and primary runtime journeys pass. Source-matched real Local cache verification passes; both independent reviews pass at `c8121960ce811989aa99a5b2a968dd2171badf2e`, followed by 171/171 full-suite tests. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
+Implementation: generation-contract refactor is uncommitted. Focused generation, lifecycle, persistence, browser, configuration and coordinator checks pass. Runtime verification and independent reviews are pending for this change. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
 

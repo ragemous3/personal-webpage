@@ -1,13 +1,15 @@
 import { ApiBase } from '@/layers/data/abstracts/base.infra';
 import { type ChatMessage } from '@/layers/data/models/models';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
+import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-generation.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
+import { type ChatGenerationState } from '@/layers/shared/models/chat-generation.model';
 import { readJsonLines } from '@/layers/shared/utils/ndjson.utility';
+import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
-export class OnlineChatClient extends ApiBase implements StandardCommunicationContract {
-  readonly name = 'llm';
-  readonly #listeners = new Set<(data: unknown) => void>();
+export class OnlineChatClient extends ApiBase implements ChatGenerationContract {
+  readonly stateSubscription = createStatefulSubscribable<ChatGenerationState>({ ready: true });
+  #disposed = false;
   readonly #requests = new Map<string, AbortController>();
 
   constructor(
@@ -18,48 +20,29 @@ export class OnlineChatClient extends ApiBase implements StandardCommunicationCo
     super(baseURL, fetcher);
   }
 
-  onData = (listener: (data: unknown) => void): (() => void) => {
-    this.#listeners.add(listener);
-    listener({ task: 'llm:ready' });
-    return () => this.#listeners.delete(listener);
-  };
-
   initialize = (): void => {
-    this.#emit({ task: 'llm:ready' });
+    if (!this.#disposed) this.stateSubscription.emit({ ready: true });
   };
 
-  send = (
-    payload: unknown,
-    requestId = crypto.randomUUID(),
-    action: 'query' | 'cancel' = 'query',
-  ): void => {
-    if (action === 'cancel') {
-      this.#requests.get(requestId)?.abort();
-      return;
-    }
-    if (!isRecord(payload) || !Array.isArray(payload.message))
-      throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid chat request.`);
+  cancel(requestId: string): void {
+    this.#requests.get(requestId)?.abort();
+  }
+
+  async generate(
+    messages: readonly ChatMessage[],
+    onText: (text: string) => void,
+    requestId: string,
+  ): Promise<string> {
+    if (this.#disposed || this.#requests.has(requestId))
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Chat generation is unavailable.`);
     const controller = new AbortController();
     this.#requests.set(requestId, controller);
-    const emit = (data: Record<string, unknown>): void => {
-      if (!controller.signal.aborted) this.#emit({ ...data, requestId });
-    };
-    void this.generate(
-      payload.message as ChatMessage[],
-      (text) => emit({ task: 'llm:stream:response', payload: text }),
-      controller.signal,
-    )
-      .then((result) => emit({ task: 'llm:message:response', payload: result }))
-      .catch(() =>
-        emit({
-          task: 'llm:query',
-          error: {
-            message: `[${SeverityLevelCodes.ERROR}] - Online generation failed. Retry explicitly.`,
-          },
-        }),
-      )
-      .finally(() => this.#requests.delete(requestId));
-  };
+    try {
+      return await this.#generate(messages, onText, controller.signal);
+    } finally {
+      if (this.#requests.get(requestId) === controller) this.#requests.delete(requestId);
+    }
+  }
 
   #readEvent(event: unknown): { text: string; done: boolean } {
     if (!isRecord(event))
@@ -74,15 +57,11 @@ export class OnlineChatClient extends ApiBase implements StandardCommunicationCo
     throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid online stream event.`);
   }
 
-  #emit(data: unknown): void {
-    for (const listener of this.#listeners) listener(data);
-  }
-
-  async generate(
-    messages: ChatMessage[],
+  async #generate(
+    messages: readonly ChatMessage[],
     callback: (text: string) => void,
     signal?: AbortSignal,
-  ): Promise<{ generated_text: string }> {
+  ): Promise<string> {
     const response = await this.request('generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,12 +89,14 @@ export class OnlineChatClient extends ApiBase implements StandardCommunicationCo
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Online response was interrupted. Retry explicitly.`,
       );
-    return { generated_text: text };
+    return text;
   }
 
   dispose = (): void => {
     for (const controller of this.#requests.values()) controller.abort();
     this.#requests.clear();
-    this.#listeners.clear();
+    this.#disposed = true;
+    this.stateSubscription.emit({ ready: false });
+    this.stateSubscription.disconnect();
   };
 }

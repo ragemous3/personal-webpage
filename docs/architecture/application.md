@@ -2,7 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `94d623f1c02be5e7b75998c841ce7276c59e7d36`. Focused checks, typecheck, lint, production build and primary runtime journeys pass. Source-matched real Local cache verification passes; both independent reviews pass at `c8121960ce811989aa99a5b2a968dd2171badf2e`, followed by 171/171 full-suite tests. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
+Implementation: generation-contract refactor is uncommitted. Focused generation, lifecycle, persistence, browser, configuration and coordinator checks pass. Runtime verification and independent reviews are pending for this change. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
@@ -30,6 +30,8 @@ flowchart TB
     ProgressService["ProgressServiceContract"]
     Session["ChatSessionContract"]
     HistoryContract["ChatHistoryRepositoryContract"]
+    GenerationContract["ChatGenerationContract"]
+    GenerationState["ChatGenerationState"]
     Port["StandardCommunicationContract"]
     Runtime["RuntimeCoordinatorContract / RuntimeLifecycleContract"]
     AdapterContract["RuntimeConfigurationAdapterContract"]
@@ -112,9 +114,11 @@ flowchart TB
   Rag -.->|"uses"| Session
   Session -.->|"history dependency"| HistoryContract
   Session -.->|"runtime dependency"| Runtime
-  Rag -.->|"uses"| Port
-  Rag <-->|"Local generation"| Chat
-  Rag <-->|"Online generation"| Online
+  Rag -.->|"retrieval dependency"| Port
+  Rag -.->|"generation dependency"| GenerationContract
+  GenerationContract -.->|"typed readiness and errors"| GenerationState
+  Rag <-->|"generate / text updates / cancel"| Chat
+  Rag <-->|"generate / text updates / cancel"| Online
   Rag <-->|"retrieval"| DB
   Rag <-->|"prompt and passages"| Content
   Rag <-->|"load/save/reset"| History
@@ -125,7 +129,8 @@ flowchart TB
   Chat -.->|"extends"| Standard
   DB -.->|"extends"| Standard
   Standard -.->|"implements"| Port
-  Online -.->|"implements"| Port
+  Online -.->|"implements"| GenerationContract
+  Chat -.->|"implements"| GenerationContract
   Online -.->|"extends"| ApiBase
   Content --> Files
   Rag <-->|"response lease / recovery"| Coordinator
@@ -177,8 +182,8 @@ flowchart TB
   Provider <-->|"stream / AbortSignal"| SDK
   SDK <-->|"generation"| OpenAI
   classDef added stroke:#2da44e,stroke-width:3px;
-  class Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry,Identity,StorageBase,TabStorage,ModelOption,OnlineDTO added;
+  class GenerationContract,GenerationState,Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry,Identity,StorageBase,TabStorage,ModelOption,OnlineDTO added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,Preferences,Metadata,LocalDTO,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
+  class Chat,Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,Preferences,Metadata,LocalDTO,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```
