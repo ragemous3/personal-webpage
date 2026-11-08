@@ -86,6 +86,10 @@ The runner closes its own browser contexts/browser and server and removes only i
 
 ## Publishing routine runs
 
+`npm run verify:browser -- --mode online` verifies the production UI and browser OnlineChatClient through the real Express API and OpenAI SDK against a controlled OpenAI HTTP endpoint. Retrieval and Local inference are labelled fixtures. It requires no credentials and covers streaming, cancellation, explicit retry, reset, failure, mode switching, shared retrieval reuse, reload restoration and fresh-tab history isolation. Initial Online startup must have only the coordinator and retrieval SharedWorkers. This is not live OpenAI inference or a real-model performance check. The manual workflow accepts `online` and retains the report and screenshot for 90 days. Server source is included in the evidence digest. See [Online generation](../../../docs/online-assistant.md).
+
+The Online journey holds Local pipeline initialization at a controlled HTTP gate, switches Online and completes an API answer while the Local resource remains loading. It releases the gate in teardown. This checks that mode changes and Online answers do not depend on Local initialization completing.
+
 The manual Browser verification workflow publishes entry/controlled reports and screenshots with 90-day retention; ordinary CI uploads test execution output even after test failure. Artifact links are included in the workflow summary. Real-model cache/performance runs need their existing local prerequisites and a separately published artifact/archive link. Record results and skipped/unattempted checks concisely in the ticket; do not commit routine reports or scratch notes. Approved baselines stay under reviewed test assets, outside the ignored artifact directory.
 
 ## Helpers

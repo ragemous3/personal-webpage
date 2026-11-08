@@ -131,6 +131,7 @@ export const siteConfig = () => ({
           online: 'Answer from the résumé.',
         },
         config: {
+          online: { apibaseurl: '/api/' },
           locallm: {
             model: modelConfig.model,
             revision: modelConfig.revision,

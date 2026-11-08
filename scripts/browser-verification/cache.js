@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { cachePrerequisites } from './application.js';
 import { root } from './environment.js';
+import { createPage } from './page.js';
 import { seedVerificationPreferences } from './preferences.js';
 import { exerciseRealSettings } from './real-settings.js';
 import { exerciseRealTabs } from './real-tabs.js';
@@ -9,9 +10,7 @@ import { exerciseRealTabs } from './real-tabs.js';
 const waitReady = async (page) => {
   await page.waitForFunction(
     () => {
-      const chat = globalThis.document
-        .querySelector('chatbot-offline-provider')
-        ?.shadowRoot?.querySelector('chat-container')?.shadowRoot;
+      const chat = globalThis.verificationChat()?.shadowRoot;
       return (
         chat &&
         (!chat.querySelector('input').disabled ||
@@ -21,16 +20,14 @@ const waitReady = async (page) => {
     { timeout: 600_000, polling: 100 },
   );
   const failure = await page.evaluate(() =>
-    globalThis.document
-      .querySelector('chatbot-offline-provider')
-      ?.shadowRoot?.querySelector('chat-container')
+    globalThis.verificationChat()
       ?.shadowRoot?.querySelector('[role=alert]')
       ?.textContent.trim(),
   );
   if (failure) throw new Error(failure);
 };
 const ask = async (browser, origin, evidence, existing) => {
-  const page = existing ?? (await browser.newPage());
+  const page = existing ?? (await createPage(browser));
   const requests = [];
   page.on('console', (event) => {
     if (event.type() === 'error')
@@ -51,15 +48,14 @@ const ask = async (browser, origin, evidence, existing) => {
   }
   await waitReady(page);
   await page.type(
-    'chatbot-offline-provider >>> chat-container >>> input',
+    'chatbot-provider >>> chat-container >>> input',
     'What experience does Rasmus have?',
   );
-  await page.click('chatbot-offline-provider >>> chat-container >>> button[type=submit]');
+  await page.click('chatbot-provider >>> chat-container >>> button[type=submit]');
   await page.waitForFunction(
     () => {
-      const provider = globalThis.document.querySelector('chatbot-offline-provider');
-      if (!provider) return false;
-      const chat = provider.shadowRoot.querySelector('chat-container').shadowRoot;
+      const chat = globalThis.verificationChat()?.shadowRoot;
+      if (!chat) return false;
       const failure = chat.querySelector('[role=alert]');
       if (failure?.textContent.trim()) return true;
       const answer = [...chat.querySelectorAll('[role=log] p')].at(-1);
@@ -75,9 +71,7 @@ const ask = async (browser, origin, evidence, existing) => {
   );
   await waitReady(page);
   const answer = await page.evaluate(() =>
-    globalThis.document
-      .querySelector('chatbot-offline-provider')
-      ?.shadowRoot?.querySelector('chat-container')
+    globalThis.verificationChat()
       ?.shadowRoot?.querySelector('[role=log] p:last-child')
       ?.textContent.trim(),
   );

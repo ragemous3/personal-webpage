@@ -7,8 +7,11 @@
   <body>
     <script type="module">
       import '/assets/layers/views/chatbot.component.ts';
-      import { RagService } from '/assets/layers/services/chatbot.service.ts';
+      import { RagService } from '/assets/layers/services/rag.service.ts';
       import { ChatMessageModel } from '/assets/layers/data/models/chat.model.ts';
+      import { ChatHistoryRepository } from '/assets/layers/data/chat-history-repository.data.ts';
+
+      import { createChatGenerationFixture } from '/tests/chat-generation.fixture.js';
 
       const transport = () => {
         const listeners = new Set();
@@ -20,19 +23,28 @@
           },
           send(payload, requestId, action = 'query') {
             this.sent.push({ payload, requestId, action });
+            if (action === 'query')
+              queueMicrotask(() =>
+                this.emit({
+                  task: 'vectordb:query:response',
+                  requestId,
+                  payload: { response: { neighbors: [0] } },
+                }),
+              );
           },
           emit(message) {
             for (const listener of listeners) listener(message);
           },
         };
       };
-      const chat = transport();
+      const chat = createChatGenerationFixture();
       const database = transport();
       const service = new RagService(
         chat,
         database,
         { getChunksAsync: async () => [{ index: 0, text: 'Résumé evidence' }] },
         new ChatMessageModel({ role: 'system', content: 'Use evidence.' }),
+        { history: new ChatHistoryRepository(indexedDB), conversationId: crypto.randomUUID() },
       );
       const element = document.createElement('chat-container');
       document.body.append(element);

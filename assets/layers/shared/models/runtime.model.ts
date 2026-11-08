@@ -36,6 +36,7 @@ export interface RuntimeSelection {
   settings: unknown;
 }
 export interface RuntimeSnapshot {
+  mountSelection?: RuntimeSelection;
   selection?: RuntimeSelection;
   activeSelection?: RuntimeSelection;
   runtimeId: string;

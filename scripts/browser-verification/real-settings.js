@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 const update = (page, patch) =>
   page.$eval(
-    'chatbot-offline-provider >>> assistant-configuration',
+    'chatbot-provider >>> assistant-configuration',
     (element, patch) => {
       const settings = element.configurationService;
       settings.update({ ...settings.stateSubscription.getValue().selected, ...patch });
@@ -12,7 +12,7 @@ const update = (page, patch) =>
 const ready = (page) =>
   page.waitForFunction(
     () => {
-      const provider = globalThis.document.querySelector('chatbot-offline-provider');
+      const provider = globalThis.document.querySelector('chatbot-provider');
       const state = provider?.shadowRoot
         ?.querySelector('assistant-configuration')
         ?.configurationService?.stateSubscription.getValue();
@@ -21,7 +21,7 @@ const ready = (page) =>
     { timeout: 600_000, polling: 100 },
   );
 const state = (page) =>
-  page.$eval('chatbot-offline-provider >>> assistant-configuration', (element) =>
+  page.$eval('chatbot-provider >>> assistant-configuration', (element) =>
     element.configurationService.stateSubscription.getValue(),
   );
 
@@ -35,7 +35,7 @@ export const exerciseRealSettings = async (browser, origin, evidence, ask) => {
   assert.equal(auto.active.execution, 'auto');
   const autoAnswer = await ask(browser, origin, evidence, page);
   const before = await page.$eval(
-    'chatbot-offline-provider >>> chat-container',
+    'chatbot-provider >>> chat-container',
     (element) => element.shadowRoot.querySelectorAll('[role=log] p').length,
   );
   await update(page, { execution: 'wasm' });
@@ -44,7 +44,7 @@ export const exerciseRealSettings = async (browser, origin, evidence, ask) => {
   assert.equal(cpu.error, undefined);
   assert.equal(cpu.active.execution, 'wasm');
   const after = await page.$eval(
-    'chatbot-offline-provider >>> chat-container',
+    'chatbot-provider >>> chat-container',
     (element) => element.shadowRoot.querySelectorAll('[role=log] p').length,
   );
   assert.equal(after, before);

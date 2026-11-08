@@ -23,7 +23,8 @@ record(
 const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 for (const name of Object.keys({ ...manifest.dependencies, ...manifest.devDependencies })) {
   try {
-    require.resolve(name === 'hnswlib-wasm' ? 'hnswlib-wasm/dist/hnswlib.js' : name);
+    const entry = name.startsWith('@types/') ? `${name}/package.json` : name;
+    require.resolve(entry === 'hnswlib-wasm' ? 'hnswlib-wasm/dist/hnswlib.js' : entry);
     record(`dependency:${name}`, true, 'Resolvable from this checkout');
   } catch (error) {
     record(`dependency:${name}`, false, error.code);

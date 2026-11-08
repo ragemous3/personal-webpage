@@ -1,70 +1,23 @@
+import { ApiBase } from '@/layers/data/abstracts/base.infra';
+import { type MetadataSources } from '@/layers/data/models/model-metadata-sources.model';
+import { autoPrecisions, cachedMetadata, manifest } from '@/layers/data/utils/model-metadata.utility';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type ApiContract } from '@/layers/shared/contracts/api.contract';
 import { type ModelMetadataRepositoryContract } from '@/layers/shared/contracts/model-metadata-repository.contract';
-import { isRecord } from '@/layers/shared/guards/guards';
-import {
-  type ModelDescriptor,
-  type ModelMetadata,
-  type ModelPrecision,
-  modelPrecisionSuffixes,
-} from '@/layers/shared/models/model-metadata.model';
+import { type ModelDescriptor, type ModelMetadata, type ModelPrecision, modelPrecisionSuffixes } from '@/layers/shared/models/model-metadata.model';
 
-interface MetadataSources {
-  cache?: CacheStorage | undefined;
-  modelBaseUrl?: string | undefined;
-  metadataBaseUrl?: string | undefined;
-}
-
-const precision = (value: unknown): value is ModelPrecision =>
-  typeof value === 'string' && Object.hasOwn(modelPrecisionSuffixes, value);
-
-const manifest = (value: unknown, revision: string): string[] => {
-  if (!isRecord(value) || value.sha !== revision || !Array.isArray(value.siblings))
-    throw new Error(`[${SeverityLevelCodes.ERROR}] - Model metadata revision does not match`);
-  return value.siblings.flatMap((entry: unknown) =>
-    isRecord(entry) && typeof entry.rfilename === 'string' ? [entry.rfilename] : [],
-  );
-};
-
-const record = (value: unknown): Record<string, unknown> => (isRecord(value) ? value : {});
-const autoPrecisions = (value: unknown): ModelMetadata['autoPrecision'] => {
-  const custom = record(record(value)['transformers.js_config']);
-  const devices = record(custom.device_config);
-  const result: ModelMetadata['autoPrecision'] = { auto: 'fp32', wasm: 'q8', webgpu: 'fp32' };
-  for (const device of ['auto', 'wasm', 'webgpu'] as const) {
-    const configured = record(devices[device]).dtype ?? custom.dtype;
-    const dtype = isRecord(configured) ? configured.model : configured;
-    if (precision(dtype)) result[device] = dtype;
-  }
-  return result;
-};
-const validAuto = (value: unknown): boolean => {
-  const mapping = record(value);
-  return ['auto', 'wasm', 'webgpu'].every((key) => precision(mapping[key]));
-};
-const cachedMetadata = (value: unknown, model: ModelDescriptor): value is ModelMetadata => {
-  if (!isRecord(value) || value.model !== model.id || value.revision !== model.revision)
-    return false;
-  const variants = value.precisions;
-  return (
-    Array.isArray(variants) &&
-    variants.length > 0 &&
-    variants.every(precision) &&
-    validAuto(value.autoPrecision)
-  );
-};
-
-export class ModelMetadataRepository implements ModelMetadataRepositoryContract {
+export class ModelMetadataRepository extends ApiBase implements ModelMetadataRepositoryContract {
   readonly #pending = new Map<string, Promise<ModelMetadata>>();
   readonly #memory = new Map<string, ModelMetadata>();
   readonly #modelBase: string;
   readonly #metadataBase: string;
 
   constructor(
-    private readonly api: Pick<ApiContract, 'loadJSON'>,
+    baseURL: string,
     readonly models: readonly ModelDescriptor[],
     private readonly sources: MetadataSources = {},
+    fetcher?: typeof fetch,
   ) {
+    super(baseURL, fetcher);
     this.#modelBase = (sources.modelBaseUrl ?? 'https://huggingface.co/').replace(/\/?$/, '/');
     this.#metadataBase = (sources.metadataBaseUrl ?? 'https://huggingface.co/api/models/').replace(
       /\/?$/,
@@ -129,18 +82,18 @@ export class ModelMetadataRepository implements ModelMetadataRepositoryContract 
 
   async #fetch(model: ModelDescriptor): Promise<ModelMetadata> {
     const signal = AbortSignal.timeout(10_000);
-    const files = await this.api.loadJSON(
+    const files = await this.loadJSON(
       `${this.#metadataBase}${model.id}/revision/${model.revision}`,
       (value) => manifest(value, model.revision),
       signal,
     );
-    const config = await this.api.loadJSON(
+    const config = await this.loadJSON(
       `${this.#modelBase}${model.id}/resolve/${model.revision}/config.json`,
       (value) => value,
       signal,
     );
     const precisions = Object.entries(modelPrecisionSuffixes).flatMap(([dtype, suffix]) =>
-      files.includes(`onnx/model${suffix}.onnx`) && precision(dtype) ? [dtype] : [],
+      files.includes(`onnx/model${suffix}.onnx`) ? [dtype as ModelPrecision] : [],
     );
     if (precisions.length === 0)
       throw new Error(`[${SeverityLevelCodes.ERROR}] - No supported model variants were published`);

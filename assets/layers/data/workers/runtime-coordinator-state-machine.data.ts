@@ -1,79 +1,38 @@
+import { WorkerKeys } from '@/layers/data/contants/constants';
 import { isRuntimeMessage as isMessage } from '@/layers/data/guards/is-runtime-message.guard';
+import { type RuntimeClient, type RuntimeCommand,type RuntimeLease, type RuntimeRequest, type RuntimeRequestMessage, type RuntimeResource } from '@/layers/data/models/runtime-coordinator.model';
+import { withoutGeneration } from '@/layers/data/utils/model-configuration.utility';
+import { AssistantModes } from '@/layers/shared/constants/assistant.constant';
+import { ActiveRuntimeStatuses, InitializingRuntimeStatuses,RuntimeStatuses } from '@/layers/shared/constants/runtime.constant';
 import { isRecord } from '@/layers/shared/guards/guards';
 import {
   defaultRuntimePolicy,
   isRuntimeRole,
   type RuntimeMessage,
   type RuntimePolicy,
-  type RuntimeResourceSnapshot,
   type RuntimeRole,
   type RuntimeSelection,
   type RuntimeSnapshot,
 } from '@/layers/shared/models/runtime.model';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
-interface RuntimeClient {
-  id: ReturnType<typeof crypto.randomUUID>;
-  attached: boolean;
-  port: MessagePort;
-  channels: Map<RuntimeRole, Set<ReturnType<typeof crypto.randomUUID>>>;
-}
-type RuntimeRequestMessage = RuntimeMessage & { requestId: string };
-interface RuntimeRequest {
-  key: string;
-  client: RuntimeClient;
-  message: RuntimeRequestMessage;
-  timer: ReturnType<typeof setTimeout>;
-  cancelled: boolean;
-  activityTimer: ReturnType<typeof setTimeout> | undefined;
-}
-interface RuntimeResource {
-  deferConfiguration?: boolean;
-  role: RuntimeRole;
-  status: RuntimeResourceSnapshot['status'];
-  epoch: string;
-  port?: MessagePort;
-  instanceId?: string;
-  configuration?: unknown;
-  activeConfiguration?: unknown;
-  error?: string;
-  progress?: RuntimeMessage;
-  active: RuntimeRequest | undefined;
-  queue: RuntimeRequest[];
-  phaseTimer: ReturnType<typeof setTimeout> | undefined;
-}
-const resource = (role: RuntimeRole): RuntimeResource => ({
+export class RuntimeCoordinatorStateMachine {
+  static #resource(role: RuntimeRole): RuntimeResource {
+    return {
   role,
-  status: 'uninitialized',
+  status: RuntimeStatuses.UNINITIALIZED,
   epoch: crypto.randomUUID(),
   active: undefined,
   queue: [],
   phaseTimer: undefined,
-});
-interface RuntimeLease {
-  client: RuntimeClient;
-  requestId: string;
-  timer: ReturnType<typeof setTimeout>;
-  lastMessage?: RuntimeMessage;
-}
-interface RuntimeCommand {
-  selection?: RuntimeSelection;
-  client: RuntimeClient;
-  requestId: string;
-  timer: ReturnType<typeof setTimeout>;
-  configurations: Partial<Record<RuntimeRole, unknown>>;
-}
-const withoutGeneration = (value: unknown): unknown =>
-  isRecord(value)
-    ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'generation'))
-    : value;
+};
+  }
 
-export class RuntimeCoordinatorStateMachine {
   readonly runtimeId = crypto.randomUUID();
   readonly #clients = new Map<MessagePort, RuntimeClient>();
   readonly #resources: Record<RuntimeRole, RuntimeResource> = {
-    llm: resource('llm'),
-    vectordb: resource('vectordb'),
+    llm: RuntimeCoordinatorStateMachine.#resource(WorkerKeys.LLM),
+    vectordb: RuntimeCoordinatorStateMachine.#resource(WorkerKeys.VECTORDB),
   };
   readonly #policy: RuntimePolicy;
   readonly #requests = new Map<string, RuntimeRequest>();
@@ -160,7 +119,7 @@ export class RuntimeCoordinatorStateMachine {
 
   readonly #configurePolicy = (payload: unknown): void => {
     if ([...this.#clients.values()].some((entry) => entry.attached)) return;
-    if (!Object.values(this.#resources).every((model) => model.status === 'uninitialized')) return;
+    if (!Object.values(this.#resources).every((model) => model.status === RuntimeStatuses.UNINITIALIZED)) return;
     if (!isRecord(payload) || !isRecord(payload.policy)) return;
     for (const key of Object.keys(defaultRuntimePolicy) as Array<keyof RuntimePolicy>)
       this.#setPolicy(key, payload.policy[key]);
@@ -229,7 +188,9 @@ export class RuntimeCoordinatorStateMachine {
   };
 
   readonly #sendSnapshot = (client: RuntimeClient): void => {
+    const mountSelection = this.#configuration?.selection ?? this.#activeSelection;
     const snapshot: RuntimeSnapshot = {
+      ...(mountSelection ? { mountSelection } : {}),
       ...(this.#selection ? { selection: this.#selection } : {}),
       ...(this.#activeSelection ? { activeSelection: this.#activeSelection } : {}),
       responding: this.#leases.size > 0 || this.#requests.size > 0,
@@ -266,7 +227,7 @@ export class RuntimeCoordinatorStateMachine {
     )
       return;
     const model = this.#resources[payload.role];
-    if (model.port && model.status !== 'failed') {
+    if (model.port && model.status !== RuntimeStatuses.FAILED) {
       payload.port.close();
       return;
     }
@@ -290,7 +251,7 @@ export class RuntimeCoordinatorStateMachine {
     model.port = port;
     model.instanceId = instanceId;
     model.epoch = crypto.randomUUID();
-    model.status = 'connecting';
+    model.status = RuntimeStatuses.CONNECTING;
     clearTimeout(model.phaseTimer);
     model.phaseTimer = setTimeout(
       () => this.#failResource(model, 'Model connection deadline exceeded'),
@@ -322,8 +283,8 @@ export class RuntimeCoordinatorStateMachine {
     const model = this.#resources[payload.name];
     model.configuration ??= payload.payload;
     this.#waitForRegistration(model);
-    if (model.status === 'failed') this.#roleFailure(client, model, payload.id);
-    else if (['ready', 'busy', 'stopping'].includes(model.status))
+    if (model.status === RuntimeStatuses.FAILED) this.#roleFailure(client, model, payload.id);
+    else if (ActiveRuntimeStatuses.has(model.status))
       this.#ready(client, model.role, payload.id);
     else this.#initialize(model);
     if (model.progress) this.#send(client, 'runtime:event', { ...model.progress, id: payload.id });
@@ -337,9 +298,9 @@ export class RuntimeCoordinatorStateMachine {
       );
   };
   readonly #initialize = (model: RuntimeResource): void => {
-    if (model.status !== 'uninitialized' || model.configuration === undefined || !model.port)
+    if (model.status !== RuntimeStatuses.UNINITIALIZED || model.configuration === undefined || !model.port)
       return;
-    model.status = 'loading';
+    model.status = RuntimeStatuses.LOADING;
     delete model.progress;
     clearTimeout(model.phaseTimer);
     model.phaseTimer = setTimeout(
@@ -430,7 +391,7 @@ export class RuntimeCoordinatorStateMachine {
     this.#requests.set(key, request);
     const lease = this.#leases.get(`${client.id}:${message.requestId}`);
     if (lease) lease.lastMessage = message;
-    if (model.status === 'failed') {
+    if (model.status === RuntimeStatuses.FAILED) {
       this.#finish(model, request, {
         ...message,
         error: { message: 'Something went wrong' },
@@ -443,11 +404,11 @@ export class RuntimeCoordinatorStateMachine {
   };
 
   readonly #pump = (model: RuntimeResource): void => {
-    if (model.active || model.status !== 'ready' || !model.port) return;
+    if (model.active || model.status !== RuntimeStatuses.READY || !model.port) return;
     const request = model.queue.shift();
     if (!request) return;
     model.active = request;
-    model.status = 'busy';
+    model.status = RuntimeStatuses.BUSY;
     request.activityTimer = setTimeout(
       () => this.#expire(model, request.key),
       this.#policy.connectionMs,
@@ -461,7 +422,7 @@ export class RuntimeCoordinatorStateMachine {
     if (!request) return;
     request.cancelled = true;
     if (request === model.active) {
-      model.status = 'stopping';
+      model.status = RuntimeStatuses.STOPPING;
       clearTimeout(request.activityTimer);
       request.activityTimer = setTimeout(
         () => this.#failResource(model, 'Cancellation stop deadline exceeded'),
@@ -497,7 +458,7 @@ export class RuntimeCoordinatorStateMachine {
     });
     if (model.active !== request) return;
     model.active = undefined;
-    if (model.status !== 'failed') model.status = 'ready';
+    if (model.status !== RuntimeStatuses.FAILED) model.status = RuntimeStatuses.READY;
     this.#pump(model);
   };
 
@@ -580,8 +541,8 @@ export class RuntimeCoordinatorStateMachine {
     this.#end(lease.client, { requestId: lease.requestId });
   };
   readonly #failResource = (model: RuntimeResource, reason: string): void => {
-    if (model.status === 'failed') return;
-    model.status = 'failed';
+    if (model.status === RuntimeStatuses.FAILED) return;
+    model.status = RuntimeStatuses.FAILED;
     model.error = reason;
     clearTimeout(model.phaseTimer);
     if (model.active)
@@ -605,7 +566,8 @@ export class RuntimeCoordinatorStateMachine {
       });
     }
     this.#publishFailure(model);
-    for (const lease of this.#leases.values()) this.#cancelLease(lease);
+    if (this.#requiredRole(model.role))
+      for (const lease of this.#leases.values()) this.#cancelLease(lease);
     this.#advance();
     this.#broadcastState();
   };
@@ -615,8 +577,13 @@ export class RuntimeCoordinatorStateMachine {
     Boolean(this.#configuration) ||
     this.#configurationQueue.length > 0 ||
     Object.values(this.#resources).some(
-      (model) => model.configuration !== undefined && model.status === 'failed',
+      (model) => model.configuration !== undefined && model.status === RuntimeStatuses.FAILED && this.#requiredRole(model.role),
     );
+
+  #requiredRole(role: RuntimeRole): boolean {
+    const settings = this.#activeSelection?.settings;
+    return role !== WorkerKeys.LLM || !isRecord(settings) || settings.mode !== AssistantModes.ONLINE;
+  }
 
   readonly #begin = (client: RuntimeClient, message: RuntimeMessage): void => {
     const payload = message.payload;
@@ -696,7 +663,7 @@ export class RuntimeCoordinatorStateMachine {
   };
   readonly #failConfiguration = (command: RuntimeCommand): void => {
     this.#configuration = undefined;
-    for (const role of ['llm', 'vectordb'] as const)
+    for (const role of [WorkerKeys.LLM, WorkerKeys.VECTORDB] as const)
       if (command.configurations[role] !== undefined)
         this.#failResource(this.#resources[role], 'Configuration deadline exceeded');
   };
@@ -704,16 +671,25 @@ export class RuntimeCoordinatorStateMachine {
   readonly #configure = (client: RuntimeClient, message: RuntimeMessage): void => {
     if (!isRecord(message.payload) || !isRecord(message.payload.configurations)) return;
     const configurations: RuntimeCommand['configurations'] = {};
-    for (const role of ['llm', 'vectordb'] as const) {
+    for (const role of [WorkerKeys.LLM, WorkerKeys.VECTORDB] as const) {
       if (message.payload.configurations[role] !== undefined)
         configurations[role] = message.payload.configurations[role];
     }
     const command = this.#command(client, message, configurations);
     if (!command) return;
     this.#selectCommand(command, message.payload.selection);
+    this.#supersedeLocalInitialization(command);
     this.#configurationQueue.push(command);
     this.#broadcastState();
   };
+
+  #supersedeLocalInitialization(command: RuntimeCommand): void {
+    const current = this.#configuration;
+    if (!current || !isRecord(command.selection?.settings)) return;
+    if (command.selection.settings.mode !== AssistantModes.ONLINE || current.configurations.llm === undefined) return;
+    this.#replyCommand(current, 'runtime:failed', 'Configuration superseded by Online selection');
+    this.#configuration = undefined;
+  }
 
   readonly #selectCommand = (command: RuntimeCommand, selection: unknown): void => {
     if (!isRecord(selection) || typeof selection.enabled !== 'boolean') return;
@@ -753,10 +729,10 @@ export class RuntimeCoordinatorStateMachine {
     this.#startConfiguration();
     this.#checkConfiguration();
     const configured = Object.values(this.#resources).filter(
-      (model) => model.configuration !== undefined,
+      (model) => model.configuration !== undefined && this.#requiredRole(model.role),
     );
     for (const [key, command] of this.#recoveries) {
-      if (configured.every((model) => ['ready', 'busy', 'stopping'].includes(model.status))) {
+      if (configured.every((model) => ActiveRuntimeStatuses.has(model.status))) {
         this.#replyCommand(command, 'runtime:recovered');
         this.#recoveries.delete(key);
       }
@@ -768,7 +744,7 @@ export class RuntimeCoordinatorStateMachine {
     const command = this.#configurationQueue.shift();
     if (!command) return;
     this.#configuration = command;
-    for (const role of ['llm', 'vectordb'] as const) {
+    for (const role of [WorkerKeys.LLM, WorkerKeys.VECTORDB] as const) {
       if (command.configurations[role] !== undefined)
         this.#changeConfiguration(this.#resources[role], command.configurations[role]);
     }
@@ -777,17 +753,18 @@ export class RuntimeCoordinatorStateMachine {
   };
 
   readonly #changeConfiguration = (model: RuntimeResource, configuration: unknown): void => {
-    if (!model.port && model.status === 'failed') return;
+    if (!model.port && model.status === RuntimeStatuses.FAILED) return;
+    if (InitializingRuntimeStatuses.has(model.status) && areValuesEqual(configuration, model.configuration)) return;
     model.configuration = configuration;
-    if (areValuesEqual(configuration, model.activeConfiguration) && model.status === 'ready')
+    if (areValuesEqual(configuration, model.activeConfiguration) && model.status === RuntimeStatuses.READY)
       return;
     if (!model.port) {
-      model.status = 'uninitialized';
+      model.status = RuntimeStatuses.UNINITIALIZED;
       this.#waitForRegistration(model);
       return;
     }
     model.epoch = crypto.randomUUID();
-    model.status = 'connecting';
+    model.status = RuntimeStatuses.CONNECTING;
     clearTimeout(model.phaseTimer);
     model.phaseTimer = setTimeout(
       () => this.#failResource(model, 'Configuration binding deadline exceeded'),
@@ -805,11 +782,11 @@ export class RuntimeCoordinatorStateMachine {
   readonly #checkConfiguration = (): void => {
     const command = this.#configuration;
     if (!command) return;
-    const changed = (['llm', 'vectordb'] as const)
+    const changed = ([WorkerKeys.LLM, WorkerKeys.VECTORDB] as const)
       .filter((role) => command.configurations[role] !== undefined)
       .map((role) => this.#resources[role]);
-    const failed = changed.some((model) => model.status === 'failed');
-    if (!failed && !changed.every((model) => model.status === 'ready')) return;
+    const failed = changed.some((model) => model.status === RuntimeStatuses.FAILED);
+    if (!failed && !changed.every((model) => model.status === RuntimeStatuses.READY)) return;
     if (!failed && command.selection) this.#activeSelection = command.selection;
     this.#replyCommand(
       command,
@@ -829,7 +806,7 @@ export class RuntimeCoordinatorStateMachine {
     }
     model.activeConfiguration = message.payload.configuration;
     if (model.deferConfiguration && model.configuration === undefined) {
-      model.status = 'uninitialized';
+      model.status = RuntimeStatuses.UNINITIALIZED;
       return;
     }
     delete model.deferConfiguration;
@@ -839,12 +816,12 @@ export class RuntimeCoordinatorStateMachine {
 
   readonly #resumeModel = (model: RuntimeResource, loaded: boolean): void => {
     if (!loaded) {
-      model.status = 'uninitialized';
+      model.status = RuntimeStatuses.UNINITIALIZED;
       this.#initialize(model);
       return;
     }
     if (areValuesEqual(model.configuration, model.activeConfiguration)) {
-      model.status = 'ready';
+      model.status = RuntimeStatuses.READY;
       delete model.error;
       return;
     }
@@ -854,11 +831,11 @@ export class RuntimeCoordinatorStateMachine {
         withoutGeneration(model.activeConfiguration),
       )
     ) {
-      model.status = 'uninitialized';
+      model.status = RuntimeStatuses.UNINITIALIZED;
       this.#initialize(model);
       return;
     }
-    model.status = 'loading';
+    model.status = RuntimeStatuses.LOADING;
     model.phaseTimer = setTimeout(
       () => this.#failResource(model, 'Model disposal deadline exceeded'),
       this.#policy.stoppingMs,
@@ -873,7 +850,7 @@ export class RuntimeCoordinatorStateMachine {
   };
 
   readonly #publishReadiness = (model: RuntimeResource): void => {
-    if (model.status !== 'ready') return;
+    if (model.status !== RuntimeStatuses.READY) return;
     for (const client of this.#clients.values()) {
       for (const id of client.channels.get(model.role) ?? []) this.#ready(client, model.role, id);
     }
@@ -911,7 +888,7 @@ export class RuntimeCoordinatorStateMachine {
       case `${model.role}:ready`: {
         clearTimeout(model.phaseTimer);
         delete model.error;
-        model.status = 'ready';
+        model.status = RuntimeStatuses.READY;
         model.activeConfiguration = model.configuration;
 
         break;
@@ -919,7 +896,7 @@ export class RuntimeCoordinatorStateMachine {
       case 'runtime:disposed': {
         clearTimeout(model.phaseTimer);
         model.activeConfiguration = undefined;
-        model.status = 'uninitialized';
+        model.status = RuntimeStatuses.UNINITIALIZED;
         this.#initialize(model);
 
         break;

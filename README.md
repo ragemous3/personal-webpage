@@ -34,12 +34,9 @@ The infrastructure is aiming to follow SOLID principles and is built on OO (Obje
 
 ### Composition root (called composition in the folder tree)
 
-The composition root is essentially the app - it's responsible for constructing concrete dependencies and providing them to the component tree.
-The web components providing the components with dependencies.
+Composition owns dependency wiring between layers. Its factories construct concrete dependencies; Lit providers supply them to component trees through Lit context. Composition may import from every layer.
 
-In this project, Lit components + lit context acts as composition root. The composition-root is then provisioned by factory pattern.
-
-The composition root may depend on all layers because its job is wiring, not application logic.
+ChatbotProvider owns the shared configuration, retrieval DB and history repository. Each mode provider owns its RagService and generation dependency, and disposes them when that tree unmounts. Factories supply construction and cleanup functions to those owners. RagService owns response cancellation and persistence ordering; RuntimeCoordinator owns cross-tab response leases. Accepted writes finish before the shared history repository closes.
 
 ### Layers - Dynamic data handling
 
@@ -65,12 +62,21 @@ The data layer contains technical mechanisms and data access.
 This includes workers, SharedWorkers, BroadcastChannel, IndexedDB, fetch, runtime config, model loading, vector search, and persistence logic.
 The data layer hides low-level implementation details behind simple methods that the service layer can call.
 
-**Layer dependency direction**
-The direction of the dependencies is always only one direction. Between layers in the below-mentioned direction, it's allowed to anything that concerns data transfers is allowed as to keep code DRY - for example contracts and guards.
+### Dependency and helper placement
+
+Application interactions follow this direction through injected contracts:
 
 ```text
 view->service->data
 ```
+
+- Views, services and data modules may import directly from their own layer and from shared. Composition wires concrete dependencies across layers.
+- Class implementation files contain imports and their class. Put class-specific helpers and constants inside the class. Keep reusable helpers, types, interfaces and guards in their owning area's utils, models, contracts, constants or guards folder. Factory, worker entry-point and utility files keep their respective construction, startup and helper functions.
+- Put generic utilities and contracts needed across layers in shared. Import same-layer and shared helpers directly; dependency injection is for substitutable dependencies at boundaries.
+- Keep composition dependency types in composition/models. Factories, provider web components and context may import them directly. These models may describe the concrete dependencies that composition wires together; keep them independent of factories.
+- Before adding a helper, check the owning area and shared for an existing one. Keep a helper local unless its responsibility is generic or it is needed across layers.
+
+For example, composition-only browser-access handling belongs in composition/utils. A reusable value-comparison function belongs in layers/shared/utils. Both use the .utility.ts suffix.
 
 ### Contracts
 
@@ -235,6 +241,9 @@ api-base.service.ts
 
 - **adapter**
   Data-layer entity that implements a contract and translates between application-facing operations and a technical interface.
+
+- **client**
+  Data-layer entity that makes typed requests to an external service and handles its responses, streams and cancellation. Use the `.client.ts` file suffix, for example `online-chat.client.ts`.
 
 - **spec**  
   Test files.

@@ -8,9 +8,10 @@ export const getLocalChatBot = (
   runtime: RuntimeCoordinatorContract,
   config: RagConfigBase<LmConfig>,
   singleton = true,
+  autoStart = true,
 ): Chat => {
   if (singleton && chat) return chat;
-  const result = new Chat(runtime, config);
+  const result = new Chat(runtime, config, autoStart);
   if (singleton) chat = result;
   return result;
 };

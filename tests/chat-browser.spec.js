@@ -44,6 +44,9 @@ test('browser handles late context, submit, plain text, interruption, retry and 
     await page.type('chat-container >>> input', 'Question');
     await page.click('chat-container >>> button[type=submit]');
     await page.waitForFunction(() => globalThis.fixture.database.sent.length === 1);
+    await page.waitForFunction(() =>
+      globalThis.fixture.chat.sent.some(({ action }) => action === 'query'),
+    );
     await page.evaluate(() => {
       const { chat, database } = globalThis.fixture;
       const { requestId } = database.sent[0];
@@ -61,13 +64,20 @@ test('browser handles late context, submit, plain text, interruption, retry and 
     );
     await page.evaluate(() => {
       const buttons = [...globalThis.fixture.element.shadowRoot.querySelectorAll('button')];
-      buttons.find((button) => button.textContent === 'Retry').click();
+      buttons.find((button) => button.textContent.trim() === 'Retry').click();
     });
     assert.equal(
       await page.evaluate(
         () => globalThis.fixture.service.chatMessagesSubscription.getValue().length,
       ),
       2,
+    );
+    await page.waitForFunction(
+      () =>
+        globalThis.fixture.database.sent.filter(({ action }) => action === 'query').length === 2,
+    );
+    await page.waitForFunction(
+      () => globalThis.fixture.chat.sent.filter(({ action }) => action === 'query').length === 2,
     );
     await page.evaluate(() => {
       const { chat, database } = globalThis.fixture;
@@ -86,8 +96,8 @@ test('browser handles late context, submit, plain text, interruption, retry and 
       element.remove();
       parent.append(element);
     });
-    await page.waitForFunction(
-      () => globalThis.fixture.element.shadowRoot.querySelectorAll('[role=log] p').length === 0,
+    await page.waitForFunction(() =>
+      globalThis.fixture.element.shadowRoot.textContent.includes('Completed'),
     );
     assert.deepEqual(errors, []);
     const retrieved = await page.evaluate(() => globalThis.exerciseRetrieval());

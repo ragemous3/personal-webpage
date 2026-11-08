@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { IDBFactory } from 'fake-indexeddb';
+
+import { buildChatbotDeps } from '@/composition/factories/chatbot.factory';
 import { buildChatbotOfflineDeps } from '@/composition/factories/chatbot-offline.factory';
+import { getOfflineConfiguration } from '@/composition/factories/offline-configuration.factory';
 import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
-import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
+import { defaultAssistantSettings } from '@/layers/shared/constants/assistant-settings.constant';
 
 import {
   databaseConfig,
@@ -16,6 +20,17 @@ import {
 
 test('a language model configuration is accepted without database fields', () => {
   assert.equal(isLmConfig(modelConfig), true);
+});
+
+test('the configured Online API directory is preserved and normalized', () => {
+  for (const [configured, expected] of [
+    ['/assistant-api', '/assistant-api/'],
+    ['https://api.example.test/assistant/v2/', 'https://api.example.test/assistant/v2/'],
+  ]) {
+    const config = siteConfig();
+    config.SITE_PARAMS.params.chatbot.config.online = { apibaseurl: configured };
+    assert.equal(getOfflineConfiguration(config).onlineApiBaseURL, expected);
+  }
 });
 
 test('unsupported model devices, dtypes and malformed generation options are rejected', () => {
@@ -55,7 +70,7 @@ test('invalid model configuration creates no worker or broadcast resources', (co
   const config = siteConfig();
   config.SITE_PARAMS.params.chatbot.config.locallm.device = 'invalid';
   const count = resources.length;
-  assert.throws(() => buildChatbotOfflineDeps(config, new EventTarget()));
+  assert.throws(() => buildChatbotDeps(config, new EventTarget()));
   assert.equal(resources.length, count);
 });
 
@@ -74,6 +89,11 @@ test('invalid site settings are rejected before creating any resources', (contex
     (config) => {
       config.SITE_PARAMS.baseURL = '';
     },
+    ...[undefined, '', 'javascript:alert(1)', '/api/?version=2', '/api/#models', 'http://['].map(
+      (apibaseurl) => (config) => {
+        config.SITE_PARAMS.params.chatbot.config.online = { apibaseurl };
+      },
+    ),
     (config) => {
       config.WORKER_NAMES['runtime-coordinator.shared-worker.ts'] = undefined;
     },
@@ -91,7 +111,7 @@ test('invalid site settings are rejected before creating any resources', (contex
     const config = siteConfig();
     change(config);
     const count = resources.length;
-    assert.throws(() => buildChatbotOfflineDeps(config, new EventTarget()));
+    assert.throws(() => buildChatbotDeps(config, new EventTarget()));
     assert.equal(resources.length, count);
   }
 });
@@ -105,7 +125,7 @@ test('non-serializable generation values are rejected before allocating worker r
     const config = siteConfig();
     config.SITE_PARAMS.params.chatbot.config.locallm.generation = generation;
     const count = resources.length;
-    assert.throws(() => buildChatbotOfflineDeps(config, new EventTarget()));
+    assert.throws(() => buildChatbotDeps(config, new EventTarget()));
     assert.equal(resources.length, count);
   }
 });
@@ -125,15 +145,17 @@ test('invalid numeric generation options are rejected before allocating resource
     const config = siteConfig();
     config.SITE_PARAMS.params.chatbot.config.locallm.generation = generation;
     const count = resources.length;
-    assert.throws(() => buildChatbotOfflineDeps(config, new EventTarget()));
+    assert.throws(() => buildChatbotDeps(config, new EventTarget()));
     assert.equal(resources.length, count);
   }
 });
 
 test('valid normalized site params produce configured model and database startup messages after saved settings resolve', async () => {
-  const dependencies = buildChatbotOfflineDeps(siteConfig(), new EventTarget());
-  assert.ok(dependencies.service);
+  const browser = Object.assign(new EventTarget(), { indexedDB: new IDBFactory() });
+  const dependencies = buildChatbotDeps(siteConfig(), browser);
   assert.ok(dependencies.settings);
+  await new Promise((resolve) => setImmediate(resolve));
+  const offline = buildChatbotOfflineDeps(dependencies);
   await new Promise((resolve) => setImmediate(resolve));
   const coordinator = workers.find(
     (worker) => worker.source.pathname === '/workers/coordinator.js',
@@ -143,9 +165,10 @@ test('valid normalized site params produce configured model and database startup
     .filter((message) => message.task === 'runtime:host')
     .map(({ payload: { name, task, payload } }) => ({ name, task, payload }));
   assert.deepEqual(startup, [
-    { name: 'llm', task: 'llm:init', payload: { ...modelConfig, device: defaultAssistantSettings.execution, generation: { max_new_tokens: 256, do_sample: false } } },
     { name: 'vectordb', task: 'vectordb:init', payload: { ...databaseConfig, device: defaultAssistantSettings.execution } },
+    { name: 'llm', task: 'llm:init', payload: { ...modelConfig, device: defaultAssistantSettings.execution, generation: { max_new_tokens: 256, do_sample: false } } },
   ]);
+  offline.dispose();
   dependencies.dispose();
 });
 

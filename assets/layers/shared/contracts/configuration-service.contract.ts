@@ -1,7 +1,4 @@
-import {
-  type AssistantSettings,
-  type ConfigurationState,
-} from '@/layers/shared/models/assistant-settings.model';
+import { type AssistantSettings, type ConfigurationState } from '@/layers/shared/models/assistant-settings.model';
 import { type ReadonlyStatefulConnections } from '@/layers/shared/utils/subscribable';
 
 export interface ConfigurationServiceContract {
