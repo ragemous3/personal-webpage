@@ -2,7 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: uncommitted on `44e79ef4695dc7e24defb50981dd16ec21cf1179`; runtime verification and reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154` (signed prototype checkpoint). Controlled speech and Online browser journeys pass. Real Qwen/Kokoro coexistence fails at the 8 GB environment limit; independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -31,6 +31,7 @@ flowchart TB
     HeadContract["TalkingHeadPresentationContract"]
     SpeechAudio["SpeechAudio"]
     SpeechState["TalkingHeadState"]
+    SpeechOptions["TalkingHeadOptions"]
     ChatLifecycleEvent["ChatLifecycleEvent"]
     GenerationEvent["ChatGenerationEvent"]
     ConfigService["ConfigurationServiceContract"]
@@ -221,8 +222,9 @@ flowchart TB
   TTSContract -.->|"audio and timed visemes"| SpeechAudio
   HeadContract -.->|"playback input"| SpeechAudio
   ChatService -.->|"availability and invalidation"| ChatLifecycleEvent
+  Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechAudio,SpeechState,GenerationEvent,TTS,Renderer,HeadTTS,SpeechWorker,TalkingHead,Avatar,SpeechAssets,ChatLifecycleEvent added;
+  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechAudio,SpeechState,GenerationEvent,TTS,Renderer,HeadTTS,SpeechWorker,TalkingHead,Avatar,SpeechAssets,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,ChatService,Rag,BaseProvider,ServiceFactory modified;
 ```

@@ -52,7 +52,7 @@ The adapters isolate synthesis and presentation SDKs through shared contracts. N
 
 ### Intended architecture
 
-Implementation is uncommitted on `44e79ef4695dc7e24defb50981dd16ec21cf1179`. This diagram now describes the current source; full runtime verification and reviews remain in progress. Green means added, yellow means modified source, and solid/dotted arrows distinguish runtime/type relationships. Composition is disconnected. Saved copies are under docs/architecture/. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
+Implementation checkpoint: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154`. This diagram now describes the current source; full runtime verification and reviews remain in progress. Green means added, yellow means modified source, and solid/dotted arrows distinguish runtime/type relationships. Composition is disconnected. Saved copies are under docs/architecture/. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 
 ```mermaid
 flowchart TB
@@ -322,3 +322,5 @@ The real Local variant with `RUNTIME_MODEL_DIR=/workspace/scratch/three-sharedwo
 Focused generation, persistence/lifecycle, speech and asset checks pass 58/58. Typecheck, lint and production build pass after cleanup. Production build and the existing Online browser journey pass. Five architecture diagrams render; metadata remains explicitly uncommitted/partial until the checkpoint commit. Independent reviews, final full-suite result, push and PR handoff are pending. The ticket stays OPEN.
 
 Final controlled checkpoint: `npm run verify:browser -- --mode speech` PASS after helper cleanup, with screenshot, video and nonzero PCM WAV retained under ignored artifacts/verification/speech-2026-11-08T18-41-20-154Z-0a46d648-c220-4710-b4c7-06fdc287b9ac/. Source digest: `a97875bd83300a684899f7e32282cc6abe1dd46fa366d193185b502f5e28a2e6`. Real Local coexistence remains FAIL at 8 GB; the isolated no-voice real-Qwen diagnostic passes. Stage 4 requires a higher-memory real-model pass or user-approved alternative verification before review/publication. No PR has been opened.
+
+Signed implementation checkpoint: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154`. Stage 4 is blocked; no reviews, final full-suite claim, push or PR publication have occurred. A following documentation/formatting checkpoint updates diagram provenance and removes a trailing blank line; runtime behavior is unchanged.

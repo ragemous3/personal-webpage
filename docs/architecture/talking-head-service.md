@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/talking-head.service.ts). The head observes completed Local/Online generation output, synthesizes English audio and plays timed Oculus visemes. Mode composition supplies the shared generation instance; only RagService starts requests.
 
-Implementation: uncommitted on `44e79ef4695dc7e24defb50981dd16ec21cf1179`; runtime verification and reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154` (signed prototype checkpoint). Controlled speech and Online browser journeys pass. Real Qwen/Kokoro coexistence fails at the 8 GB environment limit; independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -35,6 +35,7 @@ flowchart TB
     HeadContract["TalkingHeadPresentationContract"]
     SpeechAudio["SpeechAudio"]
     SpeechState["TalkingHeadState"]
+    SpeechOptions["TalkingHeadOptions"]
     ChatLifecycleEvent["ChatLifecycleEvent"]
     GenerationEvent["ChatGenerationEvent"]
   end
@@ -206,8 +207,9 @@ flowchart TB
   TTSContract -.->|"audio and timed visemes"| SpeechAudio
   HeadContract -.->|"playback input"| SpeechAudio
   ServiceContract -.->|"availability and invalidation"| ChatLifecycleEvent
+  Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent added;
+  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```

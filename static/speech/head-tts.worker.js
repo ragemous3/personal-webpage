@@ -30,4 +30,3 @@ globalThis.fetch = async (input, options) => {
   }
   return response;
 };
-
