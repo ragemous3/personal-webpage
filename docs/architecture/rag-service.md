@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). RagService owns retrieval, generation initiation and persisted history. TalkingHeadService observes the same generation instance and receives separate lifecycle invalidation.
 
-Implementation: uncommitted Local browser-speech change after `8918c8fb762a290f9fd08c83c62aff273718eaa8` (checkpoint). Local uses browser speech with a still head; Online retains Kokoro audio and timed visemes. Runtime verification, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `2feecb4df66a81ac5be7fd932f6b6e6ceb77c400` (signed Local browser-speech checkpoint). Local uses browser speech with a still head; Online retains Kokoro audio and timed visemes. Runtime verification, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB

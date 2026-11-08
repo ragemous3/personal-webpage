@@ -358,3 +358,5 @@ Five native API tests cover completion, cancellation, error/retry, missing capab
 
 
 Current-source browser run: `npm run verify:browser -- --mode speech` reports BLOCKED at Local native speech with synthesis-failed and zero available voices. Online Kokoro audio, Stop/Reset and Local transition ran first; Local had zero dedicated speech Workers. The Local answer was retained, and browser/server/profile cleanup passed with evidence retained. Cached restart was not reached. Report and visual artifacts are local-only under ignored artifacts/verification/speech-2026-11-08T20-55-34-398Z-8b191396-2c26-46cf-9e49-62d8a915202f/. This is a prerequisite blocker, not a passing native-audio journey or an approved substitution.
+
+Signed Local browser-speech implementation checkpoint: `2feecb4df66a81ac5be7fd932f6b6e6ceb77c400`. Stage 4 remains OPEN on the recorded runtime blockers. Saved diagram provenance now identifies this snapshot; no application code changed in the provenance update.
