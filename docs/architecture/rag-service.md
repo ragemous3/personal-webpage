@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). ChatbotProvider renders AssistantConfiguration and one mode component directly in its tree after accepted work drains. Both modes reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
 
-Implementation: `16e22ccbf80af3fcf70e3807b401d00ea3c58925`. Focused checks, typecheck, lint, production builds and Online/settings/real Local cache journeys pass. Both independent reviews and the final full suite are pending. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
+Implementation: `16e22ccbf80af3fcf70e3807b401d00ea3c58925`. Focused checks, typecheck, lint, production builds and Online/settings/real Local cache journeys pass. Both independent reviews pass at `b78888b3be5b1f0a350f39fdddb9ee438cfcb73a`; the final full suite passes 175/175. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
