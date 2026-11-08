@@ -60,7 +60,7 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
   async #generate(
     messages: readonly ChatMessage[],
     callback: (text: string) => void,
-    signal?: AbortSignal,
+    signal: AbortSignal,
   ): Promise<string> {
     const response = await this.request('generate', {
       method: 'POST',
@@ -69,8 +69,9 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
         ...this.options,
         messages: messages.filter(({ role }) => role !== 'system'),
       }),
-      signal: signal ?? null,
+      signal,
     });
+    signal.throwIfAborted();
     if (!response.ok || !response.body)
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Online API request failed (${response.status}).`,
@@ -78,6 +79,7 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
     let text = '';
     let done = false;
     for await (const value of readJsonLines(response.body)) {
+      signal.throwIfAborted();
       if (done)
         throw new Error(`[${SeverityLevelCodes.ERROR}] - Unexpected output after completion.`);
       const event = this.#readEvent(value);
@@ -85,6 +87,7 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
       done = event.done;
       if (event.text) callback(event.text);
     }
+    signal.throwIfAborted();
     if (!done)
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Online response was interrupted. Retry explicitly.`,

@@ -139,3 +139,26 @@ test('cancelling the browser client aborts HTTP and suppresses late completion w
   assert.deepEqual(chunks, ['Partial']);
   client.dispose();
 });
+
+test('cancellation also stops events already buffered in an HTTP response', async () => {
+  const client = new OnlineChatClient(
+    '/api/',
+    { model: 'gpt-6-luna', maxOutputTokens: 256 },
+    async () =>
+      new Response(
+        '{"type":"delta","text":"First"}\n{"type":"delta","text":"Late"}\n{"type":"done"}\n',
+      ),
+  );
+  const chunks = [];
+  const result = client.generate(
+    [],
+    (text) => {
+      chunks.push(text);
+      client.cancel('request');
+    },
+    'request',
+  );
+  await assert.rejects(result, { name: 'AbortError' });
+  assert.deepEqual(chunks, ['First']);
+  client.dispose();
+});
