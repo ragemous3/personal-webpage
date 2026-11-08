@@ -1,6 +1,6 @@
 # Switch Local and Online chatbot trees through dependency injection
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task, refactor
 
@@ -78,6 +78,8 @@ Stage 3 checks: **137 tests, 137 pass, 0 fail** across the mapped chat/history, 
 Primary local runtime journeys PASS with clean teardown/evidence retention: Online online-2026-11-08T07-13-23-552Z-10a9ae0d-56fb-4f56-a3d8-c2d5e2420a90; settings settings-2026-11-08T07-13-24-937Z-4441147c-b2bf-4fc4-85a8-808e6188f968; real Local cache cache-2026-11-08T07-13-27-352Z-3a8dc7cc-6f8a-41fa-8c9e-d124b69fb4cb, all under artifacts/verification/. A final type-import formatting correction has no runtime effect; an exact-full-source cache refresh will provide matching hosted provenance. The signed review-fix snapshot is next, followed by both independent reviews. Final npm test and publication have not run for these fixes.
 
 ### Final review-fix gates
+
+Review-fix publication: signed head768c8a4 was pushed to the existing feature branch and PR #24 was updated with the current provider tree, names and saved service diagrams. The ticket is CLOSED on this branch after publication, per stage7. Current-head CI and hosted evidence publication continue; a new CI defect would reopen it. Human discussion of the persisted model-selection fields remains separate from implementation approval. No merge, auto-merge, queue, deployment or original-PR closure was performed.
 
 Signed implementation: 94d623f1c02be5e7b75998c841ce7276c59e7d36. Source digest: 2099eb1be8d71330acd8732cb42ea253ce268e67af9c27bc29b665b2924172ef (213 inputs). Both independent reviews pass at c8121960ce811989aa99a5b2a968dd2171badf2e: Standards **0 hard violations, 0 actionable smells, 0 unresolved maintenance notes**; Spec **0 findings**. The first review identified stale host/JSON-API wording in two guides and the verification feature map; the documentation-only correction was re-reviewed by both agents. No reviewer changed files or ran the full suite.
 
