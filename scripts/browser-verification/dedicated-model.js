@@ -1,7 +1,7 @@
 import { pipeline } from '@huggingface/transformers';
 
+import { configureModelEnvironment } from '@/layers/data/utils/model-environment.utility';
 import { createLlmMessageHandler } from '@/layers/data/workers/llm.shared-worker';
-import { configureModelEnvironment } from '@/layers/data/workers/model-environment.data';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 
 const handler = createLlmMessageHandler({

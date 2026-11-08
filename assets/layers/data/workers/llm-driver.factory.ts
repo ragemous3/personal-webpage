@@ -1,29 +1,20 @@
 import {
   InterruptableStoppingCriteria,
   pipeline,
-  type ProgressInfo,
-  type TextGenerationPipeline,
 } from '@huggingface/transformers';
 
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
 import { LocalLLMData } from '@/layers/data/llm.data';
 import { type LmConfig } from '@/layers/data/models/chatbot-config.model';
+import { type LlmWorkerDependencies } from '@/layers/data/models/llm-driver.model';
+import { withoutGeneration } from '@/layers/data/utils/model-configuration.utility';
+import { configureModelEnvironment } from '@/layers/data/utils/model-environment.utility';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
 import { TokenizerUtility } from '@/layers/shared/utils/tokenizer';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
-import { configureModelEnvironment } from './model-environment.data';
 import { type LlmDTO, type MessageBase } from './models';
-
-interface LlmWorkerDependencies {
-  loadGeneratorPipeline: (
-    config: LmConfig,
-    progress: (value: ProgressInfo) => void,
-  ) => Promise<TextGenerationPipeline>;
-  loadTokenizer: (model: string, revision?: string) => Promise<TokenizerUtility>;
-  publish: (message: unknown) => void;
-}
 
 const defaultDependencies: LlmWorkerDependencies = {
   loadGeneratorPipeline: async (config, progress) => {
@@ -138,8 +129,6 @@ const createGenerationQueue = (
   };
 };
 
-const identity = ({ generation: _generation, ...value }: LmConfig): unknown => value;
-
 export const createLlmMessageHandler = (
   dependencies: LlmWorkerDependencies,
 ): SharedModelDriverContract['handle'] & { dispose: SharedModelDriverContract['dispose'] } => {
@@ -152,7 +141,7 @@ export const createLlmMessageHandler = (
     const { payload } = request;
     if (!isLmConfig(payload))
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid language model configuration.`);
-    if (activeConfiguration && !areValuesEqual(identity(activeConfiguration), identity(payload))) {
+    if (activeConfiguration && !areValuesEqual(withoutGeneration(activeConfiguration), withoutGeneration(payload))) {
       throw new Error(
         `[${SeverityLevelCodes.ERROR}] - Model initialized with a different configuration.`,
       );

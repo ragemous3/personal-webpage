@@ -5,9 +5,10 @@ import { IDBFactory } from 'fake-indexeddb';
 
 import { buildChatbotDeps } from '@/composition/factories/chatbot.factory';
 import { buildChatbotOfflineDeps } from '@/composition/factories/chatbot-offline.factory';
+import { getOfflineConfiguration } from '@/composition/factories/offline-configuration.factory';
 import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
-import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
+import { defaultAssistantSettings } from '@/layers/shared/constants/assistant-settings.constant';
 
 import {
   databaseConfig,
@@ -19,6 +20,17 @@ import {
 
 test('a language model configuration is accepted without database fields', () => {
   assert.equal(isLmConfig(modelConfig), true);
+});
+
+test('the configured Online API directory is preserved and normalized', () => {
+  for (const [configured, expected] of [
+    ['/assistant-api', '/assistant-api/'],
+    ['https://api.example.test/assistant/v2/', 'https://api.example.test/assistant/v2/'],
+  ]) {
+    const config = siteConfig();
+    config.SITE_PARAMS.params.chatbot.config.online = { apibaseurl: configured };
+    assert.equal(getOfflineConfiguration(config).onlineApiBaseURL, expected);
+  }
 });
 
 test('unsupported model devices, dtypes and malformed generation options are rejected', () => {
@@ -77,6 +89,11 @@ test('invalid site settings are rejected before creating any resources', (contex
     (config) => {
       config.SITE_PARAMS.baseURL = '';
     },
+    ...[undefined, '', 'javascript:alert(1)', '/api/?version=2', '/api/#models', 'http://['].map(
+      (apibaseurl) => (config) => {
+        config.SITE_PARAMS.params.chatbot.config.online = { apibaseurl };
+      },
+    ),
     (config) => {
       config.WORKER_NAMES['runtime-coordinator.shared-worker.ts'] = undefined;
     },

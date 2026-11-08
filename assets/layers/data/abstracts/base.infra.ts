@@ -1,14 +1,12 @@
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ApiContract } from '@/layers/shared/contracts/api.contract';
 
-//TODO: Might Need to convert to abstract but its used by implementation
 export class ApiBase implements ApiContract {
   constructor(
     readonly baseURL: string,
     private readonly fetcher: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
-  //TODO:  Need to remove the file paths and put it in SITE_PARAMS
   loadUint8Array = async (url = '/content-data/contents.bin'): Promise<Uint8Array | undefined> => {
     const response = await this.request(url);
     if (!response.ok) throw new Error(`[${SeverityLevelCodes.ERROR}] - Failed to fetch file`);

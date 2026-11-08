@@ -1,8 +1,8 @@
 # ConfigurationService
 
-[Source](../../assets/layers/services/configuration.service.ts). The settings slice restores preferences, discovers Local/Online model choices, and changes the shared runtime after accepted responses drain. Its repositories keep preferences, local metadata caching and API catalog access separate.
+[Source](../../assets/layers/services/configuration.service.ts). The settings slice restores preferences, discovers Local/Online model choices, and changes the shared runtime after accepted responses drain. Its repositories keep preferences, local metadata caching and API catalog access separate. OnlineModelRepository and OnlineChatClient receive the same API base URL from Hugo configuration and reuse ApiBase for URL resolution.
 
-Implementation: `e6b713fef5238f13a2aef46d0d3c53b0319d1bb7`. Primary Online, settings and real Local CPU/cache journeys are verified; the supplemental forced-close limitation is recorded in the ticket. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified. Colors refer to this comparison.
+Implementation: uncommitted PR review fixes based on `5d05a2530354812381bff4855ab3e93d037ae189`. Focused checks, typecheck and production build pass; current runtime verification and both independent reviews remain in progress. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
 
@@ -10,7 +10,6 @@ Green borders identify added components or dependencies; yellow borders identify
 flowchart TB
   subgraph Views["Views layer"]
     UI["AssistantConfiguration"]
-    Host["ChatbotHost"]
   end
   subgraph Services["Services layer"]
     Settings["ConfigurationService"]
@@ -22,13 +21,18 @@ flowchart TB
     MetadataContract["ModelMetadataRepositoryContract"]
     OnlineContract["OnlineModelRepositoryContract"]
     OnlineDTO["OnlineModel"]
+    LocalDTO["ModelDescriptor"]
+    ModelOption["ModelOption"]
     AdapterContract["RuntimeConfigurationAdapterContract"]
     SettingsDTO["AssistantSettings"]
+    ApiContract["ApiContract"]
   end
   subgraph Data["Data layer"]
     Saved["ConfigurationRepository"]
+    StorageBase["WebStorageBase — abstract"]
     Metadata["ModelMetadataRepository"]
     Catalogue["OnlineModelRepository"]
+    ApiBase["ApiBase"]
     Adapter["RuntimeConfigurationAdapter"]
     Coordinator["RuntimeCoordinator"]
     CoordinatorBase["RuntimeCoordinatorAbstract"]
@@ -63,8 +67,6 @@ flowchart TB
   end
 
   UI <-->|"edits and state subscription"| Settings
-  Host <-->|"mounted mode after response/write drain"| Settings
-  Host -.->|"uses"| ServiceContract
   UI -.->|"uses"| ServiceContract
   Settings -.->|"implements"| ServiceContract
   Settings -.->|"uses"| SettingsContract
@@ -77,7 +79,14 @@ flowchart TB
   Settings <-->|"selected and active settings"| Adapter
   Saved -.->|"implements"| SettingsContract
   Metadata -.->|"implements"| MetadataContract
+  Metadata -.->|"extends"| ApiBase
+  Metadata -.->|"uses"| LocalDTO
+  LocalDTO -.->|"extends"| ModelOption
+  OnlineDTO -.->|"extends"| ModelOption
+  Saved -.->|"extends"| StorageBase
   Catalogue -.->|"implements"| OnlineContract
+  Catalogue -.->|"extends"| ApiBase
+  ApiBase -.->|"implements"| ApiContract
   Adapter -.->|"implements"| AdapterContract
   Saved <-->|"persist and observe"| Storage
   Metadata <-->|"fetch matching revision"| HF
@@ -97,11 +106,11 @@ flowchart TB
   API -.->|"uses"| OnlineDTO
 
   classDef added stroke:#2da44e,stroke-width:3px;
-  class Host,Catalogue,OnlineContract,OnlineDTO,API,ServerComposition,AppFactory,BrowserProvider,BrowserFactory,OnlineComposition,ModeBase added;
+  class Catalogue,OnlineContract,OnlineDTO,ModelOption,StorageBase,API,ServerComposition,AppFactory,BrowserProvider,BrowserFactory,OnlineComposition,ModeBase added;
 
   Settings -.->|"uses"| SettingsDTO
   Adapter -.->|"uses"| SettingsDTO
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class UI,Settings,Rag,Adapter,SettingsDTO,CoordinatorBase,Connection,Hub,LocalComposition modified;
+  class UI,Settings,Rag,Saved,Metadata,LocalDTO,Adapter,SettingsDTO,ApiBase,CoordinatorBase,Connection,Hub,LocalComposition modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

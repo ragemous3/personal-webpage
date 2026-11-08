@@ -26,11 +26,11 @@ export class IndexDBBase implements StoreContract<Promise<IDBDatabase>> {
       };
       request.onerror = () => {
         console.error(`[${SeverityLevelCodes.ERROR}] - Failed to open IndexedDB`, request.error);
-        reject(request.error ?? new Error('Failed to open IndexedDB'));
+        reject(request.error ?? new Error(`[${SeverityLevelCodes.ERROR}] - Failed to open IndexedDB`));
       };
       request.onblocked = () => {
         blocked = true;
-        reject(new Error('IndexedDB upgrade is blocked. Close older tabs and retry.'));
+        reject(new Error(`[${SeverityLevelCodes.ERROR}] - IndexedDB upgrade is blocked. Close older tabs and retry.`));
       };
     });
 }

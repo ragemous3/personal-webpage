@@ -2,6 +2,7 @@ import { ApiBase } from '@/layers/data/abstracts/base.infra';
 import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard';
 import { IndexDBBase } from '@/layers/data/idb-base.data';
 import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
+import { configureModelEnvironment } from '@/layers/data/utils/model-environment.utility';
 import { VectorDBHNSWData } from '@/layers/data/vectordb-hnsw.data';
 import { type RetrievalDriverDependenciesContract } from '@/layers/shared/contracts/retrieval-driver-dependencies.contract';
 import { type SharedModelDriverContract } from '@/layers/shared/contracts/shared-model-driver.contract';
@@ -9,7 +10,6 @@ import { isRecord } from '@/layers/shared/guards/guards';
 import { type RuntimeMessage } from '@/layers/shared/models/runtime.model';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
-import { configureModelEnvironment } from './model-environment.data';
 import { SharedModelRuntime } from './shared-model-runtime.data';
 
 export const createRetrievalDriver = (

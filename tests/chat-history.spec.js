@@ -3,8 +3,8 @@ import { test } from 'node:test';
 
 import { IDBFactory } from 'fake-indexeddb';
 
-import { getConversationId } from '@/composition/factories/conversation-identity.factory';
 import { ChatHistoryRepository } from '@/layers/data/chat-history-repository.data';
+import { ConversationIdentity } from '@/layers/data/conversation-identity.data';
 
 test('history survives repository replacement and clearing one conversation preserves another', async () => {
   const indexedDB = new IDBFactory();
@@ -25,10 +25,11 @@ test('history survives repository replacement and clearing one conversation pres
 test('only a reload reuses the tab ID; fresh tabs and browser restores replace copied IDs', () => {
   let value;
   const storage = { getItem: () => value, setItem: (_key, next) => { value = next; } };
-  const first = getConversationId(storage, 'navigate');
-  assert.equal(getConversationId(storage, 'reload'), first);
-  const child = getConversationId(storage, 'navigate');
+  const identity = new ConversationIdentity(storage);
+  const first = identity.getId('navigate');
+  assert.equal(identity.getId('reload'), first);
+  const child = identity.getId('navigate');
   assert.notEqual(child, first);
-  assert.equal(getConversationId(storage, 'reload'), child);
-  assert.notEqual(getConversationId(storage, 'back_forward'), child);
+  assert.equal(identity.getId('reload'), child);
+  assert.notEqual(identity.getId('back_forward'), child);
 });

@@ -1,5 +1,7 @@
 import { isSiteConfiguratonGlobal } from '@/composition/guards/is-site-configuration';
 import { isSysMessageConfig } from '@/composition/guards/is-sys-message';
+import { type ChatbotConfiguration } from '@/composition/models/chatbot-configuration.model';
+import { modelLocations } from '@/composition/utils/model-locations.utility';
 import { WorkerFileNames, WorkerKeys } from '@/layers/data/contants/constants';
 import {
   databaseNumberKeys,
@@ -7,28 +9,14 @@ import {
 } from '@/layers/data/contants/local-database.constants';
 import { isDatabaseConfig } from '@/layers/data/guards/is-database-config.guard';
 import { isLmConfig } from '@/layers/data/guards/is-lm-config.guard';
-import { type DatabaseConfig, type LmConfig } from '@/layers/data/models/chatbot-config.model';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
-import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
-import { requireNonEmptyString, requireRecord } from '@/layers/shared/utils/validation.utility';
+import {
+  requireHttpDirectoryURL,
+  requireNonEmptyString,
+  requireRecord,
+} from '@/layers/shared/utils/validation.utility';
 
-interface OfflineConfiguration {
-  modelMetadataBaseURL?: string | undefined;
-  baseURL: string;
-  systemMessage: string;
-  coordinatorSource: string;
-  model: RagConfigBase<LmConfig>;
-  database: RagConfigBase<DatabaseConfig>;
-}
-
-const modelLocations = (
-  value: Record<string, unknown>,
-): { modelBaseUrl?: string; wasmBaseUrl?: string } => ({
-  ...(typeof value.modelbaseurl === 'string' ? { modelBaseUrl: value.modelbaseurl } : {}),
-  ...(typeof value.wasmbaseurl === 'string' ? { wasmBaseUrl: value.wasmbaseurl } : {}),
-});
-
-export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
+export const getOfflineConfiguration = (cfg: unknown): ChatbotConfiguration => {
   if (!isSiteConfiguratonGlobal(cfg)) {
     throw new Error(`[${SeverityLevelCodes.ERROR}] - Expected a defined site configuration global`);
   }
@@ -37,6 +25,8 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
   const parameters = requireRecord(site.params, 'SITE_PARAMS.params');
   const chatbot = requireRecord(parameters.chatbot, 'chatbot');
   const config = requireRecord(chatbot.config, 'chatbot.config');
+  const online = requireRecord(config.online, 'chatbot.config.online');
+  const apiBaseURL = requireHttpDirectoryURL(online.apibaseurl, 'chatbot.config.online.apiBaseURL');
   const rawModel = requireRecord(config.locallm, 'chatbot.config.locallm');
   const rawDatabase = requireRecord(config.localdatabase, 'chatbot.config.localdatabase');
   const baseURL = requireNonEmptyString(site.baseURL, 'baseURL');
@@ -75,6 +65,7 @@ export const getOfflineConfiguration = (cfg: unknown): OfflineConfiguration => {
     throw new Error(`[${SeverityLevelCodes.ERROR}] - Invalid chatbot.sysmessage configuration`);
   }
   return {
+    onlineApiBaseURL: apiBaseURL,
     modelMetadataBaseURL:
       metadatabaseurl === undefined
         ? undefined

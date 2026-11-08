@@ -1,5 +1,6 @@
 import { DB } from '@/layers/data/local-vector-database.data';
 import { type DatabaseConfig } from '@/layers/data/models/chatbot-config.model';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
 
@@ -13,7 +14,7 @@ export const getVectorDatabase = (
   const database = databases.get(runtime);
   if (singleton && database) {
     if (database.configuration !== config)
-      throw new Error('Retrieval DB already belongs to another application configuration.');
+      throw new Error(`[${SeverityLevelCodes.ERROR}] - Retrieval DB already belongs to another application configuration.`);
     return database;
   }
   const result = new DB(runtime, config, autoStart);

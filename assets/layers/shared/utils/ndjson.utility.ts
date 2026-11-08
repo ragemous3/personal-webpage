@@ -1,3 +1,4 @@
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 export async function* readJsonLines(body: ReadableStream<Uint8Array>): AsyncGenerator {
   const reader = body.getReader();
   const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -11,7 +12,7 @@ export async function* readJsonLines(body: ReadableStream<Uint8Array>): AsyncGen
       yield* lines.map((line): unknown => JSON.parse(line));
     }
     buffer += decoder.decode();
-    if (buffer.trim()) throw new Error('Online response was interrupted. Retry explicitly.');
+    if (buffer.trim()) throw new Error(`[${SeverityLevelCodes.ERROR}] - Online response was interrupted. Retry explicitly.`);
   } finally {
     await reader.cancel().catch(Boolean);
     reader.releaseLock();
@@ -19,5 +20,5 @@ export async function* readJsonLines(body: ReadableStream<Uint8Array>): AsyncGen
 }
 
 const checkBuffer = (buffer: string): void => {
-  if (buffer.length > 1_000_000) throw new Error('Online stream event is too large.');
+  if (buffer.length > 1_000_000) throw new Error(`[${SeverityLevelCodes.ERROR}] - Online stream event is too large.`);
 };

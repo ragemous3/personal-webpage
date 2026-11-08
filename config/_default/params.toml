@@ -16,6 +16,9 @@ RULES:
 """
 chunksPath = '/content-data/chunks.json'
 
+[chatbot.config.online]
+apiBaseURL = '/api/'
+
 [chatbot.config.localDatabase]
 featureExtractionModel = 'Xenova/all-MiniLM-L6-v2'
 vectorsPath = '/content-data/contents.bin'

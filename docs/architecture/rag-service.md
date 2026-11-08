@@ -1,15 +1,14 @@
 # RagService
 
-[Source](../../assets/layers/services/chatbot.service.ts). The host mounts one injected mode tree after accepted work drains. Both trees reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
+[Source](../../assets/layers/services/rag.service.ts). ChatbotProvider renders AssistantConfiguration and one mode component directly in its tree after accepted work drains. Both modes reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
 
-Implementation: `e6b713fef5238f13a2aef46d0d3c53b0319d1bb7`. Primary Online, settings and real Local CPU/cache journeys are verified; the supplemental forced-close limitation is recorded in the ticket. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
+Implementation: uncommitted PR review fixes based on `5d05a2530354812381bff4855ab3e93d037ae189`. Focused checks, typecheck and production build pass; current runtime verification and both independent reviews remain in progress. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
 ```mermaid
 flowchart TB
   subgraph Views["Views layer — browser tab"]
-    Host["ChatbotHost"]
     UI["ChatContainer"]
   end
   subgraph Services["Services layer — browser tab"]
@@ -39,6 +38,8 @@ flowchart TB
     Standard["StandardCommunication<br/>abstract"]
     StandardBase["StandardCommunicationBaseAbstract"]
     History["ChatHistoryRepository"]
+    Identity["ConversationIdentity"]
+    StorageBase["WebStorageBase — abstract"]
     IDB["IndexDBBase"]
     Content["ContentRepository"]
     Prompt["ChatMessageModel"]
@@ -69,6 +70,7 @@ flowchart TB
   end
   subgraph Resources["Storage, content and external resources"]
     IndexedDB["indexedDB — assistant-chat-history / conversations"]
+    TabStorage["sessionStorage — current conversation ID"]
     Chunks["/content-data/chunks.json"]
     RetrievalAssets["Xenova/all-MiniLM-L6-v2<br/>contents.bin / vector-metadata.json"]
     LocalWeights["Xenova/Qwen1.5-0.5B-Chat"]
@@ -84,12 +86,8 @@ flowchart TB
     Factories["buildChatbotOnlineDeps / buildRagService"]
     Context["chatbotCompositionContext"]
     ExistingContext["configurationContext / chatbotContext"]
-    Identity["getConversationId — sessionStorage reload identity"]
     ServerComposition["server/main.composition.ts / createApp"]
   end
-  Host <-->|"mounted settings"| Settings
-  Host -->|"one mode tree reuses"| UI
-  Host -.->|"uses"| SettingsContract
   Settings -.->|"implements"| SettingsContract
   UI <-->|"Send, Cancel, Reset, Retry; state and text"| Rag
   UI -.->|"uses"| ServiceContract
@@ -103,6 +101,8 @@ flowchart TB
   Rag <-->|"Online generation"| Online
   Rag <-->|"retrieve passages; cancel"| DB
   Rag <-->|"load, ordered save, clear"| History
+  Identity -.->|"extends"| StorageBase
+  Identity <-->|"reload-only conversation ID"| TabStorage
   History -.->|"implements"| HistoryContract
   History -->|"versioned open"| IDB
   History <-->|"transaction commit"| IndexedDB
@@ -157,7 +157,7 @@ flowchart TB
   Provider <-->|"stream; AbortSignal"| SDK
   SDK <-->|"request and streamed response"| OpenAI
   classDef added stroke:#2da44e,stroke-width:3px;
-  class Host,Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,ServerComposition added;
+  class Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,StorageBase,TabStorage,ServerComposition added;
   classDef modified stroke:#bf8700,stroke-width:3px;
   class UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px

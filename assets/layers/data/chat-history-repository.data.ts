@@ -1,28 +1,11 @@
 import { IndexDBBase } from '@/layers/data/idb-base.data';
 import { type ChatMessage } from '@/layers/data/models/models';
+import { parseMessages } from '@/layers/data/utils/chat-history.utility';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ChatHistoryRepositoryContract } from '@/layers/shared/contracts/chat-history-repository.contract';
-import { isRecord } from '@/layers/shared/guards/guards';
-
-const storeName = 'conversations';
-const parseMessages = (value: unknown): ChatMessage[] => {
-  if (value === undefined) return [];
-  if (!Array.isArray(value)) throw new Error('Saved conversation is invalid.');
-  return value.map((message: unknown) => {
-    if (
-      !isRecord(message) ||
-      !['user', 'assistant'].includes(String(message.role)) ||
-      typeof message.content !== 'string'
-    )
-      throw new Error('Saved conversation is invalid.');
-    return {
-      role: message.role as 'user' | 'assistant',
-      content: message.content,
-      ...(message.interrupted === true ? { interrupted: true } : {}),
-    };
-  });
-};
 
 export class ChatHistoryRepository implements ChatHistoryRepositoryContract {
+  static readonly #storeName = 'conversations';
   readonly #store: IndexDBBase;
   #database: Promise<IDBDatabase> | undefined;
 
@@ -32,7 +15,7 @@ export class ChatHistoryRepository implements ChatHistoryRepositoryContract {
 
   async #open(): Promise<IDBDatabase> {
     this.#database ??= this.#store
-      .openStore(storeName)
+      .openStore(ChatHistoryRepository.#storeName)
       .then((database) => {
         database.addEventListener('versionchange', () => this.dispose());
         return database;
@@ -50,14 +33,14 @@ export class ChatHistoryRepository implements ChatHistoryRepositoryContract {
   ): Promise<T> {
     const database = await this.#open();
     return new Promise((resolve, reject) => {
-      const transaction = database.transaction(storeName, mode);
-      const request = operation(transaction.objectStore(storeName));
+      const transaction = database.transaction(ChatHistoryRepository.#storeName, mode);
+      const request = operation(transaction.objectStore(ChatHistoryRepository.#storeName));
       transaction.addEventListener('complete', () => resolve(request.result));
       transaction.addEventListener('abort', () =>
-        reject(transaction.error ?? new Error('History transaction failed.')),
+        reject(transaction.error ?? new Error(`[${SeverityLevelCodes.ERROR}] - History transaction failed.`)),
       );
       transaction.addEventListener('error', () =>
-        reject(transaction.error ?? new Error('History transaction failed.')),
+        reject(transaction.error ?? new Error(`[${SeverityLevelCodes.ERROR}] - History transaction failed.`)),
       );
     });
   }

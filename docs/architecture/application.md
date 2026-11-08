@@ -1,8 +1,8 @@
 # Application architecture
 
-Hugo serves the view layer. The chatbot host switches injected Local and Online trees. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
+Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `e6b713fef5238f13a2aef46d0d3c53b0319d1bb7`. Primary Online, settings and real Local CPU/cache journeys are verified; the supplemental forced-close limitation is recorded in the ticket. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access is unverified.
+Implementation: uncommitted PR review fixes based on `5d05a2530354812381bff4855ab3e93d037ae189`. Focused checks, typecheck and production build pass; current runtime verification and both independent reviews remain in progress. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
 
 Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
 
@@ -15,7 +15,6 @@ flowchart TB
     Public["public/"]
   end
   subgraph Views["Views layer"]
-    Host["ChatbotHost"]
     ChatUI["ChatContainer"]
     SettingsUI["AssistantConfiguration"]
     ProgressUI["ProgressContainer"]
@@ -34,6 +33,9 @@ flowchart TB
     Port["StandardCommunicationContract"]
     Runtime["RuntimeCoordinatorContract / RuntimeLifecycleContract"]
     AdapterContract["RuntimeConfigurationAdapterContract"]
+    ModelOption["ModelOption"]
+    LocalDTO["ModelDescriptor"]
+    OnlineDTO["OnlineModel"]
   end
   subgraph Data["Data layer — browser tab"]
     Chat["Chat"]
@@ -49,7 +51,10 @@ flowchart TB
     Content["ContentRepository / ChatMessageModel"]
     History["ChatHistoryRepository"]
     IDB["IndexDBBase"]
-    Preferences["ConfigurationRepository / ModelMetadataRepository"]
+    Preferences["ConfigurationRepository"]
+    Metadata["ModelMetadataRepository"]
+    Identity["ConversationIdentity"]
+    StorageBase["WebStorageBase — abstract"]
     Catalog["OnlineModelRepository"]
     Adapter["RuntimeConfigurationAdapter"]
   end
@@ -72,6 +77,7 @@ flowchart TB
   end
   subgraph Resources["Storage, content and external resources"]
     Storage["localStorage — settings"]
+    TabStorage["sessionStorage — current conversation ID"]
     Cache["CacheStorage — models / metadata"]
     IndexedDB["indexedDB — retrieval index / chat history"]
     Files["chunks.json / contents.bin / vector-metadata.json"]
@@ -83,7 +89,7 @@ flowchart TB
     Offline["ChatbotOfflineProvider / buildChatbotOfflineDeps"]
     OnlineProvider["ChatbotOnlineProvider / buildChatbotOnlineDeps"]
     BaseProvider["ChatbotModeProviderAbstract"]
-    ServiceFactory["buildRagService / getConversationId"]
+    ServiceFactory["buildRagService"]
     ProgressProvider["ProgressProvider / progressFactory"]
     RuntimeFactory["getRuntimeCoordinator"]
     Context["chatbotCompositionContext"]
@@ -93,17 +99,14 @@ flowchart TB
   Hugo --> Public
   Layout --> Hugo
   ContentInput --> Hugo
-  Public --> Host
+  Public --> ChatUI
   Public --> SettingsUI
   Public --> ProgressUI
-  Host <-->|"mounted mode"| Settings
-  Host -->|"one injected tree"| ChatUI
   ChatUI <-->|"actions and response state"| Rag
   SettingsUI <-->|"edits and settings state"| Settings
   ProgressUI <-->|"loading state"| Progress
   ChatUI -.->|"uses"| ChatService
   Rag -.->|"implements"| ChatService
-  Host -.->|"uses"| ConfigService
   Settings -.->|"implements"| ConfigService
   Progress -.->|"implements"| ProgressService
   Rag -.->|"uses"| Session
@@ -127,16 +130,26 @@ flowchart TB
   Content --> Files
   Rag <-->|"response lease / recovery"| Coordinator
   Rag -->|"successful explicit reconnect retries availability"| Settings
-  Settings <-->|"saved choices and Local metadata"| Preferences
+  Settings <-->|"saved choices"| Preferences
+  Settings <-->|"Local metadata"| Metadata
   Settings <-->|"allowed Online choices"| Catalog
   Settings <-->|"configure and observe"| Adapter
   Adapter -.->|"implements"| AdapterContract
   Adapter -->|"availability"| Rag
   Adapter <-->|"settings; mount permission after drain"| Coordinator
   Preferences <-->|"settings"| Storage
-  Preferences <-->|"metadata cache"| Cache
-  Preferences <-->|"pinned metadata"| HF
+  Metadata <-->|"metadata cache"| Cache
+  Metadata <-->|"pinned metadata"| HF
+  Metadata -.->|"extends"| ApiBase
+  Metadata -.->|"uses"| LocalDTO
+  Catalog -.->|"uses"| OnlineDTO
+  LocalDTO -.->|"extends"| ModelOption
+  OnlineDTO -.->|"extends"| ModelOption
+  Preferences -.->|"extends"| StorageBase
+  Identity -.->|"extends"| StorageBase
+  Identity <-->|"reload-only conversation ID"| TabStorage
   Catalog <-->|"allowed model catalog"| Models
+  Catalog -.->|"extends"| ApiBase
   Progress <-->|"model progress"| Coordinator
   Chat <-->|"Local messages"| Coordinator
   DB <-->|"retrieval messages"| Coordinator
@@ -164,8 +177,8 @@ flowchart TB
   Provider <-->|"stream / AbortSignal"| SDK
   SDK <-->|"generation"| OpenAI
   classDef added stroke:#2da44e,stroke-width:3px;
-  class Host,Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry added;
+  class Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry,Identity,StorageBase,TabStorage,ModelOption,OnlineDTO added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
+  class Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,Preferences,Metadata,LocalDTO,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
   style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

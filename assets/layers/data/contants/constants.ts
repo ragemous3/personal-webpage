@@ -1,8 +1,8 @@
-export enum WorkerKeys {
-  COORDINATOR = 'coordinator',
-  LLM = 'llm',
-  VECTORDB = 'vectordb',
-}
+export const WorkerKeys = {
+  COORDINATOR: 'coordinator',
+  LLM: 'llm',
+  VECTORDB: 'vectordb',
+} as const;
 export enum BroadcastKeys {
   LLM = 'llm',
   VECTORDB = 'vectordb',

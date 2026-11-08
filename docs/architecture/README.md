@@ -9,7 +9,7 @@ Keep exactly one Mermaid diagram per service file and one application overview. 
 | Scope | Diagram | Service source |
 | --- | --- | --- |
 | Whole application | [application.md](application.md) | All active services and runtime boundaries |
-| Résumé questions and generation | [rag-service.md](rag-service.md) | [RagService](../../assets/layers/services/chatbot.service.ts) |
+| Résumé questions and generation | [rag-service.md](rag-service.md) | [RagService](../../assets/layers/services/rag.service.ts) |
 | Settings and model choices | [configuration-service.md](configuration-service.md) | [ConfigurationService](../../assets/layers/services/configuration.service.ts) |
 | Model progress | [progress-service.md](progress-service.md) | [ProgressService](../../assets/layers/services/progress.service.ts) |
 

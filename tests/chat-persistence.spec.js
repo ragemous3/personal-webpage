@@ -5,7 +5,7 @@ import { IDBFactory } from 'fake-indexeddb';
 
 import { ChatHistoryRepository } from '@/layers/data/chat-history-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
-import { RagService } from '@/layers/services/chatbot.service';
+import { RagService } from '@/layers/services/rag.service';
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 15));
 const until = async (condition) => {

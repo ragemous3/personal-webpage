@@ -1,69 +1,16 @@
 import { type Chat } from '@/layers/data/local-chat-lm.data';
 import { type DB } from '@/layers/data/local-vector-database.data';
+import { isEnabled, readSettings, resourceAvailability, selectionIdentity, sharedRevision } from '@/layers/data/utils/runtime-configuration.utility';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { AssistantModes } from '@/layers/shared/constants/assistant.constant';
 import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
 import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
-import {
-  type AssistantSettings,
-  isAssistantSettings,
-  type RuntimeAvailability,
-  type RuntimeConfigurationState,
-} from '@/layers/shared/models/assistant-settings.model';
+import { isAssistantSettings } from '@/layers/shared/guards/is-assistant-settings.guard';
+import { type AssistantSettings, type RuntimeAvailability, type RuntimeConfigurationState } from '@/layers/shared/models/assistant-settings.model';
 import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
-
-const selectionIdentity = (selection: unknown): Pick<RuntimeAvailability, 'selectionId'> =>
-  isRecord(selection) && typeof selection.selectionId === 'string'
-    ? { selectionId: selection.selectionId }
-    : {};
-
-const isEnabled = (settings: AssistantSettings): boolean =>
-  settings.mode === 'local' || Boolean(settings.onlineModel);
-
-const readSettings = (selection: unknown): AssistantSettings | undefined =>
-  isRecord(selection) && isAssistantSettings(selection.settings) ? selection.settings : undefined;
-
-const resourceFailure = (resources: unknown): string | undefined => {
-  if (!Array.isArray(resources)) return undefined;
-  const entries: unknown[] = resources;
-  const failure = entries.find((resource) => isRecord(resource) && resource.status === 'failed');
-  if (!isRecord(failure)) return undefined;
-  return typeof failure.error === 'string' ? failure.error : 'Model configuration failed';
-};
-
-const resourcesReady = (resources: unknown): boolean => {
-  if (!Array.isArray(resources)) return false;
-  const entries: unknown[] = resources;
-  return entries.every(
-    (resource) =>
-      isRecord(resource) &&
-      typeof resource.status === 'string' &&
-      ['ready', 'busy', 'stopping'].includes(resource.status),
-  );
-};
-const resourceAvailability = (
-  resources: unknown,
-  mode: AssistantSettings['mode'],
-): { ready: boolean; loading: boolean; error?: string } => {
-  const required = Array.isArray(resources)
-    ? resources.filter(
-        (resource: unknown) =>
-          isRecord(resource) && (mode === 'local' || resource.role === 'vectordb'),
-      )
-    : resources;
-  const error = resourceFailure(required);
-  const ready = resourcesReady(required);
-  return { ready, loading: !ready && !error, ...(error ? { error } : {}) };
-};
-
-const sharedRevision = (value: unknown): string | undefined => {
-  if (!Array.isArray(value)) return undefined;
-  const resources: unknown[] = value;
-  const model = resources.find((entry) => isRecord(entry) && entry.role === 'llm');
-  return isRecord(model) && typeof model.revision === 'string' ? model.revision : undefined;
-};
 
 export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterContract {
   readonly stateSubscription = createStatefulSubscribable<RuntimeConfigurationState>({
@@ -94,7 +41,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     this.#selected = settings;
     this.#failed = false;
     this.setAvailable(false);
-    const local = settings.mode === 'local';
+    const local = settings.mode === AssistantModes.LOCAL;
     const generation = {
       max_new_tokens: settings.maxNewTokens,
       do_sample: settings.sampling,
@@ -195,7 +142,7 @@ export class RuntimeConfigurationAdapter implements RuntimeConfigurationAdapterC
     const expected = this.models.find(({ id }) => id === selected.model)?.revision;
     if (
       !configuring &&
-      selected.mode === 'local' &&
+      selected.mode === AssistantModes.LOCAL &&
       resources.ready &&
       revision &&
       revision !== expected

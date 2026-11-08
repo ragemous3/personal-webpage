@@ -1,5 +1,7 @@
 import type OpenAI from 'openai';
 
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+
 import { GenerationProviderAbstract } from './generation.abstract.ts';
 import { assistantInstructions, type GenerationRequest } from './generation.model.ts';
 
@@ -21,8 +23,8 @@ export class OpenAIProvider extends GenerationProviderAbstract {
       if (event.type === 'response.output_text.delta') yield event.delta;
       if (event.type === 'response.completed') completed = true;
       if (event.type === 'response.failed' || event.type === 'response.incomplete' || event.type === 'error')
-        throw new Error('OpenAI could not complete the response. Retry explicitly.');
+        throw new Error(`[${SeverityLevelCodes.ERROR}] - OpenAI could not complete the response. Retry explicitly.`);
     }
-    if (!completed) throw new Error('OpenAI stream ended before completion.');
+    if (!completed) throw new Error(`[${SeverityLevelCodes.ERROR}] - OpenAI stream ended before completion.`);
   }
 }

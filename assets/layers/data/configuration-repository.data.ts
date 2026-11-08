@@ -1,16 +1,17 @@
-import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { WebStorageBase } from '@/layers/data/abstracts/web-storage-base.abstract';
 import {
   type ConfigurationRecord,
   type ConfigurationRepositoryContract,
 } from '@/layers/shared/contracts/configuration-repository.contract';
 
-const preferencesKey = 'assistant.preferences';
-
-export class ConfigurationRepository implements ConfigurationRepositoryContract {
+export class ConfigurationRepository extends WebStorageBase implements ConfigurationRepositoryContract {
+  static readonly #preferencesKey = 'assistant.preferences';
   constructor(
-    private readonly storage: Pick<Storage, 'getItem' | 'setItem'> | undefined,
+    storage: Pick<Storage, 'getItem' | 'setItem'> | undefined,
     private readonly events: EventTarget,
-  ) {}
+  ) {
+    super(storage);
+  }
 
   #decode(raw: string | null): ConfigurationRecord {
     if (raw === null) return { value: undefined };
@@ -33,8 +34,7 @@ export class ConfigurationRepository implements ConfigurationRepositoryContract 
 
   load(): ConfigurationRecord {
     try {
-      if (!this.storage) throw new Error(`[${SeverityLevelCodes.ERROR}] - Storage unavailable`);
-      return this.#decode(this.storage.getItem(preferencesKey));
+      return this.#decode(this.read(ConfigurationRepository.#preferencesKey));
     } catch {
       return { notice: 'Storage is unavailable. Settings will not be remembered.' };
     }
@@ -42,8 +42,7 @@ export class ConfigurationRepository implements ConfigurationRepositoryContract 
 
   save(value: unknown): { notice?: string } {
     try {
-      if (!this.storage) throw new Error(`[${SeverityLevelCodes.ERROR}] - Storage unavailable`);
-      this.storage.setItem(preferencesKey, JSON.stringify({ version: 1, preferences: value }));
+      this.write(ConfigurationRepository.#preferencesKey, JSON.stringify({ version: 1, preferences: value }));
       return {};
     } catch {
       return { notice: 'Settings could not be saved. Changes apply to this session only.' };
@@ -56,7 +55,7 @@ export class ConfigurationRepository implements ConfigurationRepositoryContract 
       const change = event as StorageEvent;
       if (
         !active ||
-        (change.key !== preferencesKey && change.key !== null) ||
+        (change.key !== ConfigurationRepository.#preferencesKey && change.key !== null) ||
         (change.storageArea && change.storageArea !== this.storage)
       )
         return;

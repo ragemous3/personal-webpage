@@ -3,7 +3,7 @@ export const createPage = async (owner) => {
   await page.evaluateOnNewDocument(() => {
     globalThis.verificationChat = () => {
       let root = globalThis.document;
-      for (const tag of ['chatbot-provider', 'chatbot-host', 'chatbot-offline-provider, chatbot-online-provider'])
+      for (const tag of ['chatbot-provider', 'chatbot-offline-provider, chatbot-online-provider'])
         root = root?.querySelector(tag)?.shadowRoot;
       return root?.querySelector('chat-container');
     };

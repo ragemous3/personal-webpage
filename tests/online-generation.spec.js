@@ -2,6 +2,23 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { OnlineChatClient } from '@/layers/data/online-chat.client';
+import { OnlineModelRepository } from '@/layers/data/online-model-repository.data';
+
+test('model discovery and generation use the same configured API directory', async () => {
+  const base = 'https://example.test/assistant/v2/';
+  const model = { id: 'gpt-6-luna', label: 'GPT-6 Luna', reasoningEffort: 'low', maxOutputTokens: 256 };
+  const repository = new OnlineModelRepository(base, async (url) => {
+    assert.equal(url, 'https://example.test/assistant/v2/models');
+    return Response.json({ models: [model] });
+  });
+  const [choice] = await repository.load();
+  const client = new OnlineChatClient(base, { model: choice.id, maxOutputTokens: choice.maxOutputTokens }, async (url) => {
+    assert.equal(url, 'https://example.test/assistant/v2/generate');
+    return new Response('{"type":"delta","text":"Configured API"}\n{"type":"done"}\n');
+  });
+  const answer = await client.generate([{ role: 'user', content: 'Hello' }], () => {});
+  assert.equal(answer.generated_text, 'Configured API');
+});
 
 test('online generation streams output and omits browser system instructions', async () => {
   let body;

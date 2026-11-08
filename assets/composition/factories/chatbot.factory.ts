@@ -1,44 +1,24 @@
-import { ApiBase } from '@/layers/data/abstracts/base.infra';
+import {
+  type ChatbotDependencies,
+  type RagDependencies,
+} from '@/composition/models/chatbot-dependencies.model';
+import { tryReadBrowserValue } from '@/composition/utils/browser-access.utility';
 import { ChatHistoryRepository } from '@/layers/data/chat-history-repository.data';
 import { ConfigurationRepository } from '@/layers/data/configuration-repository.data';
 import { ContentRepository } from '@/layers/data/content-repository.data';
+import { ConversationIdentity } from '@/layers/data/conversation-identity.data';
 import { ModelMetadataRepository } from '@/layers/data/model-metadata-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { OnlineModelRepository } from '@/layers/data/online-model-repository.data';
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
-import { RagService } from '@/layers/services/chatbot.service';
 import { ConfigurationService } from '@/layers/services/configuration.service';
+import { RagService } from '@/layers/services/rag.service';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
 import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 
-import { getConversationId } from './conversation-identity.factory';
 import { getVectorDatabase } from './local-vector-database.factory';
 import { getOfflineConfiguration } from './offline-configuration.factory';
 import { getRuntimeCoordinator } from './runtime-coordinator.factory';
-
-const read = <T>(get: () => T): T | undefined => {
-  try {
-    return get();
-  } catch {
-    return undefined;
-  }
-};
-
-export interface ChatbotDependencies {
-  configuration: ReturnType<typeof getOfflineConfiguration>;
-  coordinator: ReturnType<typeof getRuntimeCoordinator>;
-  database: ReturnType<typeof getVectorDatabase>;
-  history: ChatHistoryRepository;
-  conversationId: string;
-  settings: ConfigurationService;
-  bind(service: RagService): () => void;
-  dispose(): void;
-}
-
-export interface RagDependencies {
-  service: RagService;
-  dispose(): void;
-}
 
 export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): ChatbotDependencies => {
   const configuration = getOfflineConfiguration(cfg);
@@ -46,17 +26,18 @@ export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): Chat
   const models: ModelDescriptor[] = [
     { id: model.model, label: model.model, revision: model.revision ?? '', precision: model.dtype },
   ];
-  const metadata = new ModelMetadataRepository(new ApiBase(configuration.baseURL), models, {
-    cache: read(() => browser.caches),
+  const metadata = new ModelMetadataRepository(configuration.baseURL, models, {
+    cache: tryReadBrowserValue(() => browser.caches),
     modelBaseUrl: model.modelBaseUrl,
     metadataBaseUrl: configuration.modelMetadataBaseURL,
   });
   const coordinator = getRuntimeCoordinator(cfg);
   const database = getVectorDatabase(coordinator, configuration.database, true, false);
-  const history = new ChatHistoryRepository(read(() => browser.indexedDB));
-  const conversationId = getConversationId(
-    read(() => browser.sessionStorage),
-    read(
+  const history = new ChatHistoryRepository(tryReadBrowserValue(() => browser.indexedDB));
+  const conversationId = new ConversationIdentity(
+    tryReadBrowserValue(() => browser.sessionStorage),
+  ).getId(
+    tryReadBrowserValue(
       () =>
         (
           browser.performance.getEntriesByType('navigation')[0] as
@@ -75,12 +56,12 @@ export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): Chat
   );
   const settings = new ConfigurationService(
     new ConfigurationRepository(
-      read(() => browser.localStorage),
+      tryReadBrowserValue(() => browser.localStorage),
       browser,
     ),
     adapter,
     metadata,
-    new OnlineModelRepository(),
+    new OnlineModelRepository(configuration.onlineApiBaseURL),
   );
   return {
     configuration,

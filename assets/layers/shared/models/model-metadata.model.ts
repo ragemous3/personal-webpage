@@ -1,3 +1,5 @@
+import { type ModelOption } from '@/layers/shared/models/model-option.model';
+
 export const modelPrecisionSuffixes = {
   fp32: '',
   fp16: '_fp16',
@@ -11,9 +13,7 @@ export const modelPrecisionSuffixes = {
 
 export type ModelPrecision = keyof typeof modelPrecisionSuffixes;
 
-export interface ModelDescriptor {
-  id: string;
-  label: string;
+export interface ModelDescriptor extends ModelOption {
   revision: string;
   precision: ModelPrecision | 'auto';
 }

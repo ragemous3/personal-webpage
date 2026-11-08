@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { ContentRepository } from '@/layers/data/content-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
-import { RagService } from '@/layers/services/chatbot.service';
+import { RagService } from '@/layers/services/rag.service';
 
 const settled = () => new Promise((resolve) => setImmediate(resolve));
 const createService = (chat, database, repo, model, runtime) =>

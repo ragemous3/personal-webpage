@@ -4,9 +4,9 @@ import { property } from 'lit/decorators.js';
 
 import { chatbotCompositionContext } from '@/composition/context/chatbot-composition.context';
 import {
-  type buildRagService,
   type ChatbotDependencies,
-} from '@/composition/factories/chatbot.factory';
+  type RagDependencies,
+} from '@/composition/models/chatbot-dependencies.model';
 import { chatbotContext } from '@/layers/views/context/chatbot.context';
 
 export abstract class ChatbotModeProviderAbstract extends LitElement {
@@ -14,7 +14,7 @@ export abstract class ChatbotModeProviderAbstract extends LitElement {
   @property({ attribute: false })
   shared?: ChatbotDependencies;
   readonly #provider = new ContextProvider(this, { context: chatbotContext });
-  #dependencies: ReturnType<typeof buildRagService> | undefined;
+  #dependencies: RagDependencies | undefined;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -30,7 +30,7 @@ export abstract class ChatbotModeProviderAbstract extends LitElement {
   render(): TemplateResult {
     return html`<chat-container></chat-container>`;
   }
-  protected abstract build(shared: ChatbotDependencies): ReturnType<typeof buildRagService>;
+  protected abstract build(shared: ChatbotDependencies): RagDependencies;
 
   protected willUpdate(): void {
     if (!this.shared || this.#dependencies) return;

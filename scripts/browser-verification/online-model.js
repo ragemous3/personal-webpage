@@ -1,4 +1,4 @@
-import { createLlmMessageHandler } from '@/layers/data/workers/llm-driver.data';
+import { createLlmMessageHandler } from '@/layers/data/workers/llm-driver.factory';
 import { SharedModelRuntime } from '@/layers/data/workers/shared-model-runtime.data';
 
 const generator = async (_messages, options) => {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { ConfigurationService } from '@/layers/services/configuration.service';
-import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
+import { defaultAssistantSettings } from '@/layers/shared/constants/assistant-settings.constant';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
 import { metadata } from './model-metadata.fixture.js';

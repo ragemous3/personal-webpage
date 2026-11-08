@@ -1,20 +1,16 @@
 import { SeverityLevelCodes } from '@/layers/shared/constants';
+import { AssistantModes } from '@/layers/shared/constants/assistant.constant';
+import { defaultAssistantSettings } from '@/layers/shared/constants/assistant-settings.constant';
 import { type ConfigurationRepositoryContract } from '@/layers/shared/contracts/configuration-repository.contract';
 import { type ConfigurationServiceContract } from '@/layers/shared/contracts/configuration-service.contract';
 import { type ModelMetadataRepositoryContract } from '@/layers/shared/contracts/model-metadata-repository.contract';
 import { type OnlineModelRepositoryContract } from '@/layers/shared/contracts/online-model-repository.contract';
 import { type RuntimeConfigurationAdapterContract } from '@/layers/shared/contracts/runtime-configuration-adapter.contract';
-import {
-  type AssistantSettings,
-  type ConfigurationState,
-  defaultAssistantSettings,
-  isAssistantSettings,
-  metadataPrecisionChoices,
-  type RuntimeAvailability,
-  type RuntimeConfigurationState,
-} from '@/layers/shared/models/assistant-settings.model';
+import { isAssistantSettings } from '@/layers/shared/guards/is-assistant-settings.guard';
+import { type AssistantSettings, type ConfigurationState, type RuntimeAvailability, type RuntimeConfigurationState } from '@/layers/shared/models/assistant-settings.model';
 import { type ModelMetadata } from '@/layers/shared/models/model-metadata.model';
 import { type OnlineModel } from '@/layers/shared/models/online-model.model';
+import { metadataPrecisionChoices, modelChoices } from '@/layers/shared/utils/model-choices.utility';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 import { areValuesEqual } from '@/layers/shared/utils/value-equality.utility';
 
@@ -228,12 +224,12 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   #onlineAllowed(settings: AssistantSettings): boolean {
-    if (settings.mode !== 'online' || !settings.onlineModel || !this.online) return true;
+    if (settings.mode !== AssistantModes.ONLINE || !settings.onlineModel || !this.online) return true;
     return this.#onlineModels.some(({ id, maxOutputTokens }) => id === settings.onlineModel && settings.maxNewTokens <= maxOutputTokens);
   }
 
   #available(settings: AssistantSettings): boolean {
-    return settings.mode === 'local' || Boolean(this.online && this.#onlineModels.some(({ id }) => id === settings.onlineModel));
+    return settings.mode === AssistantModes.LOCAL || Boolean(this.online && this.#onlineModels.some(({ id }) => id === settings.onlineModel));
   }
 
   #schedule(): void {
@@ -292,7 +288,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   }
 
   #supports(settings: AssistantSettings): boolean {
-    if (settings.mode === 'online') return true;
+    if (settings.mode === AssistantModes.ONLINE) return true;
     const metadata = this.#metadata.get(settings.model);
     if (metadata)
       return metadataPrecisionChoices(metadata, settings.execution).some(
@@ -305,7 +301,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
 
   #updateChoices(): void {
     const state = this.#current();
-    if (state.selected.mode === 'online' && this.online) {
+    if (state.selected.mode === AssistantModes.ONLINE && this.online) {
       this.#onlineChoices(state);
       return;
     }
@@ -315,7 +311,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
     this.#state.emit({
       ...state,
       choices: {
-        models: this.metadata.models.map(({ id, label }) => ({ value: id, label })),
+        models: modelChoices(this.metadata.models),
         precisions: metadata
           ? metadataPrecisionChoices(metadata, state.selected.execution)
           : [{ value: descriptor.precision, label: descriptor.precision.toUpperCase() }],
@@ -327,14 +323,14 @@ export class ConfigurationService implements ConfigurationServiceContract {
   #onlineChoices(state: ConfigurationState): void {
     const model = this.#onlineModels.find(({ id }) => id === state.selected.onlineModel);
     this.#state.emit({ ...state, choices: {
-      models: this.#onlineModels.map(({ id, label }) => ({ value: id, label })),
+      models: modelChoices(this.#onlineModels),
       precisions: [], revision: '', reasoningEffort: model?.reasoningEffort ?? 'low',
       maxOutputTokens: model?.maxOutputTokens ?? 1024,
     } });
   }
 
   async refreshOptions(refresh = true): Promise<void> {
-    if (this.#current().selected.mode === 'online' && this.online) {
+    if (this.#current().selected.mode === AssistantModes.ONLINE && this.online) {
       await this.#refreshOnline();
       return;
     }
@@ -379,7 +375,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
     this.#onlineModels = models;
     const state = this.#current();
     const model = models.find(({ id }) => id === state.selected.onlineModel) ?? models[0];
-    if (!model) throw new Error('No online models are configured.');
+    if (!model) throw new Error(`[${SeverityLevelCodes.ERROR}] - No online models are configured.`);
     this.#state.emit({ ...state, metadataLoading: false });
     this.#select({ ...state.selected, onlineModel: model.id, maxNewTokens: Math.min(state.selected.maxNewTokens, model.maxOutputTokens) });
     this.#updateChoices();

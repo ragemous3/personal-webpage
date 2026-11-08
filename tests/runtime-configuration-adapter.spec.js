@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
-import { defaultAssistantSettings } from '@/layers/shared/models/assistant-settings.model';
+import { defaultAssistantSettings } from '@/layers/shared/constants/assistant-settings.constant';
 
 import { modelDescriptors } from './model-metadata.fixture.js';
 

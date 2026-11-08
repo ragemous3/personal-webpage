@@ -2,13 +2,10 @@ import { consume } from '@lit/context';
 import { html, LitElement, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
+import { AssistantModes } from '@/layers/shared/constants/assistant.constant';
+import { executionChoices, modeChoices } from '@/layers/shared/constants/assistant-settings.constant';
 import { type ConfigurationServiceContract } from '@/layers/shared/contracts/configuration-service.contract';
-import {
-  type AssistantSettings,
-  type ConfigurationState,
-  executionChoices,
-  modeChoices,
-} from '@/layers/shared/models/assistant-settings.model';
+import { type AssistantSettings, type ConfigurationState } from '@/layers/shared/models/assistant-settings.model';
 import { type SettingChoice } from '@/layers/shared/models/model-metadata.model';
 import { configurationContext } from '@/layers/views/context/configuration.context';
 
@@ -71,13 +68,13 @@ export class AssistantConfiguration extends LitElement {
           </select></label
         >
         ${this.#modelControl(state)}
-        <label ?hidden=${settings.mode === 'online'}
+        <label ?hidden=${settings.mode === AssistantModes.ONLINE}
           >Execution
           <select name="execution" .value=${settings.execution} @change=${this.#edit}>
             ${this.#options(executionChoices, settings.execution)}
           </select></label
         >
-        ${settings.mode === 'online' ? this.#onlineControls(settings) : this.#advanced(settings)}
+        ${settings.mode === AssistantModes.ONLINE ? this.#onlineControls(settings) : this.#advanced(settings)}
       </fieldset>
       ${state.metadataLoading ? html`<p role="status">Loading model options</p>` : html``}
       ${state.metadataError
@@ -108,7 +105,7 @@ export class AssistantConfiguration extends LitElement {
   }
 
   #modelControl(state: ConfigurationState): TemplateResult {
-    const online = state.selected.mode === 'online';
+    const online = state.selected.mode === AssistantModes.ONLINE;
     const selected = online ? state.selected.onlineModel ?? '' : state.selected.model;
     return html`
       <label>Model<select name=${online ? 'onlineModel' : 'model'} @change=${this.#edit}>
@@ -196,7 +193,7 @@ export class AssistantConfiguration extends LitElement {
       ${this.feedback ? html`<p role="alert">${this.feedback}</p>` : ''}
       ${state.notice ? html`<p role="status">${state.notice}</p>` : ''}
       ${this.#pendingStatus(state)}
-      ${state.selected.mode === 'online' && !state.selected.onlineModel
+      ${state.selected.mode === AssistantModes.ONLINE && !state.selected.onlineModel
         ? html`<p role="status">Online mode is not available yet</p>`
         : ''}
       ${state.error
@@ -218,7 +215,7 @@ export class AssistantConfiguration extends LitElement {
 
   #tokens(settings: AssistantSettings): TemplateResult {
     return html`
-      <label>${settings.mode === 'online' ? 'Maximum output tokens (includes reasoning)' : 'Maximum new tokens'}
+      <label>${settings.mode === AssistantModes.ONLINE ? 'Maximum output tokens (includes reasoning)' : 'Maximum new tokens'}
             <input name="maxNewTokens" type="number" min="1"
               max=${this.configuration?.choices?.maxOutputTokens ?? 1024} step="1" required
               .value=${String(settings.maxNewTokens)} @input=${this.#edit} />

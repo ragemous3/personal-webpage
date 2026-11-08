@@ -2,6 +2,8 @@ import { once } from 'node:events';
 
 import express, { type Request, type Response } from 'express';
 
+import { SeverityLevelCodes } from '@/layers/shared/constants';
+
 import { type GenerationProviderAbstract } from './generation.abstract.ts';
 import { defaultModel, type GenerationRequest, type OnlineModel } from './generation.model.ts';
 
@@ -36,7 +38,7 @@ const generate = async (
     return;
   }
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(new Error('Generation timed out.')), 120_000);
+  const timeout = setTimeout(() => controller.abort(new Error(`[${SeverityLevelCodes.ERROR}] - Generation timed out.`)), 120_000);
   const cancel = (): void => controller.abort(new Error('Client disconnected.'));
   response.once('close', cancel);
   response.type('application/x-ndjson').set('Cache-Control', 'no-store').set('X-Accel-Buffering', 'no');

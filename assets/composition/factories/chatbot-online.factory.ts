@@ -1,14 +1,19 @@
+import {
+  type ChatbotDependencies,
+  type RagDependencies,
+} from '@/composition/models/chatbot-dependencies.model';
 import { OnlineChatClient } from '@/layers/data/online-chat.client';
+import { SeverityLevelCodes } from '@/layers/shared/constants';
 
-import { buildRagService, type ChatbotDependencies } from './chatbot.factory';
+import { buildRagService } from './chatbot.factory';
 
 export const buildChatbotOnlineDeps = (
   shared: ChatbotDependencies,
-): ReturnType<typeof buildRagService> => {
+): RagDependencies => {
   const settings = shared.settings.stateSubscription.getValue()?.mounted;
-  if (!settings?.onlineModel) throw new Error('Online model is unavailable.');
+  if (!settings?.onlineModel) throw new Error(`[${SeverityLevelCodes.ERROR}] - Online model is unavailable.`);
   return buildRagService(
-    new OnlineChatClient('/api/', {
+    new OnlineChatClient(shared.configuration.onlineApiBaseURL, {
       model: settings.onlineModel,
       maxOutputTokens: settings.maxNewTokens,
     }),
