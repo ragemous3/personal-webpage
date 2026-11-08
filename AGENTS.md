@@ -6,6 +6,8 @@ The issue tracker is the repository's `tasks/<HUID>/TASK.md` files. Use [tatr-ti
 
 When wiring dependencies or adding or moving helpers, types or contracts, follow [dependency and helper placement](README.md#dependency-and-helper-placement).
 
+For architecture Mermaid in PRs, docs, tickets or chat, use [architecture-mermaid](.agents/skills/architecture-mermaid/SKILL.md).
+
 ## Documentation and code comments
 
 Before adding or changing documentation (including AGENTS.md and README.md) or adding code comments or docstrings, ask the user and wait for explicit approval.

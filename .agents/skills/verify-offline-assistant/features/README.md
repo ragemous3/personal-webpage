@@ -24,3 +24,5 @@ The form is under `chatbot-provider`, the active `chatbot-offline-provider` or `
 Report each entry point separately. A typing check does not verify submission, retrieval, generation, or answers. A skipped path is not covered by another passing path.
 
 Local/Online selection is available through assistant settings. Online keeps retrieval in the browser and uses the application API for generation. The `online` verification journey exercises the production application against a controlled OpenAI HTTP endpoint and labelled model fixtures. Rendered history, cancellation, reset and retry remain part of the shared response lifecycle. Controlled transport checks do not establish real model performance or answer quality.
+
+- [Talking head and voice](talking-head.md): real avatar/Kokoro, production UI questions, cached browser restart and Local mode speech.

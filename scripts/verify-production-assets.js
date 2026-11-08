@@ -71,6 +71,19 @@ try {
     JSON.stringify(Object.keys(manifest.workers).toSorted()) === JSON.stringify(sources),
     'Worker map differs from source entries',
   );
+  const speechAssets =
+    globSync('**/talking-head.component.ts', { cwd: values.assets }).length > 0
+      ? [
+          'avatars/mpfb.glb',
+          'speech/head-tts.worker.js',
+          'speech/headtts/modules/worker-tts.mjs',
+          'speech/headtts/modules/language-en-us.mjs',
+          'speech/headtts/dictionaries/en-us.txt',
+          'vendor/speech-transformers/transformers.min.js',
+          'speech/third-party-notices.txt',
+        ]
+      : [];
+  for (const resource of speechAssets) assetFile(new URL(resource, base).href);
   const scripts = files.filter((file) => file.endsWith('.js'));
   const bundled = scripts
     .map((file) => readFileSync(path.join(values.site, file), 'utf8'))

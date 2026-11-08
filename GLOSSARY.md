@@ -23,3 +23,6 @@ The latest valid assistant preferences requested by the visitor or observed from
 
 **Active settings**:
 The settings acknowledged by the shared runtime as applied. Accepted responses retain their starting configuration while selected settings wait.
+
+**Spoken answer**:
+A newly completed assistant answer read aloud after the visitor enables speech. Opening a saved conversation does not automatically read its history aloud.

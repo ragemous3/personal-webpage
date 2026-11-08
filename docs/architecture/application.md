@@ -2,9 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `16e22ccbf80af3fcf70e3807b401d00ea3c58925`. Focused checks, typecheck, lint, production builds and Online/settings/real Local cache journeys pass. Both independent reviews pass at `b78888b3be5b1f0a350f39fdddb9ee438cfcb73a`; the final full suite passes 175/175. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
-
-Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
+Implementation: uncommitted on `44e79ef4695dc7e24defb50981dd16ec21cf1179`; runtime verification and reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -16,16 +14,25 @@ flowchart TB
   end
   subgraph Views["Views layer"]
     ChatUI["ChatContainer"]
+    HeadUI["TalkingHeadComponent"]
     SettingsUI["AssistantConfiguration"]
     ProgressUI["ProgressContainer"]
   end
   subgraph Services["Services layer"]
     Rag["RagService"]
+    Speech["TalkingHeadService"]
     Settings["ConfigurationService"]
     Progress["ProgressService"]
   end
   subgraph Shared["Shared contracts"]
     ChatService["ChatbotServiceContract"]
+    SpeechContract["TalkingHeadServiceContract"]
+    TTSContract["SpeechSynthesisContract"]
+    HeadContract["TalkingHeadPresentationContract"]
+    SpeechAudio["SpeechAudio"]
+    SpeechState["TalkingHeadState"]
+    ChatLifecycleEvent["ChatLifecycleEvent"]
+    GenerationEvent["ChatGenerationEvent"]
     ConfigService["ConfigurationServiceContract"]
     ProgressService["ProgressServiceContract"]
     Session["ChatSessionContract"]
@@ -41,6 +48,8 @@ flowchart TB
   end
   subgraph Data["Data layer — browser tab"]
     Chat["Chat"]
+    TTS["HeadTTSAdapter"]
+    Renderer["TalkingHeadAdapter"]
     Online["OnlineChatClient"]
     ApiBase["ApiBase"]
     DB["DB"]
@@ -69,6 +78,13 @@ flowchart TB
       Handler["createLlmMessageHandler"]
       Local["LocalLLMData"]
     end
+  end
+  subgraph SpeechLibraries["Speech SDKs — browser tab and dedicated Worker"]
+    HeadTTS["HeadTTS — browser module"]
+    SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
+    TalkingHead["TalkingHead / Three.js"]
+    Avatar["avatars/mpfb.glb — CC0"]
+    SpeechAssets["Kokoro-82M-v1.0-ONNX-timestamped<br/>voices / dictionaries / runtime assets"]
   end
   subgraph Server["Server — Express and provider integration"]
     Models["GET /api/models"]
@@ -181,9 +197,32 @@ flowchart TB
   Provider -.->|"extends"| ProviderBase
   Provider <-->|"stream / AbortSignal"| SDK
   SDK <-->|"generation"| OpenAI
+  Chat -->|"Local generation events; same instance"| Speech
+  Online -->|"Online generation events; same instance"| Speech
+  Speech -.->|"observes generation output"| GenerationContract
+  Rag -->|"chat availability / invalidation; no answer text"| Speech
+  Speech -.->|"observes lifecycle"| ChatService
+  HeadUI <-->|"mount, Stop; status and playback lifecycle"| Speech
+  HeadUI -.->|"uses"| SpeechContract
+  Speech -.->|"implements"| SpeechContract
+  Speech -.->|"synthesis dependency"| TTSContract
+  Speech -.->|"presentation dependency"| HeadContract
+  Speech <-->|"text; audio/timings; release idle model"| TTS
+  TTS -.->|"implements"| TTSContract
+  TTS <-->|"initialize and synthesize"| HeadTTS
+  HeadTTS <-->|"synthesis messages"| SpeechWorker
+  SpeechWorker -->|"model / voice / dictionary loading and caches"| SpeechAssets
+  Speech <-->|"mount, play, stop, dispose; playback state"| Renderer
+  Renderer -.->|"implements"| HeadContract
+  Renderer <-->|"synchronized audio and animation"| TalkingHead
+  TalkingHead -->|"load avatar"| Avatar
+  GenerationContract -.->|"read-only events"| GenerationEvent
+  SpeechContract -.->|"state"| SpeechState
+  TTSContract -.->|"audio and timed visemes"| SpeechAudio
+  HeadContract -.->|"playback input"| SpeechAudio
+  ChatService -.->|"availability and invalidation"| ChatLifecycleEvent
   classDef added stroke:#2da44e,stroke-width:3px;
-  class GenerationContract,GenerationState,Online,Session,HistoryContract,History,Catalog,Models,Generate,Provider,ProviderBase,SDK,OpenAI,Root,OnlineProvider,BaseProvider,ServiceFactory,Context,Entry,Identity,StorageBase,TabStorage,ModelOption,OnlineDTO added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class Chat,Layout,ChatUI,SettingsUI,Rag,Settings,ChatService,Preferences,Metadata,LocalDTO,ApiBase,IDB,Adapter,CoordinatorBase,Connection,Hub,Offline modified;
-  style GenerationWorker stroke:#bf8700,stroke-width:3px
+  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechAudio,SpeechState,GenerationEvent,TTS,Renderer,HeadTTS,SpeechWorker,TalkingHead,Avatar,SpeechAssets,ChatLifecycleEvent added;
+  class Chat,Online,GenerationContract,ChatService,Rag,BaseProvider,ServiceFactory modified;
 ```

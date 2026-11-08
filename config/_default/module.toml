@@ -39,3 +39,12 @@ lang = ''
 source = 'node_modules/@wllama/wllama/esm/'
 target = 'static/esm/'
 
+[[mounts]]
+source = 'node_modules/@met4citizen/headtts/modules'
+target = 'static/speech/headtts/modules'
+[[mounts]]
+source = 'node_modules/@met4citizen/headtts/dictionaries'
+target = 'static/speech/headtts/dictionaries'
+[[mounts]]
+source = 'node_modules/@met4citizen/headtts/node_modules/@huggingface/transformers/dist'
+target = 'static/vendor/speech-transformers'

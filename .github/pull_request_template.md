@@ -6,7 +6,7 @@
 
 ## Explanation
 
-<!-- Explain important decisions or behavior that the diff does not make clear. Use show-me for a useful diagram or example. Omit this section for simple changes. -->
+<!-- Explain important decisions or behavior that the diff does not make clear. Use show-me for a useful diagram or example. For architecture Mermaid, use .agents/skills/architecture-mermaid/SKILL.md and reuse the saved feature diagram. Omit this section for simple changes. -->
 
 ## Other
 

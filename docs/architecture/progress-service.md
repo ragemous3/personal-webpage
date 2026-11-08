@@ -2,9 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: `16e22ccbf80af3fcf70e3807b401d00ea3c58925`. Focused checks, typecheck, lint, production builds and Online/settings/real Local cache journeys pass. Both independent reviews pass at `b78888b3be5b1f0a350f39fdddb9ee438cfcb73a`; the final full suite passes 175/175. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
-
-Green borders identify added components or dependencies; yellow borders identify modified source; default borders identify unchanged or pure-moved code. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [diagram maintenance and style](README.md).
+Implementation: uncommitted on `44e79ef4695dc7e24defb50981dd16ec21cf1179`; runtime verification and reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -69,6 +67,4 @@ flowchart TB
 
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class CoordinatorBase,Connection,Hub modified;
-  style GenerationWorker stroke:#bf8700,stroke-width:3px
 ```

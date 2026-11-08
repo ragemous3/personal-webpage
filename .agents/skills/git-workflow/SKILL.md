@@ -49,7 +49,7 @@ Releases: `github-release`. BLOCKED-PR diagnosis: `github-project`.
 
 ## Project pull request diagrams
 
-When preparing or updating an architecture or feature PR, read [Architecture diagrams](../../../docs/architecture/README.md). Refresh the saved service and application diagrams, then use the affected service diagrams in the PR. That document owns the layer layout, exact code names, contracts/abstracts, green added borders, yellow modified borders, disconnected composition, comparison metadata and validation rules. Keep the PR diagrams consistent with the saved versions and preserve its verification and limitation notes.
+When preparing or updating architecture diagrams in a PR, use [architecture-mermaid](../architecture-mermaid/SKILL.md). It owns the drawing, comparison and validation rules. Select the affected service diagrams from the [saved inventory](../../../docs/architecture/README.md) and reuse their blocks and provenance in the PR.
 
 ## Conventional Commits
 
