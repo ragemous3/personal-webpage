@@ -19,7 +19,7 @@ This map describes the existing home-page surface. Entry-open has been exercised
 
 ## Driving conventions
 
-The form is under `chatbot-provider`, `chatbot-host`, the active `chatbot-offline-provider` or `chatbot-online-provider`, and `chat-container`, each with an open shadow root. Use Puppeteer's `chatbot-provider >>> chat-container` selector to cross them. Settings stay under `chatbot-provider >>> assistant-configuration`. The input has accessible label `Question`. The submit button is `Send`. Observe `[role="status"]`, `[role="alert"]`, and `[role="log"]` within the chat shadow root. `Cancel` interrupts a response; `Reset` clears the current conversation. `reconnect` preserves history without resending a question. `Retry` repeats a failed generation explicitly; `Retry saving` repairs storage without another generation request.
+The form is under `chatbot-provider`, the active `chatbot-offline-provider` or `chatbot-online-provider`, and `chat-container`, each with an open shadow root. Use Puppeteer's `chatbot-provider >>> chat-container` selector to cross them. Settings stay under `chatbot-provider >>> assistant-configuration`. The input has accessible label `Question`. The submit button is `Send`. Observe `[role="status"]`, `[role="alert"]`, and `[role="log"]` within the chat shadow root. `Cancel` interrupts a response; `Reset` clears the current conversation. `reconnect` preserves history without resending a question. `Retry` repeats a failed generation explicitly; `Retry saving` repairs storage without another generation request.
 
 Report each entry point separately. A typing check does not verify submission, retrieval, generation, or answers. A skipped path is not covered by another passing path.
 
