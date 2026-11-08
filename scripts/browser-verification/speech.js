@@ -31,7 +31,33 @@ const enable = async (page) => {
 };
 const instrument = async (page) => {
   await page.evaluateOnNewDocument(() => {
-    globalThis.verificationSpeech = { audio: [], states: [], stops: 0 };
+    globalThis.verificationSpeech = {
+      audio: [],
+      browser: [],
+      states: [],
+      stops: 0,
+      nativeCancels: 0,
+    };
+    const cancel = globalThis.speechSynthesis.cancel;
+    globalThis.speechSynthesis.cancel = function () {
+      globalThis.verificationSpeech.nativeCancels++;
+      return Reflect.apply(cancel, this, []);
+    };
+    const speak = globalThis.speechSynthesis.speak;
+    globalThis.speechSynthesis.speak = function (utterance) {
+      const record = { text: utterance.text, voices: this.getVoices().length };
+      globalThis.verificationSpeech.browser.push(record);
+      utterance.addEventListener('start', () => {
+        record.started = true;
+      });
+      utterance.addEventListener('end', () => {
+        record.ended = true;
+      });
+      utterance.addEventListener('error', (event) => {
+        record.error = event.error;
+      });
+      return Reflect.apply(speak, this, [utterance]);
+    };
     const stop = globalThis.AudioBufferSourceNode.prototype.stop;
     globalThis.AudioBufferSourceNode.prototype.stop = function (...arguments_) {
       globalThis.verificationSpeech.stops++;
@@ -58,16 +84,37 @@ const instrument = async (page) => {
     };
   });
 };
-const ask = async (page, question, stop = false) => {
-  const count = await page.evaluate(() => globalThis.verificationSpeech.audio.length);
+const ask = async (page, question, stop = false, browserSpeech = false) => {
+  const count = await page.evaluate(
+    (browserSpeech) => globalThis.verificationSpeech[browserSpeech ? 'browser' : 'audio'].length,
+    browserSpeech,
+  );
   const start = performance.now();
   await page.type(`${chat} >>> input`, question);
   await page.click(`${chat} >>> button[type=submit]`);
   await page.waitForFunction(
-    (count) => globalThis.verificationSpeech.audio.length > count,
+    (count, browserSpeech) =>
+      browserSpeech
+        ? globalThis.verificationSpeech.browser[count]?.started ||
+          globalThis.verificationSpeech.browser[count]?.error
+        : globalThis.verificationSpeech.audio.length > count,
     { timeout: 240_000 },
     count,
+    browserSpeech,
   );
+  if (browserSpeech) {
+    const observation = await page.evaluate(
+      (count) => globalThis.verificationSpeech.browser[count],
+      count,
+    );
+    if (observation.error) {
+      const error = new Error(
+        `Browser speech failed: ${observation.error}; available voices: ${observation.voices}`,
+      );
+      error.name = observation.voices === 0 ? 'BrowserSpeechUnavailableError' : 'Error';
+      throw error;
+    }
+  }
   const latency = performance.now() - start;
   if (stop) await page.click(`${head} >>> button:nth-of-type(2)`);
   await page.waitForFunction(
@@ -99,7 +146,7 @@ const caches = (page) =>
 export const runSpeech = async (restart, origin, evidence, directory) => {
   const result = {
     name: 'talking-head-speech-cache',
-    kind: 'real-avatar-and-kokoro-controlled-chat-generation',
+    kind: 'real-avatar-online-kokoro-local-browser-speech',
     realOpenAI: false,
     realLocalModels: Boolean(process.env.RUNTIME_MODEL_DIR),
     verdict: 'PASS',
@@ -148,10 +195,13 @@ export const runSpeech = async (restart, origin, evidence, directory) => {
     await page.goto(origin);
     await waitReady(page);
     result.cachedInitializationMs = await enable(page);
-    result.cachedFirstAudioMs = await ask(page, 'Does cached speech work?');
+    result.cachedFirstAudioMs = await ask(page, 'Does cached speech work?', false, true);
     result.offlineModelRestart = true;
   } catch (error) {
-    result.verdict = 'FAIL';
+    result.verdict = error.name === 'BrowserSpeechUnavailableError' ? 'BLOCKED' : 'FAIL';
+    result.browserSpeech = await page
+      ?.evaluate(() => globalThis.verificationSpeech?.browser)
+      .catch(() => {});
     result.reason = error.stack;
     if (page && !page.isClosed()) {
       result.failureState = await page
@@ -204,13 +254,30 @@ const checkLocal = async (page, evidence, result, directory) => {
   );
   await waitReady(page);
   result.localInitializationMs = await enable(page);
-  result.localFirstAudioMs = await ask(page, 'What experience does Rasmus have?', true);
+  result.dedicatedWorkers = page.workers().map((worker) => worker.url());
+  assert.equal(result.dedicatedWorkers.length, 0);
+  try {
+    result.localFirstAudioMs = await ask(page, 'What experience does Rasmus have?', true, true);
+  } finally {
+    result.localAnswer = await page
+      .$eval(chat, (element) => element.messages.at(-1)?.content)
+      .catch(() => {});
+    result.browserSpeech = await page
+      .evaluate(() => globalThis.verificationSpeech.browser)
+      .catch(() => {});
+  }
+  result.nativeSpeechCancels = await page.evaluate(
+    () => globalThis.verificationSpeech.nativeCancels,
+  );
+  assert.ok(result.nativeSpeechCancels > 0);
+  result.localSpeechBackend = 'browser-speechSynthesis';
+  result.browserSpeech = await page.evaluate(() => globalThis.verificationSpeech.browser);
   result.localGenerationRequests = evidence.events.filter(
     (event) => event.type === 'accepted' && event.role === 'llm',
   ).length;
   if (!result.realLocalModels) assert.equal(result.localGenerationRequests, 1);
   result.dedicatedWorkers = page.workers().map((worker) => worker.url());
-  assert.ok(result.dedicatedWorkers.length <= 1);
+  assert.equal(result.dedicatedWorkers.length, 0);
   result.nativeAudioStops = await page.evaluate(() => globalThis.verificationSpeech.stops);
   assert.ok(result.nativeAudioStops > 0);
   const clip = await page.evaluate(() => globalThis.verificationSpeech.clip);

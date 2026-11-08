@@ -239,36 +239,3 @@ test('stable configuration keeps the idle voice warm between questions', async (
   assert.equal(resident, true);
   service.dispose();
 });
-
-test('Local generation can release the voice before model work begins', async () => {
-  const events = createSubscribable();
-  const lifecycle = createSubscribable();
-  let resident = false;
-  const service = new TalkingHeadService(
-    { generationSubscription: events },
-    lifecycle,
-    {
-      initialize: async () => {
-        resident = true;
-      },
-      synthesize: async () => [],
-      release() {
-        resident = false;
-      },
-      dispose() {},
-    },
-    {
-      mount: async () => {},
-      activate: async () => {},
-      play: async () => {},
-      stop() {},
-      dispose() {},
-    },
-    { releaseVoiceDuringGeneration: true },
-  );
-  await service.enable();
-  assert.equal(resident, true);
-  events.emit({ type: 'start', requestId: 'local-inference' });
-  assert.equal(resident, false);
-  service.dispose();
-});

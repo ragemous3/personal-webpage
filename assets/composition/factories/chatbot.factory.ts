@@ -7,7 +7,6 @@ import { ChatHistoryRepository } from '@/layers/data/chat-history-repository.dat
 import { ConfigurationRepository } from '@/layers/data/configuration-repository.data';
 import { ContentRepository } from '@/layers/data/content-repository.data';
 import { ConversationIdentity } from '@/layers/data/conversation-identity.data';
-import { HeadTTSAdapter } from '@/layers/data/head-tts.adapter';
 import { ModelMetadataRepository } from '@/layers/data/model-metadata-repository.data';
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { OnlineModelRepository } from '@/layers/data/online-model-repository.data';
@@ -16,8 +15,8 @@ import { TalkingHeadAdapter } from '@/layers/data/talking-head.adapter';
 import { ConfigurationService } from '@/layers/services/configuration.service';
 import { RagService } from '@/layers/services/rag.service';
 import { TalkingHeadService } from '@/layers/services/talking-head.service';
-import { AssistantModes } from '@/layers/shared/constants/assistant.constant';
 import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-generation.contract';
+import { type SpeechSynthesisContract } from '@/layers/shared/contracts/speech-synthesis.contract';
 import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 
 import { getVectorDatabase } from './local-vector-database.factory';
@@ -96,6 +95,7 @@ export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): Chat
 export const buildRagService = (
   chat: ChatGenerationContract,
   shared: ChatbotDependencies,
+  synthesis: SpeechSynthesisContract,
 ): RagDependencies => {
   const service = new RagService(
     chat,
@@ -121,12 +121,10 @@ export const buildRagService = (
   const speech = new TalkingHeadService(
     chat,
     service.lifecycleSubscription,
-    new HeadTTSAdapter(shared.configuration.baseURL),
+    synthesis,
     new TalkingHeadAdapter(shared.configuration.baseURL),
     {
       available: shared.settings.stateSubscription.getValue()?.available ?? false,
-      releaseVoiceDuringGeneration:
-        shared.settings.stateSubscription.getValue()?.mounted?.mode === AssistantModes.LOCAL,
     },
   );
   return {

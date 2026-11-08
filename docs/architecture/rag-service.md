@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). RagService owns retrieval, generation initiation and persisted history. TalkingHeadService observes the same generation instance and receives separate lifecycle invalidation.
 
-Implementation: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154` (signed prototype checkpoint). Controlled speech and Online browser journeys pass. Real Qwen/Kokoro coexistence fails at the 8 GB environment limit; independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted Local browser-speech change after `8918c8fb762a290f9fd08c83c62aff273718eaa8` (checkpoint). Local uses browser speech with a still head; Online retains Kokoro audio and timed visemes. Runtime verification, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -34,6 +34,7 @@ flowchart TB
     TTSContract["SpeechSynthesisContract"]
     HeadContract["TalkingHeadPresentationContract"]
     SpeechAudio["SpeechAudio"]
+    SpeechOutput["SpeechOutput"]
     SpeechState["TalkingHeadState"]
     SpeechOptions["TalkingHeadOptions"]
     ChatLifecycleEvent["ChatLifecycleEvent"]
@@ -45,6 +46,7 @@ flowchart TB
       StoreContract["StoreContract"]
     end
     TTS["HeadTTSAdapter"]
+    BrowserTTS["BrowserSpeechAdapter"]
     Renderer["TalkingHeadAdapter"]
     Chat["Chat"]
     Online["OnlineChatClient"]
@@ -78,6 +80,7 @@ flowchart TB
   subgraph SpeechLibraries["Speech SDKs — browser tab and dedicated Worker"]
     HeadTTS["HeadTTS / Kokoro<br/>HeadTTS browser module"]
     SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
+    BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
     TalkingHead["TalkingHead / Three.js<br/>rendering, audio and Oculus visemes"]
   end
   subgraph Server["Server — Express API and provider integration"]
@@ -193,7 +196,11 @@ flowchart TB
   Speech -.->|"implements"| SpeechContract
   Speech -.->|"synthesis dependency"| TTSContract
   Speech -.->|"presentation dependency"| HeadContract
-  Speech <-->|"text; audio/timings; release idle model"| TTS
+  Speech <-->|"Online: text; audio/timings; release idle model"| TTS
+  Speech <-->|"Local: text"| BrowserTTS
+  BrowserTTS -.->|"implements"| TTSContract
+  BrowserTTS -->|"capability check"| BrowserAPI
+  Renderer <-->|"Local: speak, end, error, cancel"| BrowserAPI
   TTS -.->|"implements"| TTSContract
   TTS <-->|"initialize and synthesize"| HeadTTS
   HeadTTS <-->|"synthesis messages"| SpeechWorker
@@ -204,12 +211,13 @@ flowchart TB
   TalkingHead -->|"load avatar"| Avatar
   GenerationContract -.->|"read-only events"| GenerationEvent
   SpeechContract -.->|"state"| SpeechState
-  TTSContract -.->|"audio and timed visemes"| SpeechAudio
-  HeadContract -.->|"playback input"| SpeechAudio
+  TTSContract -.->|"synthesis output"| SpeechOutput
+  SpeechOutput -.->|"Online audio and timed visemes"| SpeechAudio
+  HeadContract -.->|"playback input"| SpeechOutput
   ServiceContract -.->|"availability and invalidation"| ChatLifecycleEvent
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
+  class BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```

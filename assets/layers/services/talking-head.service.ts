@@ -5,7 +5,7 @@ import { type TalkingHeadPresentationContract } from '@/layers/shared/contracts/
 import { type TalkingHeadServiceContract } from '@/layers/shared/contracts/talking-head-service.contract';
 import { type ChatGenerationEvent } from '@/layers/shared/models/chat-generation.model';
 import {
-  type SpeechAudio,
+  type SpeechOutput,
   type TalkingHeadOptions,
   type TalkingHeadState,
 } from '@/layers/shared/models/speech.model';
@@ -19,7 +19,6 @@ export class TalkingHeadService implements TalkingHeadServiceContract {
   readonly #connections: Array<() => void>;
   #enabled = false;
   #available: boolean;
-  readonly #releaseVoiceDuringGeneration: boolean;
   #disposed = false;
   #request: string | undefined;
   #work: AbortController | undefined;
@@ -31,7 +30,6 @@ export class TalkingHeadService implements TalkingHeadServiceContract {
     options: TalkingHeadOptions = {},
   ) {
     this.#available = options.available ?? true;
-    this.#releaseVoiceDuringGeneration = options.releaseVoiceDuringGeneration ?? false;
     if (!this.#available) this.stateSubscription.emit({ status: 'unavailable' });
     this.#connections = [
       generation.generationSubscription.connect(this.#receive),
@@ -112,7 +110,6 @@ export class TalkingHeadService implements TalkingHeadServiceContract {
   };
   #begin(requestId: string): void {
     this.stop();
-    if (this.#releaseVoiceDuringGeneration) this.synthesis.release();
     this.#request = requestId;
   }
   async #speak(text: string): Promise<void> {
@@ -130,7 +127,7 @@ export class TalkingHeadService implements TalkingHeadServiceContract {
       if (this.#work === work) this.#work = undefined;
     }
   }
-  async #play(audio: SpeechAudio[], work: AbortController): Promise<void> {
+  async #play(audio: SpeechOutput[], work: AbortController): Promise<void> {
     for (const item of audio) {
       if (!this.#current(work)) return;
       this.stateSubscription.emit({ status: 'speaking' });

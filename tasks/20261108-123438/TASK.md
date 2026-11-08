@@ -84,7 +84,9 @@ flowchart TB
     TTSContract["SpeechSynthesisContract"]
     HeadContract["TalkingHeadPresentationContract"]
     SpeechAudio["SpeechAudio"]
+    SpeechOutput["SpeechOutput"]
     SpeechState["TalkingHeadState"]
+    SpeechOptions["TalkingHeadOptions"]
     ChatLifecycleEvent["ChatLifecycleEvent"]
     GenerationEvent["ChatGenerationEvent"]
   end
@@ -94,6 +96,7 @@ flowchart TB
       StoreContract["StoreContract"]
     end
     TTS["HeadTTSAdapter"]
+    BrowserTTS["BrowserSpeechAdapter"]
     Renderer["TalkingHeadAdapter"]
     Chat["Chat"]
     Online["OnlineChatClient"]
@@ -127,6 +130,7 @@ flowchart TB
   subgraph SpeechLibraries["Speech SDKs — browser tab and dedicated Worker"]
     HeadTTS["HeadTTS / Kokoro<br/>HeadTTS browser module"]
     SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
+    BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
     TalkingHead["TalkingHead / Three.js<br/>rendering, audio and Oculus visemes"]
   end
   subgraph Server["Server — Express API and provider integration"]
@@ -242,7 +246,11 @@ flowchart TB
   Speech -.->|"implements"| SpeechContract
   Speech -.->|"synthesis dependency"| TTSContract
   Speech -.->|"presentation dependency"| HeadContract
-  Speech <-->|"text; audio/timings; release idle model"| TTS
+  Speech <-->|"Online: text; audio/timings; release idle model"| TTS
+  Speech <-->|"Local: text"| BrowserTTS
+  BrowserTTS -.->|"implements"| TTSContract
+  BrowserTTS -->|"capability check"| BrowserAPI
+  Renderer <-->|"Local: speak, end, error, cancel"| BrowserAPI
   TTS -.->|"implements"| TTSContract
   TTS <-->|"initialize and synthesize"| HeadTTS
   HeadTTS <-->|"synthesis messages"| SpeechWorker
@@ -253,25 +261,27 @@ flowchart TB
   TalkingHead -->|"load avatar"| Avatar
   GenerationContract -.->|"read-only events"| GenerationEvent
   SpeechContract -.->|"state"| SpeechState
-  TTSContract -.->|"audio and timed visemes"| SpeechAudio
-  HeadContract -.->|"playback input"| SpeechAudio
+  TTSContract -.->|"synthesis output"| SpeechOutput
+  SpeechOutput -.->|"Online audio and timed visemes"| SpeechAudio
+  HeadContract -.->|"playback input"| SpeechOutput
   ServiceContract -.->|"availability and invalidation"| ChatLifecycleEvent
+  Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent added;
+  class BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```
 
 ## Prerequisites
 
-- Current stage: stage 4 runtime verification, blocked on the real Online-to-Local speech journey. A fresh Local session can generate and speak an answer; the mode-switch journey still triggers an out-of-memory kill. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
+- Current stage: stage 4 runtime verification, blocked on native browser voice availability and the real Online-to-Local journey. Local now uses browser speech; the fresh Local text path passes, but this Chromium installation exposes no system voices. The mode-switch memory failure remains open. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
 - Test seams: normalized generation events (one request, correlated output, terminal cancellation/errors, observer isolation); TalkingHeadService with controlled synthesis/presentation (stale work, reset, disposal and playback failure); real browser SDK integration (GLB, audible synthesis, timed animation, cached reload and cleanup). Focused commands: `node --import ./scripts/typescript-test.loader.js --test tests/chat-generation.spec.js tests/online-generation.spec.js tests/talking-head.spec.js`, `npm run typecheck`, `npm run lint`; browser journeys extend the existing verification runner. The final required suite also includes `npm test` and `npm run build`.
 - Browser proof targets: visible framed head, nonempty synthesized audio with corresponding visemes, responsive Stop/Reset, no duplicate generation, no stale playback after reset or remount, cached assets reusable after reload. Record cold/warm first-audio delay and responsiveness with Local inference; these are prototype measurements, not a hardware-wide performance guarantee.
-- Selected delivery: each newly completed answer speaks once after Enable speech. Stop speech stops the current utterance; Reset/new questions/errors invalidate work. English af_bella, WASM/Q4, and one dedicated HeadTTS Worker per enabled tab are the prototype choices. Sentence streaming, voice selection, microphone input and emotion inference are deferred.
+- Selected delivery: each newly completed answer speaks once after Enable speech. Stop speech stops the current utterance; Reset/new questions/errors invalidate work. Local uses browser speech with a still head; Online uses English af_bella, WASM/Q4 and one dedicated HeadTTS Worker per enabled tab. Sentence streaming, voice selection, microphone input and emotion inference are deferred.
 - Lifecycle uses the non-replaying invalidation subscription described above for a new question, Cancel/Reset, chat/storage failures and mode changes. The accepted design requires an explicit stop/invalidation path beyond generation events, including when generation has finished or retrieval has only just started. Stop pending/current speech while preserving history according to the existing chat action; the existing generation Cancel button alone is insufficient.
-- Resource ownership: each mode composition owns TalkingHeadService and its adapters; feature removal also disposes its service idempotently. The generation instance remains composition-owned. HeadTTS executes in a dedicated Worker; renderer/audio stay in the tab. Keep rendering/audio associated with the visible tab. HeadTTS's documented Worker is not a SharedWorker; do not add another application SharedWorker or alter RuntimeCoordinator's responsibilities without evidence and an agreed design. Check the accepted [runtime ADR](../../docs/adr/0002-share-assistant-resources-through-runtimecoordinator-and-two-model-sharedworkers.md) before changing model sharing.
+- Resource ownership: each mode composition owns TalkingHeadService and its adapters; feature removal also disposes its service idempotently. The generation instance remains composition-owned. Online HeadTTS executes in a dedicated Worker; Local browser speech starts no speech Worker. Renderer/audio stay in the tab. Keep rendering/audio associated with the visible tab. HeadTTS's documented Worker is not a SharedWorker; do not add another application SharedWorker or alter RuntimeCoordinator's responsibilities without evidence and an agreed design. Check the accepted [runtime ADR](../../docs/adr/0002-share-assistant-resources-through-runtimecoordinator-and-two-model-sharedworkers.md) before changing model sharing.
 - Cancellation and cleanup checks: [HeadTTS source](https://github.com/met4citizen/HeadTTS/blob/main/modules/headtts.mjs) clears queues but does not establish that active inference is aborted; its documented API lacks a simple disposal operation. Stale results must be ignored, and teardown/resource reuse must be demonstrated. [TalkingHead source](https://github.com/met4citizen/TalkingHead/blob/main/modules/talkinghead.mjs) provides playback stop and disposal mechanisms to verify.
 - Asset/cache policy and checks: model, voices, tokenizer, dictionaries, GLB, modules and WASM. [HeadTTS worker](https://github.com/met4citizen/HeadTTS/blob/main/modules/worker-tts.mjs) uses Transformers.js for model loading but plain fetch for some other assets. Existing model caching does not prove all speech assets are available offline. Measure initial and cached startup, time to first audio, rendering responsiveness and resource use alongside Local generation; agree supported browser/device targets and acceptable limits before closing the prototype.
 - No paid TTS credentials are needed for the candidate browser path. If OpenAI credentials remain unavailable, verify Online integration through the existing controlled API seam and disclose that live OpenAI access was not tested.
@@ -281,7 +291,7 @@ flowchart TB
 The functional target and shared generation subscription are accepted. Autopilot selected completed-answer speech, explicit activation, plain Stop, and text-preserving failure fallback for the first prototype.
 
 - [ ] A visible 3D head is centered in a canvas with explicit usable dimensions and fits the available viewport. Only sizing, centering and functional plain controls are added.
-- [ ] Feeding text through the feature produces audible speech and visibly synchronized mouth movement using the selected avatar and synthesis integration.
+- [ ] Feeding text through the feature produces speech using the selected mode: Local browser speech with a still head, Online Kokoro audio with synchronized mouth movement.
 - [ ] A newly generated answer from either Local or Online follows the same head/speech path and corresponds to the text answer. Existing question entry, retrieval, streaming text and history remain usable.
 - [ ] Composition injects the same active generation instance into RagService and TalkingHeadService. One question starts one generation operation, initiated only by RagService; speech observes request-scoped output through the shared contract in both modes.
 - [ ] Generation subscriptions do not replay earlier output, and distinguish text, completion, cancellation and errors. Speech receives output independently of history-save completion. Speech failures or observer disposal do not fail generation, dispose its instance or prevent text/history updates.
@@ -336,3 +346,15 @@ At `6797ddb`, diagnostic runs measured Chromium through CDP `Runtime.getHeapUsag
 These results establish a working fresh Local path and a failing mode-switch path. They do not establish a memory leak or prove that more RAM is the required fix. Investigate resource release and temporary allocations across the switch and voice reload. The earlier 8 GiB figure describes the environment limit, not the browser's measured allocation. No verification substitution has been approved. Stage 4 remains OPEN.
 
 Local-only evidence: ignored `artifacts/verification/memory-local-only-1794165064840/`, `memory-combined-1794165123848/` and `memory-full-journey-1794165329398/`, each containing source-linked reports, memory samples and Chrome traces. These files survived cleanup and are not committed. The five saved architecture diagrams were checked; diagnostics changed no application classes or wiring. Reviews, final full-suite testing, push and PR remain pending.
+
+
+### Local browser speech change
+
+The user requested removing Kokoro from Local speech. Each mode composition now supplies its synthesis dependency explicitly: buildChatbotOfflineDeps supplies BrowserSpeechAdapter, and buildChatbotOnlineDeps retains HeadTTSAdapter. SpeechOutput carries either browser text or Online audio/timings. TalkingHeadAdapter owns native speak/end/error/cancel handling as well as its existing audio playback. Local starts no speech Worker and downloads no Kokoro weights; the head remains still because native speech supplies no timed visemes. The old release-before-Local-generation option is removed. Stop, Reset and disposal use the existing abort/invalidation path. Disposing native playback also settles its pending promise.
+
+A fresh Local diagnostic with real retrieval/Qwen returned “Rasmus has worked at Ericsson for several years.” It observed zero speech Workers, a 5.90 GiB sampled browser PSS peak and no new OOM kill. Native speech then returned synthesis-failed; Chromium exposes zero voices. This proves the text/error path, not audible native speech. Local-only evidence: ignored artifacts/verification/memory-browser-local-1794171220826/. An earlier full real-model Online-to-Local run still suffered an OOM kill during the Local question; it does not establish that the mode-switch issue is fixed. That run also overlapped build work, so it is not a clean comparative memory benchmark.
+
+Five native API tests cover completion, cancellation, error/retry, missing capability and disposal; the six service lifecycle tests pass. The broader 61-check focused run passed before the final disposal regression was added, and the affected 11-check run passes afterward. Typecheck, lint and production build pass. Five saved diagrams render, with Local browser speech and Online Kokoro shown separately. Native audible output and the full mode-switch journey remain verification gates. Stage 4 remains OPEN; both independent reviews, blast-radius review, final full-suite result and PR handoff remain invalid/unperformed. Routine evidence is ignored; no PR has been opened.
+
+
+Current-source browser run: `npm run verify:browser -- --mode speech` reports BLOCKED at Local native speech with synthesis-failed and zero available voices. Online Kokoro audio, Stop/Reset and Local transition ran first; Local had zero dedicated speech Workers. The Local answer was retained, and browser/server/profile cleanup passed with evidence retained. Cached restart was not reached. Report and visual artifacts are local-only under ignored artifacts/verification/speech-2026-11-08T20-55-34-398Z-8b191396-2c26-46cf-9e49-62d8a915202f/. This is a prerequisite blocker, not a passing native-audio journey or an approved substitution.

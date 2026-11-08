@@ -1,11 +1,12 @@
 import { TalkingHead } from '@met4citizen/talkinghead';
 
 import { type TalkingHeadPresentationContract } from '@/layers/shared/contracts/talking-head-presentation.contract';
-import { type SpeechAudio } from '@/layers/shared/models/speech.model';
+import { type SpeechOutput } from '@/layers/shared/models/speech.model';
 
 export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
   #head: TalkingHead | undefined;
   #disposed = false;
+  #cancelBrowser: (() => void) | undefined;
   #mounted: Promise<void> | undefined;
   constructor(private readonly baseURL: string) {}
   async mount(host: HTMLElement): Promise<void> {
@@ -28,10 +29,12 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
     if (!this.#head || this.#disposed) throw new Error('The head is unavailable.');
     await Promise.all([this.#head.audioCtx.resume(), this.#mounted]);
   }
-  play(audio: SpeechAudio, signal: AbortSignal): Promise<void> {
+  play(audio: SpeechOutput, signal: AbortSignal): Promise<void> {
     signal.throwIfAborted();
+    if (this.#disposed) return Promise.reject(new Error('The head is unavailable.'));
+    if ('text' in audio) return this.#speak(audio.text, signal);
     const head = this.#head;
-    if (!head || this.#disposed) return Promise.reject(new Error('The head is unavailable.'));
+    if (!head) return Promise.reject(new Error('The head is unavailable.'));
     head.start();
     return new Promise((resolve, reject) => {
       const abort = (): void => {
@@ -53,10 +56,46 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
       });
     });
   }
+  #speak(text: string, signal: AbortSignal): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      const cleanup = (): void => {
+        signal.removeEventListener('abort', abort);
+        utterance.removeEventListener('end', end);
+        utterance.removeEventListener('error', error);
+        if (this.#cancelBrowser === abort) this.#cancelBrowser = undefined;
+      };
+      const abort = (): void => {
+        cleanup();
+        globalThis.speechSynthesis.cancel();
+        reject(new DOMException('Speech cancelled.', 'AbortError'));
+      };
+      const end = (): void => {
+        cleanup();
+        resolve();
+      };
+      const error = (event: SpeechSynthesisErrorEvent): void => {
+        cleanup();
+        reject(new Error(`Browser speech failed: ${event.error}`));
+      };
+      this.#cancelBrowser = abort;
+      utterance.addEventListener('end', end, { once: true });
+      utterance.addEventListener('error', error, { once: true });
+      signal.addEventListener('abort', abort, { once: true });
+      try {
+        globalThis.speechSynthesis.speak(utterance);
+      } catch (error) {
+        cleanup();
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
+  }
   #isDisposed(): boolean {
     return this.#disposed;
   }
   stop(): void {
+    this.#cancelBrowser?.();
     this.#head?.stopSpeaking();
     this.#head?.stop();
   }

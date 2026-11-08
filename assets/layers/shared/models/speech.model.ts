@@ -14,5 +14,6 @@ export interface TalkingHeadState {
 
 export interface TalkingHeadOptions {
   available?: boolean;
-  releaseVoiceDuringGeneration?: boolean;
 }
+
+export type SpeechOutput = SpeechAudio | { text: string };
