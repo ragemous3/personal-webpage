@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 runtime verification, stage 7 final checks passed; publishing the unmerged PR under the approved verification alternative. Both modes use browser speech. Real-model mode/restart text paths pass; audible native speech remains explicitly unverified because this Chromium installation exposes no system voices. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
+- Current stage: stage 4 runtime verification, stage 7 PR published and ticket CLOSED; CI/artifact handoff checks are running under the approved verification alternative. Both modes use browser speech. Real-model mode/restart text paths pass; audible native speech remains explicitly unverified because this Chromium installation exposes no system voices. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
 - Test seams: normalized generation events (one request, correlated output, terminal cancellation/errors, observer isolation); TalkingHeadService with controlled synthesis/presentation (stale work, reset, disposal and playback failure); real browser SDK integration (GLB, audible synthesis, timed animation, cached reload and cleanup). Focused commands: `node --import ./scripts/typescript-test.loader.js --test tests/chat-generation.spec.js tests/online-generation.spec.js tests/talking-head.spec.js`, `npm run typecheck`, `npm run lint`; browser journeys extend the existing verification runner. The final required suite also includes `npm test` and `npm run build`.
@@ -414,3 +414,10 @@ Stage 7 is next: final full suite, source-linked evidence publication, signed pu
 Final required checks passed after both reviews on the application/test source at d24fb93291bf3133fb850a48e6baaa15c830433d: `npm test` 196/196, `npm run typecheck`, `npm run lint`, and `PATH=/workspace/tools/hugo-0.158.0:$PATH npm run build`. The build verifies three SharedWorkers/four JavaScript assets. Local full-suite output remains ignored under artifacts/verification/final-talking-head/test.log; CI will publish its own execution output with 90-day retention. Subsequent ticket/evidence updates do not change tested code.
 
 The current-source real-model browser rerun again completed Online-to-Local switching, both Qwen answers and a returning-browser journey with downloads blocked. It reports BLOCKED only for zero system voices, under the approved alternative. Cgroup OOM kill count remained 2. Report: ignored artifacts/verification/speech-2026-11-09T11-54-37-667Z-fdcfe814-c6ed-4a34-8d73-ba002d83b9f5/evidence.json. Source digest 20b5f093fa8889d255bf6eff7d87417568d79a25b585c170931ea29645f6989a matches the current source. The matching report will be attached through the Browser verification workflow; local controlled-animation captures remain local-only. Final PR body uses the saved feature diagram and links the application overview and server-audio planning ticket.
+
+
+### PR publication
+
+PR https://github.com/ragemous3/personal-webpage/pull/25 is open and unmerged. The signed branch was pushed, and the PR body readback exactly matches the prepared text and saved feature diagram. The PR has no auto-merge request or queue entry; auto-merge is disabled for the repository. No merge/deployment operation was performed.
+
+Browser evidence publication run: https://github.com/ragemous3/personal-webpage/actions/runs/42613285898 (90-day artifact retention). It runs the production entry check in CI and attaches the matching local real-model report as submitted evidence, explicitly distinguished from checks executed in CI. Only that JSON report is submitted; local speech videos/controlled-animation captures are not claimed as uploaded. CI and artifact completion are pending at this closure push. The existing git-workflow watcher will check the latest head for failures/actionable findings. Server-streaming ticket 20261109-114334 remains OPEN.
