@@ -6,4 +6,4 @@ Source: https://github.com/met4citizen/TalkingHead/blob/1563de184c19b310de4b6366
 
 SHA-256: `63c645a2a863b9972e9a9c2ed576a1de4c390b8475508e1473e69c87a3ee299c`.
 
-TalkingHead and HeadTTS are separate MIT-licensed packages. Their pinned versions and transitive dependencies are recorded in package-lock.json. The Kokoro timestamped model has its own Apache-2.0 license; model weights are downloaded at runtime and are not part of this avatar asset.
+TalkingHead and Three.js are MIT-licensed rendering dependencies. Their pinned versions and transitive dependencies are recorded in package-lock.json; notices are in [third-party-notices.txt](third-party-notices.txt). Speech uses the browser's native speechSynthesis API and loads no neural voice model.

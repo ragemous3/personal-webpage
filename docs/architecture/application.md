@@ -2,7 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `119499542b46c9a709d6eff3c3ca00d6e5f10270` (signed text-driven animation checkpoint). Local uses browser speech with text-driven mouth animation; Online retains Kokoro audio and timed visemes. Controlled rendering and focused checks pass; audible native speech, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted browser-only speech change after `c952bf879cd0ff305cec409a0c1895994cc1a7f3` (latest checkpoint). Both modes use native speech and text-driven mouth animation. Audible native speech, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -29,7 +29,6 @@ flowchart TB
     SpeechContract["TalkingHeadServiceContract"]
     TTSContract["SpeechSynthesisContract"]
     HeadContract["TalkingHeadPresentationContract"]
-    SpeechAudio["SpeechAudio"]
     SpeechOutput["SpeechOutput"]
     SpeechState["TalkingHeadState"]
     SpeechOptions["TalkingHeadOptions"]
@@ -50,7 +49,6 @@ flowchart TB
   end
   subgraph Data["Data layer — browser tab"]
     Chat["Chat"]
-    TTS["HeadTTSAdapter"]
     BrowserTTS["BrowserSpeechAdapter"]
     LipSync["BrowserSpeechLipSync"]
     Renderer["TalkingHeadAdapter"]
@@ -83,14 +81,11 @@ flowchart TB
       Local["LocalLLMData"]
     end
   end
-  subgraph SpeechLibraries["Speech SDKs — browser tab and dedicated Worker"]
-    HeadTTS["HeadTTS — browser module"]
-    SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
+  subgraph SpeechLibraries["Speech and rendering — browser tab"]
     BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
     Converter["LipsyncEn — TalkingHead"]
     TalkingHead["TalkingHead / Three.js"]
     Avatar["avatars/mpfb.glb — CC0"]
-    SpeechAssets["Kokoro-82M-v1.0-ONNX-timestamped<br/>voices / dictionaries / runtime assets"]
   end
   subgraph Server["Server — Express and provider integration"]
     Models["GET /api/models"]
@@ -213,31 +208,25 @@ flowchart TB
   Speech -.->|"implements"| SpeechContract
   Speech -.->|"synthesis dependency"| TTSContract
   Speech -.->|"presentation dependency"| HeadContract
-  Speech <-->|"Online: text; audio/timings; release idle model"| TTS
-  Speech <-->|"Local: text"| BrowserTTS
+  Speech <-->|"Local and Online: text"| BrowserTTS
   BrowserTTS -.->|"implements"| TTSContract
   BrowserTTS -->|"capability check"| BrowserAPI
-  Renderer <-->|"Local: speak, start, boundary, end, error, cancel"| BrowserAPI
-  Renderer -->|"Local speech lifecycle and word position"| LipSync
+  Renderer <-->|"speak, start, boundary, end, error, cancel"| BrowserAPI
+  Renderer -->|"speech lifecycle and word position"| LipSync
   LipSync -->|"text to visemes"| Converter
   LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
-  TTS -.->|"implements"| TTSContract
-  TTS <-->|"initialize and synthesize"| HeadTTS
-  HeadTTS <-->|"synthesis messages"| SpeechWorker
-  SpeechWorker -->|"model / voice / dictionary loading and caches"| SpeechAssets
   Speech <-->|"mount, play, stop, dispose; playback state"| Renderer
   Renderer -.->|"implements"| HeadContract
-  Renderer <-->|"synchronized audio and animation"| TalkingHead
+  Renderer <-->|"avatar rendering and viseme animation"| TalkingHead
   TalkingHead -->|"load avatar"| Avatar
   GenerationContract -.->|"read-only events"| GenerationEvent
   SpeechContract -.->|"state"| SpeechState
   TTSContract -.->|"synthesis output"| SpeechOutput
-  SpeechOutput -.->|"Online audio and timed visemes"| SpeechAudio
   HeadContract -.->|"playback input"| SpeechOutput
   ChatService -.->|"availability and invalidation"| ChatLifecycleEvent
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechAudio,SpeechState,GenerationEvent,TTS,Renderer,HeadTTS,SpeechWorker,TalkingHead,Avatar,SpeechAssets,ChatLifecycleEvent,SpeechOptions added;
+  class LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechState,GenerationEvent,Renderer,TalkingHead,Avatar,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,ChatService,Rag,BaseProvider,ServiceFactory modified;
 ```

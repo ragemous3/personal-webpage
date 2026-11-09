@@ -2,7 +2,7 @@
 
 Entry: production ChatbotModeProviderAbstract renders TalkingHeadComponent alongside ChatContainer.
 
-Journey: enable English speech, ask a question, observe the visible Online answer with real Kokoro audio and timed mouth movement, Stop/Reset, restart with outbound DNS blocked and cached models, then switch Local and ask another question using browser speech without a speech Worker. Local mouth animation uses text estimates and optional native word-boundary events. Verify its rendering separately with labelled controlled events when no system voice is available; do not infer audible synchronization from that fixture. A missing system voice is a BLOCKED native-speech prerequisite, not a passing audio check.
+Journey: enable browser speech, ask Online and Local questions, compare native utterance text to the answer, verify text-driven mouth motion and Stop/Reset, and restart with external DNS blocked. Both modes have zero speech Workers. System voice availability and audible speech are separate checks; missing voices yield BLOCKED while text/error and mode/restart checks continue. Label controlled native-event animation probes and never infer audible synchronization from them.
 
 Command: `npm run verify:browser -- --mode speech`. Use `RUNTIME_MODEL_DIR` for real Local generation/retrieval; the default generation drivers and Online HTTP endpoint are controlled fixtures. See [prototype details](../../../../docs/talking-head.md).
 

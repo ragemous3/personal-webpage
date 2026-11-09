@@ -2,7 +2,7 @@ import {
   type ChatbotDependencies,
   type RagDependencies,
 } from '@/composition/models/chatbot-dependencies.model';
-import { HeadTTSAdapter } from '@/layers/data/head-tts.adapter';
+import { BrowserSpeechAdapter } from '@/layers/data/browser-speech.adapter';
 import { OnlineChatClient } from '@/layers/data/online-chat.client';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 
@@ -18,6 +18,6 @@ export const buildChatbotOnlineDeps = (shared: ChatbotDependencies): RagDependen
       maxOutputTokens: settings.maxNewTokens,
     }),
     shared,
-    new HeadTTSAdapter(shared.configuration.baseURL),
+    new BrowserSpeechAdapter(),
   );
 };

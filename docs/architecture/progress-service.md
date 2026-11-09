@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: `1d74729449d09d8e57b7e0b4e6bbb6a942a7c154` (signed prototype checkpoint). Controlled speech and Online browser journeys pass. Real Qwen/Kokoro coexistence fails at the 8 GB environment limit; independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted browser-only speech change after `c952bf879cd0ff305cec409a0c1895994cc1a7f3` (latest checkpoint). Both modes use native speech and text-driven mouth animation. Audible native speech, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB

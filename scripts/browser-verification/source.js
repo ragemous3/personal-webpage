@@ -13,7 +13,7 @@ export const sourceSnapshot = (root) => {
   const entries = [...new Set(files)]
     .filter(
       (file) =>
-        /^(assets\/|static\/(?:avatars|speech)\/|server\/|scripts\/|tests\/|config\/|package.*\.json$|tsconfig\.json$|eslint\.config\.js$)/.test(
+        /^(assets\/|static\/avatars\/|server\/|scripts\/|tests\/|config\/|package.*\.json$|tsconfig\.json$|eslint\.config\.js$)/.test(
           file,
         ) && existsSync(path.join(root, file)),
     )

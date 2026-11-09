@@ -25,4 +25,4 @@ Report each entry point separately. A typing check does not verify submission, r
 
 Local/Online selection is available through assistant settings. Online keeps retrieval in the browser and uses the application API for generation. The `online` verification journey exercises the production application against a controlled OpenAI HTTP endpoint and labelled model fixtures. Rendered history, cancellation, reset and retry remain part of the shared response lifecycle. Controlled transport checks do not establish real model performance or answer quality.
 
-- [Talking head and voice](talking-head.md): real avatar/Kokoro, production UI questions, cached browser restart and Local mode speech.
+- [Talking head and voice](talking-head.md): real avatar/browser speech, production UI questions, mode changes and returning-browser speech.

@@ -33,30 +33,9 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
   play(audio: SpeechOutput, signal: AbortSignal): Promise<void> {
     signal.throwIfAborted();
     if (this.#disposed) return Promise.reject(new Error('The head is unavailable.'));
-    if ('text' in audio) return this.#speak(audio.text, signal);
-    const head = this.#head;
-    if (!head) return Promise.reject(new Error('The head is unavailable.'));
-    head.start();
-    return new Promise((resolve, reject) => {
-      const abort = (): void => {
-        head.stopSpeaking();
-        cleanup();
-        reject(new DOMException('Speech cancelled.', 'AbortError'));
-      };
-      const cleanup = (): void => signal.removeEventListener('abort', abort);
-      signal.addEventListener('abort', abort, { once: true });
-      head.speakAudio({
-        ...audio,
-        markers: [
-          () => {
-            cleanup();
-            resolve();
-          },
-        ],
-        mtimes: [audio.audio.duration * 1000],
-      });
-    });
+    return this.#speak(audio.text, signal);
   }
+
   #speak(text: string, signal: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
       const utterance = new SpeechSynthesisUtterance(text);

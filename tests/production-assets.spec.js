@@ -133,14 +133,14 @@ test('production asset CLI rejects a missing nested script even when a root file
   assert.match(result.stderr, /Missing asset.*nested\/app.js/);
 });
 
-test('a talking-head build requires its avatar, speech worker and SDK runtime assets', context => {
+test('a talking-head build requires its avatar and renderer license notices', (context) => {
   const f = fixture(context);
   mkdirSync(path.join(f.assets, 'layers/views'), { recursive: true });
   writeFileSync(path.join(f.assets, 'layers/views/talking-head.component.ts'), '');
   let result = f.run();
   assert.equal(result.status, 1);
   assert.match(result.stderr, /avatars\/mpfb.glb/);
-  for (const file of ['avatars/mpfb.glb', 'speech/head-tts.worker.js', 'speech/headtts/modules/worker-tts.mjs', 'speech/headtts/modules/language-en-us.mjs', 'speech/headtts/dictionaries/en-us.txt', 'vendor/speech-transformers/transformers.min.js', 'speech/third-party-notices.txt']) {
+  for (const file of ['avatars/mpfb.glb', 'avatars/third-party-notices.txt']) {
     mkdirSync(path.dirname(path.join(f.site, file)), { recursive: true });
     writeFileSync(path.join(f.site, file), '');
   }
