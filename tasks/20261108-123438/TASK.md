@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 runtime verification, stage 4 passed with the user-approved verification alternative; entering stage 5 independent reviews. Both modes use browser speech. Real-model mode/restart text paths pass; audible native speech remains explicitly unverified because this Chromium installation exposes no system voices. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
+- Current stage: stage 4 runtime verification, stage 7 final checks passed; publishing the unmerged PR under the approved verification alternative. Both modes use browser speech. Real-model mode/restart text paths pass; audible native speech remains explicitly unverified because this Chromium installation exposes no system voices. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
 - Test seams: normalized generation events (one request, correlated output, terminal cancellation/errors, observer isolation); TalkingHeadService with controlled synthesis/presentation (stale work, reset, disposal and playback failure); real browser SDK integration (GLB, audible synthesis, timed animation, cached reload and cleanup). Focused commands: `node --import ./scripts/typescript-test.loader.js --test tests/chat-generation.spec.js tests/online-generation.spec.js tests/talking-head.spec.js`, `npm run typecheck`, `npm run lint`; browser journeys extend the existing verification runner. The final required suite also includes `npm test` and `npm run build`.
@@ -281,20 +281,20 @@ flowchart TB
 
 ## Acceptance criteria
 
-The functional target and shared generation subscription are accepted. Autopilot selected completed-answer speech, explicit activation, plain Stop, and text-preserving failure fallback for the first prototype.
+The criteria below are accepted under the explicit verification alternative recorded at the end of this ticket; they do not assert audible native speech or measured live audio alignment. The functional target and shared generation subscription are accepted. Autopilot selected completed-answer speech, explicit activation, plain Stop, and text-preserving failure fallback for the first prototype.
 
-- [ ] A visible 3D head is centered in a canvas with explicit usable dimensions and fits the available viewport. Only sizing, centering and functional plain controls are added.
-- [ ] Feeding text through the feature produces speech using the selected mode: browser speech with approximate text-driven mouth animation in both Local and Online modes.
-- [ ] A newly generated answer from either Local or Online follows the same head/speech path and corresponds to the text answer. Existing question entry, retrieval, streaming text and history remain usable.
-- [ ] Composition injects the same active generation instance into RagService and TalkingHeadService. One question starts one generation operation, initiated only by RagService; speech observes request-scoped output through the shared contract in both modes.
-- [ ] Generation subscriptions do not replay earlier output, and distinguish text, completion, cancellation and errors. Speech receives output independently of history-save completion. Speech failures or observer disposal do not fail generation, dispose its instance or prevent text/history updates.
-- [ ] The agreed delivery policy distinguishes a live answer from restored history, partial snapshots, interrupted answers and duplicate callbacks. Reload, reconnect and mode changes do not automatically speak old history.
-- [ ] Stop, Cancel, Reset, a replacement question and component disposal follow the agreed lifecycle policy. Obsolete synthesis or playback callbacks cannot restart speech or animate a replaced component.
-- [ ] Lifecycle verification covers Reset after generation completion, a new question while retrieval is pending, and a save failure after generation output. Each invalidates pending/current speech through the agreed lifecycle connection without replaying a generation request.
-- [ ] A browser-required audio activation action is handled visibly. Avatar, synthesis, playback or capability failures show useful plain status while leaving text chat usable. Only the originating tab speaks its answer.
-- [ ] Resource ownership is demonstrated across Local/Online remounts and multiple tabs: audio, animation loops, subscriptions and workers are stopped, released or deliberately reused. No unintended duplicate playback or accumulating synthesis instances occur.
-- [ ] No neural speech model or speech Worker loads in either mode. Verify returning-browser generation separately from browser voice availability; document that system voices and offline synthesis depend on the browser/operating system.
-- [ ] Initial load, cached startup, first-audio delay and Local-generation coexistence are measured against agreed targets. Lip synchronization is verified with real audio and visible motion, not a static screenshot alone.
+- [x] A visible 3D head is centered in a canvas with explicit usable dimensions and fits the available viewport. Only sizing, centering and functional plain controls are added.
+- [x] Feeding text through the feature produces speech using the selected mode: browser speech with approximate text-driven mouth animation in both Local and Online modes.
+- [x] A newly generated answer from either Local or Online follows the same head/speech path and corresponds to the text answer. Existing question entry, retrieval, streaming text and history remain usable.
+- [x] Composition injects the same active generation instance into RagService and TalkingHeadService. One question starts one generation operation, initiated only by RagService; speech observes request-scoped output through the shared contract in both modes.
+- [x] Generation subscriptions do not replay earlier output, and distinguish text, completion, cancellation and errors. Speech receives output independently of history-save completion. Speech failures or observer disposal do not fail generation, dispose its instance or prevent text/history updates.
+- [x] The agreed delivery policy distinguishes a live answer from restored history, partial snapshots, interrupted answers and duplicate callbacks. Reload, reconnect and mode changes do not automatically speak old history.
+- [x] Stop, Cancel, Reset, a replacement question and component disposal follow the agreed lifecycle policy. Obsolete synthesis or playback callbacks cannot restart speech or animate a replaced component.
+- [x] Lifecycle verification covers Reset after generation completion, a new question while retrieval is pending, and a save failure after generation output. Each invalidates pending/current speech through the agreed lifecycle connection without replaying a generation request.
+- [x] A browser-required audio activation action is handled visibly. Avatar, synthesis, playback or capability failures show useful plain status while leaving text chat usable. Only the originating tab speaks its answer.
+- [x] Resource ownership is demonstrated across Local/Online remounts and multiple tabs: audio, animation loops, subscriptions and workers are stopped, released or deliberately reused. No unintended duplicate playback or accumulating synthesis instances occur.
+- [x] No neural speech model or speech Worker loads in either mode. Verify returning-browser generation separately from browser voice availability; document that system voices and offline synthesis depend on the browser/operating system.
+- [x] Initial load, cached startup, first-audio delay and Local-generation coexistence are measured against agreed targets. Lip synchronization is verified with real audio and visible motion, not a static screenshot alone.
 
 ## Dependencies
 
@@ -398,3 +398,19 @@ Stage 5 initial reviews at 0191e08501da254beed64ce7c5e8655a197b8ffc found stale 
 
 
 Review fix verification: the three RagService/TalkingHeadService integration tests pass. In an isolated detached checkout, individually removing the Reset, send and terminal-storage-failure invalidation emitted by RagService made the corresponding test fail; all three mutants were detected. The original source was restored and the test checkout removed. Timing/native/service/integration checks pass 18/18. This fix changes tests and current-design/provenance documentation only; application behavior, the passing real-model mode/restart evidence and the user-approved audible-speech verification alternative are unchanged. All five saved diagram blocks remain valid and rendered. Stage 4 completes again under that alternative; repeat both reviews on the signed test snapshot.
+
+
+### Stage 5/6 completion
+
+Both independent reviews PASS at d24fb93291bf3133fb850a48e6baaa15c830433d against fixed base 44e79ef4695dc7e24defb50981dd16ec21cf1179: Standards has zero unresolved documented or heuristic findings; Spec has zero unresolved findings and independently ran the three lifecycle integration checks (3/3). Initial findings were fixed through the test/docs snapshot. The current application implementation remains 0191e08501da254beed64ce7c5e8655a197b8ffc. The user-approved audible-native alternative remains explicit.
+
+Blast-radius review is not applicable to production data: no bulk operation, deployment, provider request with real credentials or production cache purge is performed. Browser data, Reset and history checks use owned isolated profiles/fixtures. The only removals are tracked implementation assets/dependencies and disposable test checkouts. There is no live user-data mutation in this feature.
+
+Stage 7 is next: final full suite, source-linked evidence publication, signed push, unmerged PR and ticket closure. No merge or deployment is authorized.
+
+
+### Final test and publication checkpoint
+
+Final required checks passed after both reviews on the application/test source at d24fb93291bf3133fb850a48e6baaa15c830433d: `npm test` 196/196, `npm run typecheck`, `npm run lint`, and `PATH=/workspace/tools/hugo-0.158.0:$PATH npm run build`. The build verifies three SharedWorkers/four JavaScript assets. Local full-suite output remains ignored under artifacts/verification/final-talking-head/test.log; CI will publish its own execution output with 90-day retention. Subsequent ticket/evidence updates do not change tested code.
+
+The current-source real-model browser rerun again completed Online-to-Local switching, both Qwen answers and a returning-browser journey with downloads blocked. It reports BLOCKED only for zero system voices, under the approved alternative. Cgroup OOM kill count remained 2. Report: ignored artifacts/verification/speech-2026-11-09T11-54-37-667Z-fdcfe814-c6ed-4a34-8d73-ba002d83b9f5/evidence.json. Source digest 20b5f093fa8889d255bf6eff7d87417568d79a25b585c170931ea29645f6989a matches the current source. The matching report will be attached through the Browser verification workflow; local controlled-animation captures remain local-only. Final PR body uses the saved feature diagram and links the application overview and server-audio planning ticket.
