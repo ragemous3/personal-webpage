@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/talking-head.service.ts). The head observes completed Local/Online generation output, uses browser speech and text-driven mouth animation for Local and Online answers. Mode composition supplies the shared generation instance; only RagService starts requests.
 
-Implementation: uncommitted browser-only speech change after `c952bf879cd0ff305cec409a0c1895994cc1a7f3` (latest checkpoint). Both modes use native speech and text-driven mouth animation. Audible native speech, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `0191e08501da254beed64ce7c5e8655a197b8ffc` (signed browser-only speech checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented alternative verification; audible native speech remains unverified. Reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
