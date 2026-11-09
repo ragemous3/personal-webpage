@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/talking-head.service.ts). The head observes completed Local/Online generation output, uses browser speech for Local answers and Kokoro audio with timed Oculus visemes for Online answers. Mode composition supplies the shared generation instance; only RagService starts requests.
 
-Implementation: `2feecb4df66a81ac5be7fd932f6b6e6ceb77c400` (signed Local browser-speech checkpoint). Local uses browser speech with a still head; Online retains Kokoro audio and timed visemes. Runtime verification, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `2feecb4df66a81ac5be7fd932f6b6e6ceb77c400` (signed Local browser-speech checkpoint). Local uses browser speech with text-driven mouth animation; Online retains Kokoro audio and timed visemes. The text-driven animation change is uncommitted after this checkpoint; controlled rendering and focused checks pass; audible native speech, independent reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -47,6 +47,7 @@ flowchart TB
     end
     TTS["HeadTTSAdapter"]
     BrowserTTS["BrowserSpeechAdapter"]
+    LipSync["BrowserSpeechLipSync"]
     Renderer["TalkingHeadAdapter"]
     Chat["Chat"]
     Online["OnlineChatClient"]
@@ -81,6 +82,7 @@ flowchart TB
     HeadTTS["HeadTTS / Kokoro<br/>HeadTTS browser module"]
     SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
     BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
+    Converter["LipsyncEn — TalkingHead"]
     TalkingHead["TalkingHead / Three.js<br/>rendering, audio and Oculus visemes"]
   end
   subgraph Server["Server — Express API and provider integration"]
@@ -200,7 +202,10 @@ flowchart TB
   Speech <-->|"Local: text"| BrowserTTS
   BrowserTTS -.->|"implements"| TTSContract
   BrowserTTS -->|"capability check"| BrowserAPI
-  Renderer <-->|"Local: speak, end, error, cancel"| BrowserAPI
+  Renderer <-->|"Local: speak, start, boundary, end, error, cancel"| BrowserAPI
+  Renderer -->|"Local speech lifecycle and word position"| LipSync
+  LipSync -->|"text to visemes"| Converter
+  LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
   TTS -.->|"implements"| TTSContract
   TTS <-->|"initialize and synthesize"| HeadTTS
   HeadTTS <-->|"synthesis messages"| SpeechWorker
@@ -218,6 +223,6 @@ flowchart TB
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
+  class LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```

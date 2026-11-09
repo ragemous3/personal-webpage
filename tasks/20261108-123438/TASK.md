@@ -97,6 +97,7 @@ flowchart TB
     end
     TTS["HeadTTSAdapter"]
     BrowserTTS["BrowserSpeechAdapter"]
+    LipSync["BrowserSpeechLipSync"]
     Renderer["TalkingHeadAdapter"]
     Chat["Chat"]
     Online["OnlineChatClient"]
@@ -131,6 +132,7 @@ flowchart TB
     HeadTTS["HeadTTS / Kokoro<br/>HeadTTS browser module"]
     SpeechWorker["head-tts.worker.js<br/>worker-tts.mjs — HeadTTS"]
     BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
+    Converter["LipsyncEn — TalkingHead"]
     TalkingHead["TalkingHead / Three.js<br/>rendering, audio and Oculus visemes"]
   end
   subgraph Server["Server — Express API and provider integration"]
@@ -250,7 +252,10 @@ flowchart TB
   Speech <-->|"Local: text"| BrowserTTS
   BrowserTTS -.->|"implements"| TTSContract
   BrowserTTS -->|"capability check"| BrowserAPI
-  Renderer <-->|"Local: speak, end, error, cancel"| BrowserAPI
+  Renderer <-->|"Local: speak, start, boundary, end, error, cancel"| BrowserAPI
+  Renderer -->|"Local speech lifecycle and word position"| LipSync
+  LipSync -->|"text to visemes"| Converter
+  LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
   TTS -.->|"implements"| TTSContract
   TTS <-->|"initialize and synthesize"| HeadTTS
   HeadTTS <-->|"synthesis messages"| SpeechWorker
@@ -268,7 +273,7 @@ flowchart TB
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
+  class LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,TTS,Renderer,HeadTTS,TalkingHead,Avatar,SpeechAssets,SpeechWorker,SpeechAudio,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```
 
@@ -279,7 +284,7 @@ flowchart TB
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
 - Test seams: normalized generation events (one request, correlated output, terminal cancellation/errors, observer isolation); TalkingHeadService with controlled synthesis/presentation (stale work, reset, disposal and playback failure); real browser SDK integration (GLB, audible synthesis, timed animation, cached reload and cleanup). Focused commands: `node --import ./scripts/typescript-test.loader.js --test tests/chat-generation.spec.js tests/online-generation.spec.js tests/talking-head.spec.js`, `npm run typecheck`, `npm run lint`; browser journeys extend the existing verification runner. The final required suite also includes `npm test` and `npm run build`.
 - Browser proof targets: visible framed head, nonempty synthesized audio with corresponding visemes, responsive Stop/Reset, no duplicate generation, no stale playback after reset or remount, cached assets reusable after reload. Record cold/warm first-audio delay and responsiveness with Local inference; these are prototype measurements, not a hardware-wide performance guarantee.
-- Selected delivery: each newly completed answer speaks once after Enable speech. Stop speech stops the current utterance; Reset/new questions/errors invalidate work. Local uses browser speech with a still head; Online uses English af_bella, WASM/Q4 and one dedicated HeadTTS Worker per enabled tab. Sentence streaming, voice selection, microphone input and emotion inference are deferred.
+- Selected delivery: each newly completed answer speaks once after Enable speech. Stop speech stops the current utterance; Reset/new questions/errors invalidate work. Local uses browser speech with approximate text-driven mouth animation; Online uses English af_bella, WASM/Q4 and one dedicated HeadTTS Worker per enabled tab. Sentence streaming, voice selection, microphone input and emotion inference are deferred.
 - Lifecycle uses the non-replaying invalidation subscription described above for a new question, Cancel/Reset, chat/storage failures and mode changes. The accepted design requires an explicit stop/invalidation path beyond generation events, including when generation has finished or retrieval has only just started. Stop pending/current speech while preserving history according to the existing chat action; the existing generation Cancel button alone is insufficient.
 - Resource ownership: each mode composition owns TalkingHeadService and its adapters; feature removal also disposes its service idempotently. The generation instance remains composition-owned. Online HeadTTS executes in a dedicated Worker; Local browser speech starts no speech Worker. Renderer/audio stay in the tab. Keep rendering/audio associated with the visible tab. HeadTTS's documented Worker is not a SharedWorker; do not add another application SharedWorker or alter RuntimeCoordinator's responsibilities without evidence and an agreed design. Check the accepted [runtime ADR](../../docs/adr/0002-share-assistant-resources-through-runtimecoordinator-and-two-model-sharedworkers.md) before changing model sharing.
 - Cancellation and cleanup checks: [HeadTTS source](https://github.com/met4citizen/HeadTTS/blob/main/modules/headtts.mjs) clears queues but does not establish that active inference is aborted; its documented API lacks a simple disposal operation. Stale results must be ignored, and teardown/resource reuse must be demonstrated. [TalkingHead source](https://github.com/met4citizen/TalkingHead/blob/main/modules/talkinghead.mjs) provides playback stop and disposal mechanisms to verify.
@@ -291,7 +296,7 @@ flowchart TB
 The functional target and shared generation subscription are accepted. Autopilot selected completed-answer speech, explicit activation, plain Stop, and text-preserving failure fallback for the first prototype.
 
 - [ ] A visible 3D head is centered in a canvas with explicit usable dimensions and fits the available viewport. Only sizing, centering and functional plain controls are added.
-- [ ] Feeding text through the feature produces speech using the selected mode: Local browser speech with a still head, Online Kokoro audio with synchronized mouth movement.
+- [ ] Feeding text through the feature produces speech using the selected mode: Local browser speech with approximate text-driven mouth animation, Online Kokoro audio with synchronized mouth movement.
 - [ ] A newly generated answer from either Local or Online follows the same head/speech path and corresponds to the text answer. Existing question entry, retrieval, streaming text and history remain usable.
 - [ ] Composition injects the same active generation instance into RagService and TalkingHeadService. One question starts one generation operation, initiated only by RagService; speech observes request-scoped output through the shared contract in both modes.
 - [ ] Generation subscriptions do not replay earlier output, and distinguish text, completion, cancellation and errors. Speech receives output independently of history-save completion. Speech failures or observer disposal do not fail generation, dispose its instance or prevent text/history updates.
@@ -360,3 +365,11 @@ Five native API tests cover completion, cancellation, error/retry, missing capab
 Current-source browser run: `npm run verify:browser -- --mode speech` reports BLOCKED at Local native speech with synthesis-failed and zero available voices. Online Kokoro audio, Stop/Reset and Local transition ran first; Local had zero dedicated speech Workers. The Local answer was retained, and browser/server/profile cleanup passed with evidence retained. Cached restart was not reached. Report and visual artifacts are local-only under ignored artifacts/verification/speech-2026-11-08T20-55-34-398Z-8b191396-2c26-46cf-9e49-62d8a915202f/. This is a prerequisite blocker, not a passing native-audio journey or an approved substitution.
 
 Signed Local browser-speech implementation checkpoint: `2feecb4df66a81ac5be7fd932f6b6e6ceb77c400`. Stage 4 remains OPEN on the recorded runtime blockers. Saved diagram provenance now identifies this snapshot; no application code changed in the provenance update.
+
+
+### Local text-driven mouth animation
+
+User approved text-to-mouth conversion with word-boundary alignment and estimated timing as the fallback. BrowserSpeechLipSync lives in the Data layer's utils folder and reuses TalkingHead's statically bundled LipsyncEn rules. It estimates word/viseme timing from text and speech rate, starts only on native speech start, and aligns the timeline to reported word charIndex values. Completion, cancellation, failure and disposal stop scheduling and close the mouth. It adds no inference model, Worker or audio buffer. Online timed-audio playback is unchanged. Four timing checks cover the no-boundary path, word realignment, cancellation/late callbacks and punctuation. Native speech and audible alignment remain blocked by zero system voices; controlled animation events do not replace that missing evidence. Reviews and final full-suite claims remain invalid pending stage 4 completion.
+
+
+2026-11-09 animation checkpoint: 15 focused timing/native-speech/service tests pass. Typecheck, lint and production build pass; all five saved diagrams rendered. A real-avatar browser probe with explicitly controlled start/word/end events returns to ready, retains zero speech Workers and records an applied mouth-opening morph of 0.475 in a separate direct-render probe of the same helper and SDK. The direct-render image shows an open mouth; the application probe captures completion with the mouth closed. Initial setValue-based motion was too slow, so the helper now uses TalkingHead's existing viseme animation queue. The signed snapshot includes the reusable timing tests; routine screenshots/video/reports remain ignored at artifacts/verification/native-mouth-1794173640536/. These checks prove rendered text-driven motion, not audible native synchronization. Stage 4 stays OPEN for the existing native-voice and mode-switch blockers; no PR or verification waiver is claimed.

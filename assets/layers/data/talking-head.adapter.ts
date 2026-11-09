@@ -1,5 +1,6 @@
 import { TalkingHead } from '@met4citizen/talkinghead';
 
+import { BrowserSpeechLipSync } from '@/layers/data/utils/browser-speech-lip-sync.utility';
 import { type TalkingHeadPresentationContract } from '@/layers/shared/contracts/talking-head-presentation.contract';
 import { type SpeechOutput } from '@/layers/shared/models/speech.model';
 
@@ -60,7 +61,17 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
     return new Promise((resolve, reject) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
+      const lipsync = this.#head
+        ? new BrowserSpeechLipSync(this.#head, text, utterance.rate)
+        : undefined;
+      const start = (): void => lipsync?.start();
+      const boundary = (event: SpeechSynthesisEvent): void => {
+        if (event.name === 'word') lipsync?.boundary(event.charIndex);
+      };
       const cleanup = (): void => {
+        lipsync?.stop();
+        utterance.removeEventListener('start', start);
+        utterance.removeEventListener('boundary', boundary);
         signal.removeEventListener('abort', abort);
         utterance.removeEventListener('end', end);
         utterance.removeEventListener('error', error);
@@ -80,6 +91,8 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
         reject(new Error(`Browser speech failed: ${event.error}`));
       };
       this.#cancelBrowser = abort;
+      utterance.addEventListener('start', start, { once: true });
+      utterance.addEventListener('boundary', boundary);
       utterance.addEventListener('end', end, { once: true });
       utterance.addEventListener('error', error, { once: true });
       signal.addEventListener('abort', abort, { once: true });
