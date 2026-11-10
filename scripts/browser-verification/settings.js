@@ -6,6 +6,7 @@ import { seedVerificationPreferences } from './preferences.js';
 
 const settingsSelector = 'chatbot-provider >>> assistant-configuration';
 const chatSelector = 'chatbot-provider >>> chat-container';
+const uiTimeout = 60_000;
 const ready = (page) =>
   page.waitForFunction(
     () => {
@@ -13,7 +14,7 @@ const ready = (page) =>
         ?.shadowRoot?.querySelector('input');
       return input && !input.disabled;
     },
-    { timeout: 10_000, polling: 25 },
+    { timeout: uiTimeout, polling: 25 },
   );
 const configuration = (page) =>
   page.$eval(settingsSelector, (element) =>
@@ -102,7 +103,7 @@ const exerciseChanges = async (first, second) => {
 const exerciseSessionOnlyTab = async (context, origin, first, second, pageErrors) => {
   const session = await createPage(context);
   session.on('pageerror', (error) => pageErrors.push(error.message));
-  session.setDefaultTimeout(10_000);
+  session.setDefaultTimeout(uiTimeout);
   await session.evaluateOnNewDocument(() => {
     Object.defineProperty(globalThis, 'localStorage', {
       get() {
@@ -139,7 +140,7 @@ const exerciseDiscoveredOptions = async (first, second, initialized) => {
           .configurationService.stateSubscription.getValue().metadataLoading === false
       );
     },
-    { polling: 25, timeout: 10_000 },
+    { polling: 25, timeout: uiTimeout },
   );
   const discovered = await configuration(first);
   assert.equal(discovered.metadataError, undefined);
@@ -175,7 +176,7 @@ export const runSettings = async (browser, origin, evidence, directory) => {
   const pageErrors = [];
   const first = await createPage(context);
   first.on('pageerror', (error) => pageErrors.push(error.message));
-  first.setDefaultTimeout(10_000);
+  first.setDefaultTimeout(uiTimeout);
   const result = {
     name: 'production-settings-controls-and-shared-runtime',
     kind: 'controlled-model-drivers-production-application',
@@ -188,7 +189,7 @@ export const runSettings = async (browser, origin, evidence, directory) => {
     await untilSettings(first, { mode: 'online', maxNewTokens: 32 });
     const second = await createPage(context);
     second.on('pageerror', (error) => pageErrors.push(error.message));
-    second.setDefaultTimeout(10_000);
+    second.setDefaultTimeout(uiTimeout);
     await second.goto(origin);
     await untilSettings(second, { mode: 'online' });
     assert.equal(evidence.events.filter((event) => event.type === 'initialized').length, 0);

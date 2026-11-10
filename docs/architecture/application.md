@@ -2,7 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `456f12917613469930f25bb1dfe02f7092598c0e` (signed rendering/audio-lifecycle checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented native-audio alternative. Camera and paused redraws are verified. Pending SDK audio resume rejections are observed during disposal; explicit activation failures remain visible. Repeat reviews and the final suite are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted recovery fix based on `c3628312b087cbeb87129507bd087970f3f52dda`. RuntimeCoordinatorAbstract now retries failed channel hosting when the same coordinator attachment recovers. Both modes retain browser speech; audible native speech remains unverified under the approved alternative. Runtime verification and repeated reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -230,6 +230,7 @@ flowchart TB
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
+  class CoordinatorBase modified;
   class AudioContext,LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechState,GenerationEvent,Renderer,TalkingHead,Avatar,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,ChatService,Rag,BaseProvider,ServiceFactory modified;
 ```

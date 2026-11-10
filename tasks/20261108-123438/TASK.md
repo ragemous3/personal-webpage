@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 audio-lifecycle update published to PR 25; ticket CLOSED. Final CI/artifact checks are monitored before handoff. The native-audio alternative remains approved.
+- Current stage: stage 4 recovery verification complete; preparing the signed snapshot for stage 5. Ticket OPEN. Repeat reviews and the final suite are pending. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -494,3 +494,24 @@ Exact-source real-model rerun speech-2026-11-10T07-32-47-322Z-00910f8c-1061-4640
 PR 25 was updated through signed source/verification snapshot 514554501b730bec1ff4709134ed95655669d07c. The ticket returns to CLOSED after that push. CI controlled Online verification and matching real-model report publication run: https://github.com/ragemous3/personal-webpage/actions/runs/42776675840 (90-day artifact retention). This supersedes the failed 42774727978 Online run, whose actual AudioContext teardown error was reproduced and fixed; it is not being treated as a pass. The existing watcher will check current-head CI and this publication's result before handoff.
 
 The PR remains unmerged with auto-merge/queue disabled. The server-streaming ticket remains OPEN. The cold-profile “could not apply” metadata/download failure remains explicitly separated from the warmed-cache Local answer evidence; native audible speech remains unverified under the original approval.
+
+
+### Settings recovery fix — 2026-11-10
+
+The user approved fixing the settings/recovery failures identified by verification maintenance, under the existing Autopilot grant and PR 25. Resume the same talking-head ticket at stage 3, fixed review base 44e79ef4695dc7e24defb50981dd16ec21cf1179. Prior Standards/Spec reviews, blast-radius assessment and final-suite evidence are invalidated for the new implementation. Keep native audible speech under the existing approved alternative; no merge or deployment is authorized.
+
+Confirmed seams and focused mapping: the existing RuntimeCoordinator/Chat public boundary (tests/runtime-configuration-adapter.spec.js) must recover a replacement generation channel hosted during terminal failure without requiring a new transport attachment, and repeated healthy state snapshots must not duplicate registration. The production settings journey must complete precision changes and two-tab CPU recovery after a controlled WebGPU failure. Use a bounded UI-readiness deadline appropriate to the software-rendered head; do not treat it as a model performance claim. Real Local verification must retain Send, Enter, reload restoration, fresh-tab isolation and cached restart without model downloads. The new working Local helper and maintained feature map join this fix.
+
+Focused commands: node --import ./scripts/typescript-test.loader.js --test tests/runtime-configuration-adapter.spec.js tests/runtime-coordinator.spec.js; npm run typecheck; npm run lint. Runtime commands: npm run verify:browser -- --mode settings, the skill-owned scripts/local.js with RUNTIME_MODEL_DIR, and affected Online/speech journeys. Final suite remains npm test plus typecheck/lint/build after both reviews. The source audit found a host/recovery registration gap; the initial ten-second settings timeout was independently observed as too short. Both need fresh passing evidence before publication.
+
+The focused regression was red on the old code. Invalidating registration only for coordinator-wide failure was insufficient: a second red case reproduced model-connection failure while the coordinator attachment stayed healthy. Registration is now invalidated by the shared channel-failure path. Both cases pass and verify readiness plus no duplicate registration on repeated healthy snapshots. Focused coordinator/adapter checks pass 29/29; typecheck and lint pass. The settings harness now uses one bounded 60-second UI deadline; both 10-second and 30-second waits captured the expected settings error just after timing out in this software-rendered environment. This is a test allowance, not a production performance claim. Full browser verification remains in progress; failed attempts are not counted as passes.
+
+The complete production settings journey now PASSes, including precision changes, shared settings during an accepted response, cancellation, Local/Online switching, rejected WebGPU with explicit CPU recovery in both tabs, reload restoration and the session-only storage path. Evidence: ignored artifacts/verification/settings-2026-11-10T13-56-07-952Z-8b8d2af0-9c95-4619-ba80-407dbdc8d758/. Browser/server/profile cleanup and evidence-retention checks pass. The earlier failed runs remain failures. Deslop removed redundant progress observation from the Local helper and moved its cached-restart PASS after the download/error assertions. Architecture review confirms the same five service/application diagrams and dependencies; RuntimeCoordinatorAbstract is now correctly yellow against the fixed base. Rendering and refreshed real Local/Online/speech checks are next.
+
+### Recovery fix runtime checkpoint
+
+Real Local helper PASS: artifacts/verification/local-2026-11-10T14-02-23-070Z-2609329d-e889-4955-9959-5010329fb38b/. Cold progress, exact typing, Send and Enter answers, Reset after completion, exact reload restoration, fresh-tab isolation and cached restart all completed with real Qwen/MiniLM and matching résumé data. All three answers state “Rasmus has worked at Ericsson for several years.” No model downloads occurred on restart; no page errors were captured. The helper digest matches the executed file; the report includes the exact invocation.
+
+Controlled Online integration PASS: artifacts/verification/online-2026-11-10T14-05-36-577Z-bf7dd87d-1f1a-4d66-adfa-d83af60f6b2c/. Speech journey: artifacts/verification/speech-2026-11-10T14-07-54-296Z-dc7cab26-e208-4989-855c-ac99de1bdaa9/ completed mode/restart and native error paths, BLOCKED solely by zero system voices under the existing user-approved alternative. This speech run uses controlled models; real inference/cache evidence is the separate Local report. No audible synchronization, live OpenAI or WebGPU performance claim is made.
+
+Settings, Local, Online and speech reports share application/test source digest 061fc7b37a9c3459608e684637ff02223ef3a24ad00f818b6b5b787a865f0991. All owned resources closed, evidence survived teardown, and the OOM-kill count stayed zero. Typecheck/lint and production build pass (three workers/four JavaScript assets). All five saved architecture diagrams rendered through an owned loopback page; the CLI file-URL launch was blocked by browser policy and is not counted as a render pass. Routine SVGs/logs/reports remain ignored. Deslop and architecture checks are complete. Both independent reviews and the post-review full suite are next.

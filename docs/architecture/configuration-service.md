@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/configuration.service.ts). The settings slice restores preferences, discovers Local/Online model choices, and changes the shared runtime after accepted responses drain. Its repositories keep preferences, local metadata caching and API catalog access separate. OnlineModelRepository and OnlineChatClient receive the same API base URL from Hugo configuration and reuse ApiBase for URL resolution.
 
-Implementation: `456f12917613469930f25bb1dfe02f7092598c0e` (signed rendering/audio-lifecycle checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented alternative verification; audible native speech remains unverified. Reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted recovery fix based on `c3628312b087cbeb87129507bd087970f3f52dda`. RuntimeCoordinatorAbstract now retries failed channel hosting when the same coordinator attachment recovers. Both modes retain browser speech; audible native speech remains unverified under the approved alternative. Runtime verification and repeated reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -108,5 +108,6 @@ flowchart TB
   Settings -.->|"uses"| SettingsDTO
   Adapter -.->|"uses"| SettingsDTO
   classDef modified stroke:#bf8700,stroke-width:3px;
+  class CoordinatorBase modified;
   class Rag modified;
 ```

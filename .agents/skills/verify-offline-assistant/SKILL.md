@@ -58,6 +58,17 @@ This mode first requires the actual retrieval files. It then attempts a question
 
 A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. Set RUNTIME_MODEL_DIR to a local model mirror for isolated WASM/one-thread/32-token deterministic configuration; production defaults remain unchanged. The cache journey also checks real answers in two tabs, continued work after closing one, Cancel and Reset. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
 
+## Local UI and real answers
+
+```sh
+node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey answer
+RUNTIME_MODEL_DIR=/path/to/model-mirror node --import tsx .agents/skills/verify-offline-assistant/scripts/local.js
+```
+
+This owned helper reuses the production-build, model-mirror, browser and cleanup infrastructure. It uses real generation/retrieval, CPU/WASM and a 32-token budget. A fresh isolated profile records cold progress, exact typed text, separate Send/Enter answers grounded in the résumé's Ericsson fact, reload history and fresh-tab isolation. A new browser process then answers from the same cache with external DNS and model download routes blocked. Application, WASM and retrieval files remain served locally. The helper does not enable speech, verify WebGPU, exercise cancellation/retry or prove whole-site offline availability.
+
+Evidence includes local-loading.png, typed-button.png, typed-enter.png, local-answer.png, local-enter-answer.png and local-returning-answer.png. The report records the application source digest and helper digest. Evidence remains in a unique ignored run directory after owned browser/server/profile teardown. Run the separate speech journey for native voice and mouth-animation observations.
+
 ## CPU cancellation and throughput
 
 ```sh
@@ -94,7 +105,7 @@ The manual Browser verification workflow publishes entry/controlled reports and 
 
 ## Helpers
 
-The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The older [observe.js](scripts/observe.js) helper captures an existing owned loopback instance for manual exploration; its exit code and brief capture window do not provide a feature verdict. Prefer the isolated runner for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.
+The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The skill-owned [Local UI helper](scripts/local.js) adds the typing, Enter and history observations described above. The legacy observe.js helper has obsolete provider traversal and is not a supported recipe for the current application. Use the isolated runners for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.
 
 ## Persisted assistant settings
 
