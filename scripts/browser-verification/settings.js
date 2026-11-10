@@ -218,8 +218,14 @@ export const runSettings = async (browser, origin, evidence, directory) => {
     result.reason = error.stack;
     result.observedSettings = await configuration(first);
   } finally {
-    await first.screenshot({ path: path.join(directory, 'settings.png'), fullPage: true });
     evidence.scenarios.push(result);
-    await context.close();
+    try {
+      await first.bringToFront();
+      await first.screenshot({ path: path.join(directory, 'settings.png'), fullPage: true });
+    } catch (error) {
+      result.screenshotError = error.stack;
+    } finally {
+      await context.close();
+    }
   }
 };

@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/configuration.service.ts). The settings slice restores preferences, discovers Local/Online model choices, and changes the shared runtime after accepted responses drain. Its repositories keep preferences, local metadata caching and API catalog access separate. OnlineModelRepository and OnlineChatClient receive the same API base URL from Hugo configuration and reuse ApiBase for URL resolution.
 
-Implementation: `edf9cc20dfec589ac8584efd93e55c0cfd1e26ed` (signed channel-recovery checkpoint). Failed channel hosting is retried when the same coordinator attachment recovers. Settings, real Local and controlled Online journeys pass. Native audible speech remains unverified under the approved alternative. Both independent reviews and final checks pass; see the [ticket](../../tasks/20261108-123438/TASK.md) for evidence. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: uncommitted settings-observation and capture fix based on `56961d5700feca5aa5960bd4c5f8ea2ef76a895b`. ConfigurationService follows shared pending choices without submitting another configuration. Browser capture retains the scenario result and closes its context on failure. Runtime verification and repeat reviews are pending; the native-audio alternative remains approved. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -74,7 +74,7 @@ flowchart TB
   Settings <-->|"load, save and observe preferences"| Saved
   Settings <-->|"Local model options"| Metadata
   Settings <-->|"Online model options"| Catalogue
-  Settings <-->|"selected and active settings"| Adapter
+  Settings <-->|"local selections; shared runtime state"| Adapter
   Saved -.->|"implements"| SettingsContract
   Metadata -.->|"implements"| MetadataContract
   Metadata -.->|"extends"| ApiBase
@@ -108,6 +108,6 @@ flowchart TB
   Settings -.->|"uses"| SettingsDTO
   Adapter -.->|"uses"| SettingsDTO
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class CoordinatorBase modified;
+  class CoordinatorBase,Settings modified;
   class Rag modified;
 ```

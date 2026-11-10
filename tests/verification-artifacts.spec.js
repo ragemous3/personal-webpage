@@ -133,3 +133,61 @@ for (const screenshotAvailable of [true, false]) {
     assert.equal(evidence.cleanup.evidenceRetained, screenshotAvailable);
   });
 }
+
+for (const screenshotAvailable of [true, false]) {
+  test(`settings failure retains its cause and closes the context when screenshot is available: ${screenshotAvailable}`, async (context) => {
+    const { runSettings } = await import(
+      new URL('../scripts/browser-verification/settings.js', import.meta.url)
+    );
+    const directory = await mkdtemp(path.join(tmpdir(), 'settings-failure-'));
+    context.after(() => rm(directory, { recursive: true, force: true }));
+    let closed = false;
+    let foreground = false;
+    const page = {
+      on() {},
+      setDefaultTimeout() {},
+      async evaluateOnNewDocument() {},
+      async goto() {
+        throw new Error('Settings initialization failed');
+      },
+      async $eval() {
+        return { available: false };
+      },
+      async bringToFront() {
+        foreground = true;
+      },
+      async screenshot({ path: file }) {
+        assert.equal(foreground, true);
+        assert.equal(closed, false);
+        if (!screenshotAvailable) throw new Error('Renderer capture timed out');
+        await writeFile(file, 'settings failure screenshot');
+      },
+    };
+    const browserContext = {
+      async newPage() {
+        return page;
+      },
+      async close() {
+        closed = true;
+      },
+    };
+    const evidence = { artifacts: [], scenarios: [], cleanup: { errors: [] } };
+    await runSettings(
+      {
+        async createBrowserContext() {
+          return browserContext;
+        },
+      },
+      'http://localhost',
+      evidence,
+      directory,
+    );
+    assert.equal(closed, true);
+    assert.equal(evidence.scenarios[0].verdict, 'FAIL');
+    assert.match(evidence.scenarios[0].reason, /Settings initialization failed/);
+    if (!screenshotAvailable)
+      assert.match(evidence.scenarios[0].screenshotError, /Renderer capture timed out/);
+    await finalizeEvidence(directory, evidence);
+    assert.equal(evidence.verdict, screenshotAvailable ? 'FAIL' : 'ERROR');
+  });
+}

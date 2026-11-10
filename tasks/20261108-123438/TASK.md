@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 recovery update published to PR 25; ticket CLOSED. Current-head CI and evidence publication are monitored before handoff. The native-audio alternative remains approved.
+- Current stage: stage 4 shared-settings/capture verification complete; preparing the signed review snapshot. Ticket OPEN. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -529,3 +529,19 @@ Final post-review checks PASS on implementation edf9cc20dfec589ac8584efd93e55c0c
 The signed recovery implementation/helper snapshot edf9cc20dfec589ac8584efd93e55c0cfd1e26ed and reviewed metadata b477ac30707278288a6eeb187baf11d110fdf33f were pushed to existing PR https://github.com/ragemous3/personal-webpage/pull/25 through 5a63bb19fbee642d596965572787259613fe7fd3. The updated body readback matches the prepared description and saved service diagram. The ticket returns to CLOSED after that publication. No auto-merge or queue entry is enabled; no merge/deployment is performed.
 
 Current evidence publication: https://github.com/ragemous3/personal-webpage/actions/runs/42832440880 (90-day artifact retention). It runs controlled production settings checks in CI at 5a63bb19fbee642d596965572787259613fe7fd3 and attaches the matching real Local report as submitted evidence, not inference executed in CI. The Local report source/helper digests are recorded in the artifact; screenshots remain local/chat evidence rather than tracked Git files. This closure changes only ticket/diagram metadata. The existing watcher will verify all automatic CI checks on the final pushed head, and the manual workflow outcome/artifact upload must be checked before handoff.
+
+### Hosted settings verification failure
+
+Manual workflow 42832440880 failed before retaining a scenario or settings.png. Its report summary is ERROR with an empty scenarios list and missing-screenshot cleanup error; the actual toolError must be inspected before assigning a product cause. All four automatic checks passed at 56961d5700feca5aa5960bd4c5f8ea2ef76a895b, but this manual failure blocks final handoff. Reopen the same ticket at stage 3; no failing result is counted as passing. Artifact 13772577086 exists with 90-day retention; this environment's download attempt returned HTTP 403. No new runtime change has been made yet.
+
+The GitHub artifact connector successfully retrieved artifact 13772577086 after the direct CLI download was blocked. Its toolError is Page.captureScreenshot timeout. The settings helper captured the image before appending its scenario, so that secondary failure erased the original scenario and skipped context teardown. Two new artifact regressions were red on the old helper and now pass: foreground the page before capture, retain the original result before capture, record any screenshot error, and always close the context. Missing required screenshots still make the overall report ERROR.
+
+The next local run retained a distinct settings race: the session-only tab selected CPU/64 tokens, then another tab echoed an older shared Auto/256 snapshot as a new application request and overwrote the selection. A new ConfigurationService regression was red (extra apply call) before the fix. Pending authoritative shared selections now remain observations rather than starting another apply; newer peer selections can replace earlier pending observations when no local apply/response owns the choice. Explicit local edits/retry still apply and retain failure baselines; the previous observed-baseline regression now exercises explicit Retry rather than assuming that observing peer state should submit a new configuration. Existing local-edit, cancellation, error/retry and adoption regressions still pass. Public ConfigurationService state/runtime-adapter boundaries are the confirmed seam for this in-scope CI fix. Focused configuration/coordinator/artifact checks pass 59/59, with typecheck/lint passing. Fresh runtime verification and both reviews are next.
+
+The full settings journey now PASSes after the observation fix, including the storage-denied session-only tab and the foreground final screenshot: artifacts/verification/settings-2026-11-10T14-40-18-815Z-b8daa8bc-20bf-45e5-8b80-270aecb0a8c6/. All five updated diagrams render; ConfigurationService is yellow where shown, and the settings slice labels local selections versus shared runtime state. Fresh real Local helper PASS: artifacts/verification/local-2026-11-10T14-45-01-954Z-0462d448-70a4-40c3-9a97-53be760150df/, all five scenarios, three real Ericsson answers, exact reload restoration/fresh-tab isolation, cached restart without model downloads, zero page errors and complete cleanup/retention. Source digest is a3891277519adbc07a1ec6266b45003b803daf52021721691f5b034d5957dad1. Cross-mode checks and repeat reviews are next; the failed hosted workflow is not counted as a pass.
+
+### Shared-observation/capture verification completion
+
+Fresh controlled Online integration PASS: artifacts/verification/online-2026-11-10T14-50-00-040Z-fb89b52d-ff36-4d18-af51-8d141a273c11/. Fresh real-model speech journey artifacts/verification/speech-2026-11-10T14-52-04-437Z-3d9429c9-a586-4d81-9c8d-96266a4af0b4/ completed Online-to-Local switching, real Qwen/MiniLM answers and cached restart with downloads blocked. Both Local answers state “Rasmus has worked at Ericsson for several years.” The only BLOCKED requirement is audible native speech with zero system voices, under the existing explicit alternative. Settings, Local helper, Online and real-model speech reports now share source digest a3891277519adbc07a1ec6266b45003b803daf52021721691f5b034d5957dad1. All owned resources closed and evidence survived; no OOM kill occurred.
+
+Deslop checked the resulting code against the fixed base, including the new regression tests. The fix reuses existing state and comparisons; it adds no DI layer, protocol or ownership class. Screenshot failure remains an overall ERROR when required evidence is absent, while its primary scenario result and context cleanup survive. All five architecture blocks rendered again with ConfigurationService's yellow border where applicable. Focused checks pass 59/59; typecheck/lint pass. Source is ready for both repeat reviews; final full-suite results remain invalid until run afterward.
