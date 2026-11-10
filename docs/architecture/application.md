@@ -2,7 +2,7 @@
 
 Hugo serves the view layer. ChatbotProvider directly renders AssistantConfiguration and the selected Local or Online component in the same tree. The service slices share retrieval and configuration coordination, while each tab keeps its own persisted conversation. Generation and model discovery use the same configured API base URL. See [RagService](rag-service.md), [ConfigurationService](configuration-service.md) and [ProgressService](progress-service.md) for their contracts and complete flows.
 
-Implementation: `2d2df2a3d5d28daf2d001118ef0700d4f2f67038` (signed idle-avatar fix checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented native-audio alternative. Initial camera setup and paused redraws are verified; missing-voice errors remain explicit. Reviews and the final suite for this fix are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `2d2df2a3d5d28daf2d001118ef0700d4f2f67038` (signed idle-avatar fix checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented native-audio alternative. Camera and paused redraws are verified. An uncommitted fix observes pending SDK audio resume rejections during disposal; explicit activation failures remain visible. Repeat reviews and the final suite are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -83,6 +83,7 @@ flowchart TB
   end
   subgraph SpeechLibraries["Speech and rendering — browser tab"]
     BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
+    AudioContext["AudioContext — TalkingHead internal graph"]
     Converter["LipsyncEn — TalkingHead"]
     TalkingHead["TalkingHead / Three.js"]
     Avatar["avatars/mpfb.glb — CC0"]
@@ -212,6 +213,8 @@ flowchart TB
   BrowserTTS -.->|"implements"| TTSContract
   BrowserTTS -->|"capability check"| BrowserAPI
   Renderer <-->|"speak, start, boundary, end, error, cancel"| BrowserAPI
+  TalkingHead -->|"owns internal graph"| AudioContext
+  Renderer -->|"observe automatic resume; activate; close"| AudioContext
   Renderer -->|"speech lifecycle and word position"| LipSync
   LipSync -->|"text to visemes"| Converter
   LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
@@ -227,6 +230,6 @@ flowchart TB
   Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechState,GenerationEvent,Renderer,TalkingHead,Avatar,ChatLifecycleEvent,SpeechOptions added;
+  class AudioContext,LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,SpeechState,GenerationEvent,Renderer,TalkingHead,Avatar,ChatLifecycleEvent,SpeechOptions added;
   class Chat,Online,GenerationContract,ChatService,Rag,BaseProvider,ServiceFactory modified;
 ```

@@ -27,7 +27,7 @@ const visiblePixels = async (page) => {
   }, Buffer.from(png).toString('base64'));
 };
 
-test('the avatar is visible initially and after idle resize or Stop', async () => {
+test('the idle avatar stays visible and disposes pending audio without unhandled errors', async () => {
   const server = await createServer({
     configFile: false,
     resolve: { alias: { '@': fileURLToPath(new URL('../assets', import.meta.url)) } },
@@ -47,6 +47,27 @@ test('the avatar is visible initially and after idle resize or Stop', async () =
       args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'],
     });
     const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.evaluateOnNewDocument(() => {
+      globalThis.closedResumeCount = 0;
+      globalThis.AudioContext.prototype.resume = function () {
+        return new Promise((_resolve, reject) => {
+          const changed = () => {
+            if (this.state !== 'closed') return;
+            this.removeEventListener('statechange', changed);
+            globalThis.closedResumeCount++;
+            reject(
+              new DOMException(
+                'AudioContext closed before a pending resume() could complete.',
+                'InvalidStateError',
+              ),
+            );
+          };
+          this.addEventListener('statechange', changed);
+        });
+      };
+    });
     await page.goto(`${server.resolvedUrls.local[0]}tests/talking-head-browser.fixture.html`);
     await page.waitForFunction(() => globalThis.fixture, { timeout: 120_000 });
     await page.evaluate(
@@ -71,7 +92,25 @@ test('the avatar is visible initially and after idle resize or Stop', async () =
     );
     await page.evaluate(() => globalThis.fixture.adapter.stop());
     assert.ok((await visiblePixels(page)) > 500, 'Stop must leave a visible neutral avatar');
-    await page.evaluate(() => globalThis.fixture.adapter.dispose());
+    const activationError = await page.evaluate(async () => {
+      const activation = globalThis.fixture.adapter.activate();
+      globalThis.fixture.adapter.dispose();
+      try {
+        await activation;
+        return null;
+      } catch (error) {
+        return error.message;
+      }
+    });
+    assert.match(activationError, /closed before a pending resume/);
+    await page.waitForFunction(() => globalThis.closedResumeCount > 0);
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          globalThis.requestAnimationFrame(() => globalThis.requestAnimationFrame(resolve)),
+        ),
+    );
+    assert.deepEqual(errors, [], 'SDK disposal must not create unhandled resume rejections');
   } finally {
     await browser?.close();
     await server.close();

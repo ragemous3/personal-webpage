@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: CLOSED
+- STATUS: OPEN
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 rendering fix published to PR 25; ticket CLOSED. CI/artifact checks on the final metadata head are monitored before handoff. The native-audio verification alternative remains approved.
+- Current stage: stage 4 audio-resume fix checks passed; repeat reviews and final checks are next. Ticket OPEN for the PR update. The same native-audio alternative remains authorized.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -470,3 +470,11 @@ Fix final checks passed after both reviews: npm test 198/198, npm run typecheck,
 PR 25 now includes the signed idle-avatar fix and verification/documentation updates through 770b9905699f30f5590239058cc516c9e4954ec4. The repeat Standards and Spec reviews have zero unresolved findings; final tests pass 198/198 plus typecheck/lint/build. The ticket returns to CLOSED after the PR update was pushed. No merge, queue entry or auto-merge is enabled.
 
 Updated evidence publication: https://github.com/ragemous3/personal-webpage/actions/runs/42774727978 (90-day retention). This runs controlled Online integration checks and submits the matching local real-model JSON; the local report remains explicitly distinguished from CI-executed inference. The source digest is 453f7c4db65201049c44e9197ef71a2bdb0b9462828af7ef4ec70f45f8dbc9e3. The local Local/returning-Local screenshots were inspected in chat and remain ignored workspace evidence, not claimed as uploaded files. CI/artifact completion is monitored at handoff. The “could not apply” cold-entry failure remains a documented test precondition/result, not a fixed configuration defect or successful inference claim.
+
+
+### CI-discovered audio-context teardown failure
+
+The optional controlled Online integration workflow 42774727978 failed because pageerror contained two InvalidStateError messages: AudioContext closed before a pending resume() could complete. This is a genuine SDK disposal race, separate from the expected cold-entry metadata fetch failure. The ticket reopens at stage 3; prior reviews/final tests are invalidated again. The real-browser lifecycle test now models a pending Web Audio resume that rejects when the context closes, and checks both preservation of the explicit activation failure and absence of unhandled SDK rejections.
+
+
+The pending-resume browser regression failed before the fix with the exact CI InvalidStateError, then passed after the adapter began observing SDK resume promises. The wrapper returns the original promise unchanged, so the same test confirms explicit activate() still rejects on closure. No extra context, worker, renderer or idle loop is created. Focused native/real-browser checks pass 7/7; typecheck/lint pass. The complete local controlled Online journey now PASSes at artifacts/verification/online-2026-11-10T07-30-42-781Z-46551474-2c46-4f29-979b-6529f6d03238/, with no page errors and successful cleanup. Prior model generation code and the approved native-audio limitation are unchanged; the real-model mode/restart result from the camera fix remains relevant and a fresh exact-source report will be captured for publication. Reviews and final suite are invalid until repeated on the new signed snapshot.

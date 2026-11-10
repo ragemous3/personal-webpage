@@ -17,6 +17,15 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
       lipsyncModules: [],
       ttsEndpoint: null,
     });
+    const resume = head.audioCtx.resume.bind(head.audioCtx);
+    head.audioCtx.resume = () => {
+      const pending = resume();
+      // The SDK ignores this promise; activate() still receives its original rejection.
+      void pending.catch(() => {
+        return;
+      });
+      return pending;
+    };
     // Redraw on demand even when the SDK animation loop is paused.
     head.render = (): void => {
       if (!this.#disposed) head.renderer.render(head.scene, head.camera);
