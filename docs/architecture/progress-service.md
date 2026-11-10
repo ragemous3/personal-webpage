@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: uncommitted settings-observation and capture fix based on `56961d5700feca5aa5960bd4c5f8ea2ef76a895b`. ConfigurationService follows shared pending choices without submitting another configuration. Browser capture retains the scenario result and closes its context on failure. Runtime verification and repeat reviews are pending; the native-audio alternative remains approved. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `1eab978e234b83aed7f3c1810acab8f2646d6033` (signed settings-observation/capture checkpoint). Pending shared settings do not submit another configuration; local edits and explicit retry retain their behavior. Settings, real Local and Online journeys pass; the native-audio alternative remains approved. Repeat reviews and final checks are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB

@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 shared-settings/capture verification complete; preparing the signed review snapshot. Ticket OPEN. The native-audio alternative remains approved.
+- Current stage: stage 5 repeat reviews of settings/capture implementation 1eab978e234b83aed7f3c1810acab8f2646d6033; ticket OPEN. Final full suite and CI publication are pending. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -545,3 +545,5 @@ The full settings journey now PASSes after the observation fix, including the st
 Fresh controlled Online integration PASS: artifacts/verification/online-2026-11-10T14-50-00-040Z-fb89b52d-ff36-4d18-af51-8d141a273c11/. Fresh real-model speech journey artifacts/verification/speech-2026-11-10T14-52-04-437Z-3d9429c9-a586-4d81-9c8d-96266a4af0b4/ completed Online-to-Local switching, real Qwen/MiniLM answers and cached restart with downloads blocked. Both Local answers state “Rasmus has worked at Ericsson for several years.” The only BLOCKED requirement is audible native speech with zero system voices, under the existing explicit alternative. Settings, Local helper, Online and real-model speech reports now share source digest a3891277519adbc07a1ec6266b45003b803daf52021721691f5b034d5957dad1. All owned resources closed and evidence survived; no OOM kill occurred.
 
 Deslop checked the resulting code against the fixed base, including the new regression tests. The fix reuses existing state and comparisons; it adds no DI layer, protocol or ownership class. Screenshot failure remains an overall ERROR when required evidence is absent, while its primary scenario result and context cleanup survive. All five architecture blocks rendered again with ConfigurationService's yellow border where applicable. Focused checks pass 59/59; typecheck/lint pass. Source is ready for both repeat reviews; final full-suite results remain invalid until run afterward.
+
+Signed settings/capture implementation checkpoint: `1eab978e234b83aed7f3c1810acab8f2646d6033`. Later provenance edits change documentation only. Both reviews compare the resulting source with fixed base 44e79ef4695dc7e24defb50981dd16ec21cf1179.
