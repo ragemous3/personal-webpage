@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 recovery final checks passed; preparing the PR update. Ticket OPEN until publication. The native-audio alternative remains approved.
+- Current stage: stage 7 recovery update published to PR 25; ticket CLOSED. Current-head CI and evidence publication are monitored before handoff. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -523,3 +523,9 @@ Signed implementation/test/helper checkpoint: `edf9cc20dfec589ac8584efd93e55c0cf
 Standards PASS at b477ac30707278288a6eeb187baf11d110fdf33f against fixed base 44e79ef4695dc7e24defb50981dd16ec21cf1179: zero actionable documented-standard violations and zero actionable heuristic smells. Spec PASS on the same snapshot: zero actionable findings; reviewer independently reran the 29 focused checks. Blast-radius is not applicable: no live bulk-data operation, migration or deployment; browser writes are limited to owned disposable profiles.
 
 Final post-review checks PASS on implementation edf9cc20dfec589ac8584efd93e55c0cfd1e26ed and reviewed metadata b477ac30707278288a6eeb187baf11d110fdf33f: npm test 200/200, npm run typecheck, npm run lint and production build (three SharedWorkers/four JavaScript assets). Test/build output remains ignored under artifacts/verification/recovery-final/. Later edits only record evidence/publication; no implementation changes after these results. All five diagrams retain the exact rendered blocks, fixed comparison base and implementation provenance. The PR body will reuse the saved talking-head service diagram, including the modified RuntimeCoordinatorAbstract border.
+
+### Recovery PR publication
+
+The signed recovery implementation/helper snapshot edf9cc20dfec589ac8584efd93e55c0cfd1e26ed and reviewed metadata b477ac30707278288a6eeb187baf11d110fdf33f were pushed to existing PR https://github.com/ragemous3/personal-webpage/pull/25 through 5a63bb19fbee642d596965572787259613fe7fd3. The updated body readback matches the prepared description and saved service diagram. The ticket returns to CLOSED after that publication. No auto-merge or queue entry is enabled; no merge/deployment is performed.
+
+Current evidence publication: https://github.com/ragemous3/personal-webpage/actions/runs/42832440880 (90-day artifact retention). It runs controlled production settings checks in CI at 5a63bb19fbee642d596965572787259613fe7fd3 and attaches the matching real Local report as submitted evidence, not inference executed in CI. The Local report source/helper digests are recorded in the artifact; screenshots remain local/chat evidence rather than tracked Git files. This closure changes only ticket/diagram metadata. The existing watcher will verify all automatic CI checks on the final pushed head, and the manual workflow outcome/artifact upload must be checked before handoff.
