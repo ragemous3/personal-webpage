@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/progress.service.ts). The progress slice forwards model-initialization events from the coordinator to ProgressContainer. Online answer-token deltas use RagService, rather than this progress subscription.
 
-Implementation: `2d2df2a3d5d28daf2d001118ef0700d4f2f67038` (signed idle-avatar fix checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented alternative verification; audible native speech remains unverified. Reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `456f12917613469930f25bb1dfe02f7092598c0e` (signed rendering/audio-lifecycle checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented alternative verification; audible native speech remains unverified. Reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
