@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 recovery verification complete; preparing the signed snapshot for stage 5. Ticket OPEN. Repeat reviews and the final suite are pending. The native-audio alternative remains approved.
+- Current stage: stage 5 repeat reviews of channel-recovery implementation edf9cc20dfec589ac8584efd93e55c0cfd1e26ed; ticket OPEN. Final suite/publication remain pending. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -515,3 +515,5 @@ Real Local helper PASS: artifacts/verification/local-2026-11-10T14-02-23-070Z-26
 Controlled Online integration PASS: artifacts/verification/online-2026-11-10T14-05-36-577Z-bf7dd87d-1f1a-4d66-adfa-d83af60f6b2c/. Speech journey: artifacts/verification/speech-2026-11-10T14-07-54-296Z-dc7cab26-e208-4989-855c-ac99de1bdaa9/ completed mode/restart and native error paths, BLOCKED solely by zero system voices under the existing user-approved alternative. This speech run uses controlled models; real inference/cache evidence is the separate Local report. No audible synchronization, live OpenAI or WebGPU performance claim is made.
 
 Settings, Local, Online and speech reports share application/test source digest 061fc7b37a9c3459608e684637ff02223ef3a24ad00f818b6b5b787a865f0991. All owned resources closed, evidence survived teardown, and the OOM-kill count stayed zero. Typecheck/lint and production build pass (three workers/four JavaScript assets). All five saved architecture diagrams rendered through an owned loopback page; the CLI file-URL launch was blocked by browser policy and is not counted as a render pass. Routine SVGs/logs/reports remain ignored. Deslop and architecture checks are complete. Both independent reviews and the post-review full suite are next.
+
+Signed implementation/test/helper checkpoint: `edf9cc20dfec589ac8584efd93e55c0cfd1e26ed`. Diagram provenance now names this checkpoint; only documentation changes after it. Application/test source digest remains 061fc7b37a9c3459608e684637ff02223ef3a24ad00f818b6b5b787a865f0991. Stage 5 reviews use the resulting committed snapshot against the fixed base.

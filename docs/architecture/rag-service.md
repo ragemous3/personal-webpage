@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). RagService owns retrieval, generation initiation and persisted history. TalkingHeadService observes the same generation instance and receives separate lifecycle invalidation.
 
-Implementation: uncommitted recovery fix based on `c3628312b087cbeb87129507bd087970f3f52dda`. RuntimeCoordinatorAbstract now retries failed channel hosting when the same coordinator attachment recovers. Both modes retain browser speech; audible native speech remains unverified under the approved alternative. Runtime verification and repeated reviews are in progress. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `edf9cc20dfec589ac8584efd93e55c0cfd1e26ed` (signed channel-recovery checkpoint). Failed channel hosting is retried when the same coordinator attachment recovers. Settings, real Local and controlled Online journeys pass. Native audible speech remains unverified under the approved alternative. Repeat reviews and the final suite are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
