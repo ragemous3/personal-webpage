@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 fix checks passed; updating PR 25 under the existing native-audio alternative. Ticket OPEN until the update is pushed.
+- Current stage: stage 7 rendering fix published to PR 25; ticket CLOSED. CI/artifact checks on the final metadata head are monitored before handoff. The native-audio verification alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -463,3 +463,10 @@ Both repeat reviews PASS at 3f3784ed5a9f5b135751a3095ce04566d2f531ca against the
 
 
 Fix final checks passed after both reviews: npm test 198/198, npm run typecheck, npm run lint and production npm run build (three SharedWorkers/four JS assets). Tested application snapshot is 2d2df2a3d5d28daf2d001118ef0700d4f2f67038, reviewed with verification/docs at 3f3784ed5a9f5b135751a3095ce04566d2f531ca. Routine full-suite output stays ignored under artifacts/verification/idle-avatar-final/test.log. The updated PR body distinguishes cold entry errors from actual cached Local answers and uses the refreshed saved Mermaid block. Source-linked real-model report and separate Local screenshots remain the current runtime evidence; audible speech remains unverified under the existing approval.
+
+
+### Rendering fix PR update
+
+PR 25 now includes the signed idle-avatar fix and verification/documentation updates through 770b9905699f30f5590239058cc516c9e4954ec4. The repeat Standards and Spec reviews have zero unresolved findings; final tests pass 198/198 plus typecheck/lint/build. The ticket returns to CLOSED after the PR update was pushed. No merge, queue entry or auto-merge is enabled.
+
+Updated evidence publication: https://github.com/ragemous3/personal-webpage/actions/runs/42774727978 (90-day retention). This runs controlled Online integration checks and submits the matching local real-model JSON; the local report remains explicitly distinguished from CI-executed inference. The source digest is 453f7c4db65201049c44e9197ef71a2bdb0b9462828af7ef4ec70f45f8dbc9e3. The local Local/returning-Local screenshots were inspected in chat and remain ignored workspace evidence, not claimed as uploaded files. CI/artifact completion is monitored at handoff. The “could not apply” cold-entry failure remains a documented test precondition/result, not a fixed configuration defect or successful inference claim.
