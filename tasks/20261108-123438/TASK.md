@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 audio-resume fix checks passed; repeat reviews and final checks are next. Ticket OPEN for the PR update. The same native-audio alternative remains authorized.
+- Current stage: stage 7 final checks passed for the audio-lifecycle fix; updating PR 25. Ticket OPEN until the push. Existing native-audio verification alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -480,3 +480,10 @@ The optional controlled Online integration workflow 42774727978 failed because p
 The pending-resume browser regression failed before the fix with the exact CI InvalidStateError, then passed after the adapter began observing SDK resume promises. The wrapper returns the original promise unchanged, so the same test confirms explicit activate() still rejects on closure. No extra context, worker, renderer or idle loop is created. Focused native/real-browser checks pass 7/7; typecheck/lint pass. The complete local controlled Online journey now PASSes at artifacts/verification/online-2026-11-10T07-30-42-781Z-46551474-2c46-4f29-979b-6529f6d03238/, with no page errors and successful cleanup. Prior model generation code and the approved native-audio limitation are unchanged; the real-model mode/restart result from the camera fix remains relevant and a fresh exact-source report will be captured for publication. Reviews and final suite are invalid until repeated on the new signed snapshot.
 
 Current signed runtime/test fix: `456f12917613469930f25bb1dfe02f7092598c0e`. Diagram provenance is updated without changing application/test code. Repeat Standards/Spec reviews are next; the exact-source real-model report is running.
+
+
+### Audio-lifecycle fix final verification
+
+Both repeat reviews PASS at dab370bc9ced926c4d41a6061b55381010ed5d38, with zero unresolved Standards or Spec findings. Blast-radius remains not applicable: no live/bulk data operation or deployment. Final checks after those reviews pass: npm test 198/198, typecheck, lint and production build. All five updated architecture diagrams render. Test output is ignored at artifacts/verification/audio-lifecycle-final/test.log. The latest runtime/test implementation is 456f12917613469930f25bb1dfe02f7092598c0e; later changes are documentation only.
+
+Exact-source real-model rerun speech-2026-11-10T07-32-47-322Z-00910f8c-1061-4640-bc2a-47b60af09869 again completed Local and returning-Local Qwen answers with the head visible, downloads blocked on restart, zero speech Workers and no OOM kill. Report digest d589febfd671b2f23f6f4a3d69181dd1a357531be767796401046fb9c783c824 matches current application/test source. Overall native-audio result stays BLOCKED solely for missing system voices under the original explicit approval. Full controlled Online integration also PASSes locally with no page errors; its CI counterpart must be rerun against this fix before final handoff. No claim is made that cold, uncached model initialization succeeds with downloads blocked.
