@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 5 repeat reviews of settings/capture implementation 1eab978e234b83aed7f3c1810acab8f2646d6033; ticket OPEN. Final full suite and CI publication are pending. The native-audio alternative remains approved.
+- Current stage: stage 7 shared-settings/capture final checks passed; preparing the PR update. Ticket OPEN until publication. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -547,3 +547,9 @@ Fresh controlled Online integration PASS: artifacts/verification/online-2026-11-
 Deslop checked the resulting code against the fixed base, including the new regression tests. The fix reuses existing state and comparisons; it adds no DI layer, protocol or ownership class. Screenshot failure remains an overall ERROR when required evidence is absent, while its primary scenario result and context cleanup survive. All five architecture blocks rendered again with ConfigurationService's yellow border where applicable. Focused checks pass 59/59; typecheck/lint pass. Source is ready for both repeat reviews; final full-suite results remain invalid until run afterward.
 
 Signed settings/capture implementation checkpoint: `1eab978e234b83aed7f3c1810acab8f2646d6033`. Later provenance edits change documentation only. Both reviews compare the resulting source with fixed base 44e79ef4695dc7e24defb50981dd16ec21cf1179.
+
+### Shared-settings/capture reviews and final checks
+
+Both repeat reviews PASS at 7c7f5d3bc973d91c7c3a86627b793108a6bdf05d against the unchanged fixed base: Standards zero actionable hard/heuristic findings; Spec zero actionable findings and independently reran 59/59 focused checks. Blast-radius remains not applicable: no bulk/live-data operation, migration or deployment; test profiles are owned and disposable.
+
+Final suite after those reviews PASSes: npm test 203/203, typecheck, lint and production build (three SharedWorkers/four JavaScript assets). Implementation is 1eab978e234b83aed7f3c1810acab8f2646d6033; later provenance/evidence records only change documentation. Routine final output remains ignored at artifacts/verification/settings-echo-final/. Settings, Local helper, Online and real-model mode/cache reports all match source digest a3891277519adbc07a1ec6266b45003b803daf52021721691f5b034d5957dad1. The hosted settings workflow will repeat before handoff; the previous capture ERROR is not a pass.
