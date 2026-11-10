@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Mermaid"
+  short_description: "Draw full architecture flows with layers and change borders"
+  default_prompt: "Use $architecture-mermaid to create or update the architecture diagram in my established PR and docs style."

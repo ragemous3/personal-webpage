@@ -14,8 +14,11 @@ This map describes the existing home-page surface. Entry-open has been exercised
 | Feature                                       | Entry point                       | Current limitation                                                          |
 | --------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------- |
 | [Open and type a question](question-entry.md) | Home page `/`                     | Entry-open is independent of readiness; typing requires both workers ready. |
-| [Observe loading](loading.md)                 | Fresh visit to `/`                | The configured WebGPU models require an available GPU adapter.              |
+| [Observe loading](loading.md)                 | Fresh visit to `/`                | CPU/WASM and WebGPU evidence must identify the selected backend.            |
 | [Get a résumé answer](resume-answer.md)       | Send button or Enter in the input | Matching résumé data and working model backends are required.               |
+| [Assistant settings](settings.md)             | Assistant settings above chat     | Controlled settings checks do not prove real weights or GPU support.        |
+| [Conversation history](history.md)            | Reload, mode selection, fresh tab | IndexedDB stores history; the tab keeps the active conversation ID.         |
+| [Talking head and voice](talking-head.md)     | Enable speech and Stop speech     | Audible speech requires an available operating-system voice.                |
 
 ## Driving conventions
 

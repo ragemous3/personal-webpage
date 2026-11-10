@@ -6,12 +6,18 @@ import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-gene
 import { type ChatMessage } from '@/layers/shared/contracts/chatbot-service.contract';
 import { type RuntimeCoordinatorContract } from '@/layers/shared/contracts/runtime-coordinator.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
-import { type ChatGenerationState } from '@/layers/shared/models/chat-generation.model';
+import {
+  type ChatGenerationEvent,
+  type ChatGenerationState,
+} from '@/layers/shared/models/chat-generation.model';
 import { type RagConfigBase } from '@/layers/shared/models/rag-config.model';
+import { createIsolatedSubscribable } from '@/layers/shared/utils/isolated-subscribable.utility';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
 export class Chat extends StandardCommunication<LmConfig> implements ChatGenerationContract {
   readonly stateSubscription = createStatefulSubscribable<ChatGenerationState>({ ready: false });
+  readonly #events = createIsolatedSubscribable<ChatGenerationEvent>();
+  readonly generationSubscription = { connect: this.#events.connect };
   readonly #requests = new Map<string, PendingChatGeneration>();
   #disposed = false;
 
@@ -40,10 +46,12 @@ export class Chat extends StandardCommunication<LmConfig> implements ChatGenerat
       );
     return new Promise((resolve, reject) => {
       this.#requests.set(requestId, { text: '', onText, resolve, reject });
+      this.#events.emit({ type: 'start', requestId });
       try {
         this.send({ message: messages }, requestId);
       } catch (error) {
         this.#requests.delete(requestId);
+        this.#events.emit({ type: 'error', requestId, error: String(error) });
         reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
@@ -53,14 +61,18 @@ export class Chat extends StandardCommunication<LmConfig> implements ChatGenerat
     const pending = this.#requests.get(requestId);
     if (!pending) return;
     this.#requests.delete(requestId);
+    this.#events.emit({ type: 'cancelled', requestId });
     pending.reject(new DOMException('Generation cancelled.', 'AbortError'));
     this.send({}, requestId, 'cancel');
   }
 
   readonly #disposeGeneration = (): void => {
     this.#disposed = true;
-    for (const pending of this.#requests.values())
+    for (const [requestId, pending] of this.#requests) {
+      this.#events.emit({ type: 'cancelled', requestId });
       pending.reject(new DOMException('Chat disposed.', 'AbortError'));
+    }
+    this.#events.disconnect();
     this.#requests.clear();
     this.stateSubscription.emit({ ready: false });
     this.stateSubscription.disconnect();
@@ -94,10 +106,13 @@ export class Chat extends StandardCommunication<LmConfig> implements ChatGenerat
     if (data.task === 'llm:stream:response' && typeof data.payload === 'string') {
       pending.text += data.payload;
       pending.onText(data.payload);
+      this.#events.emit({ type: 'delta', requestId, text: data.payload });
     }
     if (data.task === 'llm:message:response') {
       this.#requests.delete(requestId);
-      pending.resolve(this.#finalText(data.payload) ?? pending.text);
+      const text = this.#finalText(data.payload) ?? pending.text;
+      this.#events.emit({ type: 'complete', requestId, text });
+      pending.resolve(text);
     }
   }
 
@@ -121,10 +136,14 @@ export class Chat extends StandardCommunication<LmConfig> implements ChatGenerat
         error: message,
         ...(error.runtimeFailure ? { runtimeFailure: true } : {}),
       });
-      for (const request of this.#requests.values()) request.reject(error);
+      for (const [id, request] of this.#requests) {
+        this.#events.emit({ type: 'error', requestId: id, error: message });
+        request.reject(error);
+      }
       this.#requests.clear();
     } else {
       this.#requests.delete(requestId);
+      this.#events.emit({ type: 'error', requestId, error: message });
       pending?.reject(error);
     }
   }

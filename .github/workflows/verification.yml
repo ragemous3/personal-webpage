@@ -6,7 +6,7 @@ on:
       mode:
         description: Browser checks to run
         type: choice
-        options: [both, entry, controlled, settings, online]
+        options: [both, entry, controlled, settings, online, speech]
         default: both
         required: true
 
@@ -57,6 +57,10 @@ jobs:
         if: ${{ !cancelled() && inputs.mode == 'online' }}
         shell: bash
         run: npm run verify:browser -- --mode online --evidence artifacts/verification/online 2>&1 | tee artifacts/verification/logs/online.log
+      - name: Verify talking head and cached speech
+        if: ${{ !cancelled() && inputs.mode == 'speech' }}
+        shell: bash
+        run: npm run verify:browser -- --mode speech --evidence artifacts/verification/speech 2>&1 | tee artifacts/verification/logs/speech.log
       - name: Attach matching local verification report
         if: ${{ !cancelled() && inputs.local_report != '' }}
         env:

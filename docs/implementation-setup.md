@@ -14,6 +14,7 @@ Read these files from the repository:
 - [code-review](../.agents/skills/code-review/SKILL.md): Matt Pocock's parallel Standards and Spec reviews.
 - [deslop](../.agents/skills/deslop/SKILL.md): cleanup before review.
 - [git-workflow](../.agents/skills/git-workflow/SKILL.md): signed commits, branches, PRs, and the existing status watcher.
+- [architecture-mermaid](../.agents/skills/architecture-mermaid/SKILL.md): architecture diagram style and validation for PRs, docs, tickets and chat.
 - [verify-offline-assistant](../.agents/skills/verify-offline-assistant/SKILL.md): real application journeys and the feature map. This skill is a draft; [its ticket](../tasks/20261027-104746/TASK.md) lists prerequisites for the first successful live run.
 
 ## Global skills

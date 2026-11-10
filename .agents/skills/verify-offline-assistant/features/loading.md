@@ -15,13 +15,13 @@ Open `/` in a fresh profile. Observe progress without submitting a question.
 
 Preconditions: working model initialization, résumé data, and browser support for the configured models. A prefilled cache cannot prove cold startup.
 
-- **Open.** Use `open` for an initial capture. It records progress under `progress-provider >>> progress-container`.
-- **Observe.** In a persistent Puppeteer session, inspect `progress-provider >>> progress-container >>> progress` and associated labels. Capture successive screenshots and console/network events. Record the selected timeout.
+- **Run.** Use the [Local UI helper](../SKILL.md#local-ui-and-real-answers). Its fresh owned profile records `local-loading.png` and successive production progress states before waiting up to 600 seconds for readiness.
+- **Observe.** Inspect `progress-provider >>> progress-container >>> progress` and associated labels. Require an observed nonterminal progress state, then terminal chat readiness and a real answer. The report retains the progress snapshots and model requests.
 - **Complete.** Require actual terminal resource status, not merely a bar at 100 percent. The view prints status text beside completed bars. Verify the question journey before claiming answer readiness.
-- **Proof.** Retain initial and terminal states and failures. The helper's brief observation window does not prove this full journey.
+- **Proof.** Retain initial and terminal states and failures. An initial screenshot alone does not prove loading completion.
 
 ## Gotchas
 
-- The chat's `[role="status"]` reports `initializing`, `ready`, `responding`, or `error`. Require both retrieval and generation workers to reach readiness.
+- The chat's `[role="status"]` reports `initializing`, `ready`, `responding`, or `error`. Readiness requires retrieval, generation, restored IndexedDB history and an available runtime configuration.
 - Downloads require network access even though generation is local.
-- Headless browser/WebGPU support is unverified. Changing the configured device or model would change what this run proves.
+- The real-model helper explicitly selects CPU/WASM. WebGPU requires a separate supported-device run. Changing the configured device or model changes what the evidence proves.

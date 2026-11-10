@@ -15,12 +15,12 @@ Open `/` and verify the visible form for entry-open. For entry-type, wait for `r
 
 For entry-open, Doctor --journey entry passes and the owned production build renders the actual components. Run npm run verify:browser -- --mode entry --evidence <new-directory>. The offline initial condition permits disabled controls and proves only the visible entry surface. For entry-type, Doctor --journey answer passes and both model resources must actually reach ready.
 
-- **Open.** Run the skill's `open` command. Expect title `Rasmus Moberg` and visible `chatbot-provider >>> chat-container >>> input` and `chatbot-provider >>> chat-container >>> button[type="submit"]`.
-- **Type.** Run `type`. Inspect `after.png` and `observations.json`; expect the exact question in the input and an unchanged page URL.
-- **Proof.** Compare before/after screenshots and the action log. Runtime errors that prevent usable controls fail this journey, even if the HTML contains the element names.
+- **Run.** Use the [Local UI helper](../SKILL.md#local-ui-and-real-answers). It builds an isolated production application with real models and matching résumé data.
+- **Open and type.** Require a visible input, terminal `ready` state, an enabled input and a disabled empty Send button. Type the question and require its exact value, enabled Send and an unchanged URL.
+- **Proof.** Inspect `typed-button.png`, `typed-enter.png` and `evidence.json`. Runtime errors that prevent usable controls fail typing, even if the HTML contains the element names.
 
 ## Gotchas
 
 - A plain `document.querySelector('input')` cannot reach the form through the shadow roots.
-- The input and Send button remain disabled during initialization and active responses. An initialization failure must show an error and Retry.
+- The input and Send button remain disabled during initialization and active responses. Runtime failures show `reconnect`; other chat errors show `Retry`, or `Retry saving` for storage failures. Settings initialization has its own recovery controls.
 - Typing does not prove an answer. This journey cannot close a model or response-lifecycle ticket.

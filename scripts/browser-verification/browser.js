@@ -14,6 +14,7 @@ import { runPerformance } from './performance.js';
 import { runControlled } from './scenarios.js';
 import { runSettings } from './settings.js';
 import { sourceSnapshot } from './source.js';
+import { runSpeech } from './speech.js';
 
 const sourceHashes = async (site, workers) => {
   const hashes = {};
@@ -37,6 +38,7 @@ const exercise = async (state, evidence, directory) => {
     return state.browser;
   };
   const { mode } = evidence;
+  if (mode === 'speech') return runSpeech(restart, state.site.origin, evidence, directory);
   if (mode === 'cache') return runCache(restart, state.site.origin, evidence, directory);
   const browser = await restart(mode === 'entry');
   if (mode === 'performance') return runPerformance(browser, state.site.origin, evidence);

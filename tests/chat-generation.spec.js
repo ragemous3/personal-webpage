@@ -80,3 +80,31 @@ test('Local runtime failure rejects pending work; disposal rejects work and rele
     /unavailable/,
   );
 });
+
+test('generation observers share one Local request, isolate failures and do not replay output', async () => {
+  const chat = createChatGenerationFixture(true);
+  const events = [];
+  chat.generationSubscription.connect(() => {
+    throw new Error('Speech unavailable');
+  });
+  const disconnect = chat.generationSubscription.connect((event) => events.push(event));
+  const result = chat.generate([], () => {}, 'spoken');
+  chat.emit({ task: 'llm:stream:response', requestId: 'spoken', payload: 'Hello' });
+  chat.emit({
+    task: 'llm:message:response',
+    requestId: 'spoken',
+    payload: { generated_text: 'Hello.' },
+  });
+  assert.equal(await result, 'Hello.');
+  assert.equal(chat.sent.length, 1);
+  assert.deepEqual(events, [
+    { type: 'start', requestId: 'spoken' },
+    { type: 'delta', requestId: 'spoken', text: 'Hello' },
+    { type: 'complete', requestId: 'spoken', text: 'Hello.' },
+  ]);
+  const replayed = [];
+  chat.generationSubscription.connect((event) => replayed.push(event));
+  assert.deepEqual(replayed, []);
+  disconnect();
+  chat.dispose();
+});

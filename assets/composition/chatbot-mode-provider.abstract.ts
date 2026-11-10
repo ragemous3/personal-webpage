@@ -28,7 +28,10 @@ export abstract class ChatbotModeProviderAbstract extends LitElement {
   }
 
   render(): TemplateResult {
-    return html`<chat-container></chat-container>`;
+    return html`
+      <talking-head .service=${this.#dependencies?.speech}></talking-head
+            ><chat-container></chat-container>
+    `;
   }
   protected abstract build(shared: ChatbotDependencies): RagDependencies;
 

@@ -191,6 +191,60 @@ test('shared model recovery remains pending and unavailable until resource readi
   assert.equal(state.ready, false);
 });
 
+for (const failure of ['coordinator', 'model connection']) test(`a replacement chat becomes usable after ${failure} recovery on the same attachment`, async () => {
+  const { RuntimeCoordinatorAbstract } =
+    await import('@/layers/data/abstracts/runtime-coordinator.abstract');
+  const { Chat } = await import('@/layers/data/local-chat-lm.data');
+  class Coordinator extends RuntimeCoordinatorAbstract {}
+  let receive;
+  let modelFailed = false;
+  const hosted = [];
+  const connection = {
+    policy: {},
+    carrier: {},
+    attachmentVersion: 1,
+    listen(callback) {
+      receive = callback;
+    },
+    async ensureModels() { if (modelFailed) throw new Error('Model connection failed'); },
+    control(task, message) {
+      if (task !== 'runtime:host') return;
+      hosted.push(message.id);
+      queueMicrotask(() =>
+        receive({
+          id: 'tab',
+          name: 'coordinator',
+          task: 'runtime:event',
+          payload: { ...message, task: 'llm:ready', payload: null },
+        }),
+      );
+    },
+  };
+  const coordinator = new Coordinator(connection);
+  const healthy = () =>
+    receive({
+      id: 'tab',
+      name: 'coordinator',
+      task: 'runtime:state',
+      payload: { configuring: false, resources: [{ role: 'llm', status: 'ready' }] },
+    });
+  healthy();
+  if (failure === 'coordinator') receive({ id: 'tab', name: 'coordinator', task: 'runtime:failed', payload: null });
+  else modelFailed = true;
+  const chat = new Chat(coordinator, { name: 'llm', payload: {} }, false);
+  chat.initialize();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(chat.stateSubscription.getValue().ready, false);
+  modelFailed = false;
+  healthy();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(chat.stateSubscription.getValue().ready, true);
+  healthy();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(hosted.length, 1);
+  chat.dispose();
+});
+
 test('channel reattachment uses the latest settings rather than the initial startup configuration', async () => {
   const { RuntimeCoordinatorAbstract } =
     await import('@/layers/data/abstracts/runtime-coordinator.abstract');

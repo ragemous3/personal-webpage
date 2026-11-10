@@ -318,7 +318,7 @@ test('a cached shared snapshot cannot erase a failed local selection', async () 
   assert.equal(service.stateSubscription.getValue().available, false);
 });
 
-test('each apply attempt establishes a shared-snapshot baseline even for observed settings', async () => {
+test('an explicit retry of observed settings establishes a shared-snapshot baseline', async () => {
   const { service, runtime } = setup();
   await settle();
   const original = service.stateSubscription.getValue().selected;
@@ -335,6 +335,7 @@ test('each apply attempt establishes a shared-snapshot baseline even for observe
     ready: false,
   };
   runtime.stateSubscription.emit({ responding: false, runtime: shared });
+  service.retry();
   await settle();
   runtime.stateSubscription.emit({
     responding: false,
@@ -342,6 +343,27 @@ test('each apply attempt establishes a shared-snapshot baseline even for observe
   });
   assert.match(service.stateSubscription.getValue().error, /Connection deadline exceeded/);
   assert.equal(service.stateSubscription.getValue().available, false);
+});
+
+test('pending shared settings follow newer peer selections without echoing configuration requests', async () => {
+  const { service, runtime } = setup();
+  await settle();
+  const original = service.stateSubscription.getValue().selected;
+  const attempts = runtime.applied.length;
+  const pending = { selected: original, active: original, selectionId: 'peer-defaults', pending: true, loading: true, ready: false };
+  runtime.stateSubscription.emit({ responding: false, runtime: pending });
+  await settle();
+  assert.equal(runtime.applied.length, attempts);
+  const selected = { ...original, execution: 'wasm', maxNewTokens: 64 };
+  runtime.stateSubscription.emit({ responding: false, runtime: { ...pending, selected, selectionId: 'peer-cpu' } });
+  await settle();
+  assert.deepEqual(service.stateSubscription.getValue().selected, selected);
+  assert.equal(service.stateSubscription.getValue().pending, true);
+  assert.equal(runtime.applied.length, attempts);
+  runtime.stateSubscription.emit({ responding: false, runtime: { ...pending, selected, active: selected, selectionId: 'peer-cpu', pending: false, loading: false, ready: true } });
+  assert.equal(service.stateSubscription.getValue().available, true);
+  assert.deepEqual(service.stateSubscription.getValue().active, selected);
+  service.dispose();
 });
 
 test('the first late shared identity cannot erase a failure with no previously observed baseline', async () => {
