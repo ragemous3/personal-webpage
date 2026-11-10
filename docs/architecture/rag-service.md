@@ -2,7 +2,7 @@
 
 [Source](../../assets/layers/services/rag.service.ts). RagService owns retrieval, generation initiation and persisted history. TalkingHeadService observes the same generation instance and receives separate lifecycle invalidation.
 
-Implementation: `0191e08501da254beed64ce7c5e8655a197b8ffc` (signed browser-only speech checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented alternative verification; audible native speech remains unverified. Reviews and the final full suite remain pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
+Implementation: `0191e08501da254beed64ce7c5e8655a197b8ffc` (signed browser-only speech checkpoint). Both modes use native speech and text-driven mouth animation. The user approved the documented native-audio alternative. An uncommitted fix adds paused redraws and clearer missing-voice errors; its reviews and final suite are pending. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
@@ -202,7 +202,7 @@ flowchart TB
   LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
   Speech <-->|"mount, play, stop, dispose; playback state"| Renderer
   Renderer -.->|"implements"| HeadContract
-  Renderer <-->|"avatar rendering and viseme animation"| TalkingHead
+  Renderer <-->|"avatar rendering, including paused resize/Stop, and viseme animation"| TalkingHead
   TalkingHead -->|"load avatar"| Avatar
   GenerationContract -.->|"read-only events"| GenerationEvent
   SpeechContract -.->|"state"| SpeechState

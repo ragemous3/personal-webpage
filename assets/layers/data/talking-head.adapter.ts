@@ -17,6 +17,10 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
       lipsyncModules: [],
       ttsEndpoint: null,
     });
+    // Redraw on demand even when the SDK animation loop is paused.
+    head.render = (): void => {
+      if (!this.#disposed) head.renderer.render(head.scene, head.camera);
+    };
     this.#head = head;
     this.#mounted = head.showAvatar({
       url: new URL('avatars/mpfb.glb', new URL(this.baseURL, globalThis.location.href)).href,
@@ -24,7 +28,11 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
       lipsyncLang: 'en',
     });
     await this.#mounted;
-    if (!this.#isDisposed()) this.stop();
+    if (!this.#isDisposed()) {
+      // Apply the loaded avatar camera before pausing its first frame.
+      head.onResize();
+      this.stop();
+    }
   }
   async activate(): Promise<void> {
     if (!this.#head || this.#disposed) throw new Error('The head is unavailable.');
@@ -67,7 +75,11 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
       };
       const error = (event: SpeechSynthesisErrorEvent): void => {
         cleanup();
-        reject(new Error(`Browser speech failed: ${event.error}`));
+        const detail =
+          globalThis.speechSynthesis.getVoices().length === 0
+            ? ' No system voices are available.'
+            : '';
+        reject(new Error(`Browser speech failed: ${event.error}.${detail}`));
       };
       this.#cancelBrowser = abort;
       utterance.addEventListener('start', start, { once: true });
@@ -90,6 +102,7 @@ export class TalkingHeadAdapter implements TalkingHeadPresentationContract {
     this.#cancelBrowser?.();
     this.#head?.stopSpeaking();
     this.#head?.stop();
+    this.#head?.render();
   }
   dispose(): void {
     this.#disposed = true;

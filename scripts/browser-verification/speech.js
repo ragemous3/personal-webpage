@@ -95,6 +95,11 @@ const ask = async (page, question, stop = false) => {
   };
 };
 
+const capture = async (page, evidence, directory, name) => {
+  await page.screenshot({ path: path.join(directory, name), fullPage: true });
+  evidence.artifacts.push(name);
+};
+
 export const runSpeech = async (restart, origin, evidence, directory) => {
   const result = {
     name: 'talking-head-browser-speech',
@@ -119,8 +124,7 @@ export const runSpeech = async (restart, origin, evidence, directory) => {
     evidence.artifacts.push('talking-head.webm');
     try {
       result.online = await ask(page, 'Please introduce yourself.');
-      await page.screenshot({ path: path.join(directory, 'talking-head.png'), fullPage: true });
-      evidence.artifacts.push('talking-head.png');
+      await capture(page, evidence, directory, 'talking-head.png');
       await page.click(`${head} >>> button:nth-of-type(2)`);
       await page.$eval(chat, (element) => element.chatbotService.reset());
       await ready(page);
@@ -138,6 +142,7 @@ export const runSpeech = async (restart, origin, evidence, directory) => {
       await ready(page);
       result.localInitializationMs = await enable(page);
       result.local = await ask(page, 'What experience does Rasmus have?', true);
+      await capture(page, evidence, directory, 'local-answer.png');
       result.dedicatedWorkers = page.workers().map((worker) => worker.url());
       result.nativeCancels = await page.evaluate(() => globalThis.verificationSpeech.cancels);
       assert.ok(!result.local.started || result.nativeCancels > 0);
@@ -151,6 +156,7 @@ export const runSpeech = async (restart, origin, evidence, directory) => {
     await ready(page);
     result.returningInitializationMs = await enable(page);
     result.returningLocal = await ask(page, 'What experience does Rasmus have?');
+    await capture(page, evidence, directory, 'returning-local-answer.png');
     result.returningModelJourney = true;
     if ([result.online, result.local, result.returningLocal].some((item) => item.error)) {
       result.verdict = 'BLOCKED';

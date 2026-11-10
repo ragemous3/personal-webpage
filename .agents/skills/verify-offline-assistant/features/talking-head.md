@@ -6,4 +6,4 @@ Journey: enable browser speech, ask Online and Local questions, compare native u
 
 Command: `npm run verify:browser -- --mode speech`. Use `RUNTIME_MODEL_DIR` for real Local generation/retrieval; the default generation drivers and Online HTTP endpoint are controlled fixtures. See [prototype details](../../../../docs/talking-head.md).
 
-Evidence: talking-head.webm, talking-head.png, nonempty audio-buffer observations, cold/warm timings, model/voice cache URLs, worker inventory and cleanup fields. Routine run output stays in ignored artifacts. Rendering a canvas or synthesizing audio without observing mouth movement is incomplete lip-sync evidence.
+Evidence: talking-head.webm, talking-head.png (Online), local-answer.png and returning-local-answer.png, native utterance events/errors, timings, Worker inventory and cleanup fields. Routine run output stays in ignored artifacts. Verify the avatar remains visible after layout changes and Stop; a canvas element alone does not establish visible rendering. Controlled speech events can show mouth motion but cannot prove audible synchronization.

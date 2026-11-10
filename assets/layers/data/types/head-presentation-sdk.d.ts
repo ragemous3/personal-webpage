@@ -2,6 +2,11 @@ declare module '@met4citizen/talkinghead' {
   export class TalkingHead {
     constructor(host: HTMLElement, options: Record<string, unknown>);
     audioCtx: AudioContext;
+    renderer: { render(scene: unknown, camera: unknown): void };
+    onResize(): void;
+    scene: unknown;
+    camera: unknown;
+    render(): void;
     showAvatar(options: { url: string; body: string; lipsyncLang: string }): Promise<void>;
     animQueue: Array<{ template: { name: string } }>;
     animFactory(template: {

@@ -33,7 +33,7 @@ Doctor returns PREREQUISITES_PRESENT or BLOCKED and always sets runtimeVerified 
 
 ### Untouched application entry
 
-`--mode entry` serves the production build unchanged and opens it in a fresh profile with external DNS blocked. It requires the actual question input and Send button to be visible through the production shadow roots, captures their state and a screenshot, and reports entry-open only. Disabled controls during initialization are expected. It does not type a question, claim model readiness or download model weights. This is an explicit offline initial condition, not a mocked service.
+`--mode entry` serves the production build unchanged and opens it in a fresh profile with external DNS blocked. It requires the actual question input and Send button to be visible through the production shadow roots, captures their state and a screenshot, and reports entry-open only. Disabled controls during initialization are expected. It does not type a question, claim model readiness or download model weights. This is an explicit offline initial condition, not a mocked service. A PASS here proves only that entry controls appeared. A fresh offline profile has no model cache and may display configuration/model-option fetch errors; record those errors and do not present its screenshot as a successful Local answer. Use the cache journey or the speech journey's Local/returning-Local screenshots for answer evidence.
 
 ### Native coordination baseline
 

@@ -21,6 +21,7 @@ const browser = (context) => {
   context.mock.property(globalThis, 'SpeechSynthesisUtterance', Utterance);
   context.mock.property(globalThis, 'speechSynthesis', {
     speak: (utterance) => spoken.push(utterance),
+    getVoices: () => [{}],
     cancel: () => {
       cancels++;
     },
@@ -97,4 +98,16 @@ test('disposing the presentation cancels and settles pending native playback', a
     presentation.play({ text: 'Too late' }, new AbortController().signal),
     /unavailable/,
   );
+});
+
+test('a browser speech failure explains when no system voices are available', async (context) => {
+  const native = browser(context);
+  context.mock.method(globalThis.speechSynthesis, 'getVoices', () => []);
+  const presentation = new TalkingHeadAdapter('/');
+  const playback = presentation.play({ text: 'Answer' }, new AbortController().signal);
+  const event = new Event('error');
+  event.error = 'synthesis-failed';
+  native.spoken[0].dispatchEvent(event);
+  await assert.rejects(playback, /synthesis-failed.*No system voices are available/);
+  presentation.dispose();
 });
