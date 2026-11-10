@@ -1,6 +1,6 @@
 # Add a centered talking head that speaks assistant answers
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
 - TAGS: task
 
@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 7 final checks passed for the audio-lifecycle fix; updating PR 25. Ticket OPEN until the push. Existing native-audio verification alternative remains approved.
+- Current stage: stage 7 audio-lifecycle update published to PR 25; ticket CLOSED. Final CI/artifact checks are monitored before handoff. The native-audio alternative remains approved.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -487,3 +487,10 @@ Current signed runtime/test fix: `456f12917613469930f25bb1dfe02f7092598c0e`. Dia
 Both repeat reviews PASS at dab370bc9ced926c4d41a6061b55381010ed5d38, with zero unresolved Standards or Spec findings. Blast-radius remains not applicable: no live/bulk data operation or deployment. Final checks after those reviews pass: npm test 198/198, typecheck, lint and production build. All five updated architecture diagrams render. Test output is ignored at artifacts/verification/audio-lifecycle-final/test.log. The latest runtime/test implementation is 456f12917613469930f25bb1dfe02f7092598c0e; later changes are documentation only.
 
 Exact-source real-model rerun speech-2026-11-10T07-32-47-322Z-00910f8c-1061-4640-bc2a-47b60af09869 again completed Local and returning-Local Qwen answers with the head visible, downloads blocked on restart, zero speech Workers and no OOM kill. Report digest d589febfd671b2f23f6f4a3d69181dd1a357531be767796401046fb9c783c824 matches current application/test source. Overall native-audio result stays BLOCKED solely for missing system voices under the original explicit approval. Full controlled Online integration also PASSes locally with no page errors; its CI counterpart must be rerun against this fix before final handoff. No claim is made that cold, uncached model initialization succeeds with downloads blocked.
+
+
+### Audio-lifecycle PR update
+
+PR 25 was updated through signed source/verification snapshot 514554501b730bec1ff4709134ed95655669d07c. The ticket returns to CLOSED after that push. CI controlled Online verification and matching real-model report publication run: https://github.com/ragemous3/personal-webpage/actions/runs/42776675840 (90-day artifact retention). This supersedes the failed 42774727978 Online run, whose actual AudioContext teardown error was reproduced and fixed; it is not being treated as a pass. The existing watcher will check current-head CI and this publication's result before handoff.
+
+The PR remains unmerged with auto-merge/queue disabled. The server-streaming ticket remains OPEN. The cold-profile “could not apply” metadata/download failure remains explicitly separated from the warmed-cache Local answer evidence; native audible speech remains unverified under the original approval.
