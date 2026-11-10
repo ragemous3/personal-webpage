@@ -252,7 +252,7 @@ flowchart TB
   LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
   Speech <-->|"mount, play, stop, dispose; playback state"| Renderer
   Renderer -.->|"implements"| HeadContract
-  Renderer <-->|"avatar rendering and viseme animation"| TalkingHead
+  Renderer <-->|"avatar rendering, including paused resize/Stop, and viseme animation"| TalkingHead
   TalkingHead -->|"load avatar"| Avatar
   GenerationContract -.->|"read-only events"| GenerationEvent
   SpeechContract -.->|"state"| SpeechState
@@ -268,7 +268,8 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 runtime verification, reopened at stage 3 to investigate the reported Local errors and a blank idle avatar in the current screenshot. Previous reviews, blast-radius disposition and final tests are invalid until this fix pass completes. The native-audio verification alternative remains approved. Both modes use browser speech. Real-model mode/restart text paths pass; audible native speech remains explicitly unverified because this Chromium installation exposes no system voices. Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation and Mermaid skill changes, signed commits, push, PR and CI/review fixes. Merge and deployment require separate authorization.
+- Current stage: stage 4 fix verification passed under the existing native-audio alternative; stage 5 repeat reviews are next. Ticket OPEN until the updated PR is pushed.
+- Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
 - Test seams: normalized generation events (one request, correlated output, terminal cancellation/errors, observer isolation); TalkingHeadService with controlled synthesis/presentation (stale work, reset, disposal and playback failure); real browser SDK integration (GLB, audible synthesis, timed animation, cached reload and cleanup). Focused commands: `node --import ./scripts/typescript-test.loader.js --test tests/chat-generation.spec.js tests/online-generation.spec.js tests/talking-head.spec.js`, `npm run typecheck`, `npm run lint`; browser journeys extend the existing verification runner. The final required suite also includes `npm test` and `npm run build`.
@@ -447,3 +448,10 @@ The first resize-only fix was insufficient: the new initial-idle screenshot asse
 
 
 Stage 3 focused checks pass 30/30 after the viewport fix, with typecheck and lint passing. The controlled-model production browser journey now captures a visible head in the returning Local screenshot (speech-2026-11-10T07-10-36-969Z-9b0c88d2-d1fc-4f49-b0fa-8501a5cecf49). Its text is explicitly Controlled answer; this establishes rendering/lifecycle behavior, not real inference. The native-audio verdict remains BLOCKED for zero voices. Earlier speech-2026-11-10T06-54-56 real-model screenshots had a blank head and are not accepted as visual proof; their text/model path completed, but this fix needs a fresh real-model capture. Stage 4 runtime verification is now in progress on the signed viewport snapshot. Reviews/final suite remain invalid until repeated.
+
+
+### Idle-avatar fix runtime verification
+
+Runtime fix snapshot: 2d2df2a3d5d28daf2d001118ef0700d4f2f67038. The real-model production journey completed again after camera initialization was corrected: Online-to-Local switching, a Local Qwen answer and a returning-browser Local answer with model downloads blocked. Both real answers were “Rasmus has worked at Ericsson for several years.” The Local and returning-Local screenshots were visually inspected and show the avatar plus answer, with no configuration-application error. The only remaining displayed error states the actual platform limitation: synthesis-failed and no system voices. The overall report remains BLOCKED for audible native speech under the existing explicit user approval; no new audio pass is claimed. OOM kill count stayed zero in this environment.
+
+Current evidence: ignored artifacts/verification/speech-2026-11-10T07-12-13-418Z-47f53994-71aa-4c6e-a5cb-99d63747c116/ with separate local-answer.png and returning-local-answer.png. Source digest: 453f7c4db65201049c44e9197ef71a2bdb0b9462828af7ef4ec70f45f8dbc9e3. Cleanup passed and evidence survived. Focused checks pass 30/30, typecheck/lint pass, and all five diagrams render. Deslop discarded the temporary frame-retention experiment; the final fix uses existing SDK viewport/camera and render APIs without an extra renderer, canvas or idle loop. Stage 4 completes under the same native-audio alternative. Both independent reviews and final checks must be repeated on this snapshot before push.
