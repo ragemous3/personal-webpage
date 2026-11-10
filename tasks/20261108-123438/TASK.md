@@ -268,7 +268,7 @@ flowchart TB
 
 ## Prerequisites
 
-- Current stage: stage 4 fix verification passed under the existing native-audio alternative; stage 5 repeat reviews are next. Ticket OPEN until the updated PR is pushed.
+- Current stage: stage 7 fix checks passed; updating PR 25 under the existing native-audio alternative. Ticket OPEN until the update is pushed.
 - Mode: Autopilot through PR handoff, explicitly requested by the user on 2026-11-08. Scope includes routine implementation decisions, tests, in-scope documentation/diagrams, signed commits, push, PR and CI/review fixes. Merge/deployment require separate approval. The 2026-11-09 audible-native verification alternative remains authorized.
 - Branch: `feature/20261108-123438-talking-head`. Fixed review base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`.
 - Initial delivery: speak each completed new English answer once after a plain Enable speech action; plain Stop control; centered 320-by-320 mount constrained to available width. Additional voice selection, microphone input and sentence streaming are deferred.
@@ -455,3 +455,11 @@ Stage 3 focused checks pass 30/30 after the viewport fix, with typecheck and lin
 Runtime fix snapshot: 2d2df2a3d5d28daf2d001118ef0700d4f2f67038. The real-model production journey completed again after camera initialization was corrected: Online-to-Local switching, a Local Qwen answer and a returning-browser Local answer with model downloads blocked. Both real answers were “Rasmus has worked at Ericsson for several years.” The Local and returning-Local screenshots were visually inspected and show the avatar plus answer, with no configuration-application error. The only remaining displayed error states the actual platform limitation: synthesis-failed and no system voices. The overall report remains BLOCKED for audible native speech under the existing explicit user approval; no new audio pass is claimed. OOM kill count stayed zero in this environment.
 
 Current evidence: ignored artifacts/verification/speech-2026-11-10T07-12-13-418Z-47f53994-71aa-4c6e-a5cb-99d63747c116/ with separate local-answer.png and returning-local-answer.png. Source digest: 453f7c4db65201049c44e9197ef71a2bdb0b9462828af7ef4ec70f45f8dbc9e3. Cleanup passed and evidence survived. Focused checks pass 30/30, typecheck/lint pass, and all five diagrams render. Deslop discarded the temporary frame-retention experiment; the final fix uses existing SDK viewport/camera and render APIs without an extra renderer, canvas or idle loop. Stage 4 completes under the same native-audio alternative. Both independent reviews and final checks must be repeated on this snapshot before push.
+
+
+### Fix reviews and blast-radius completion
+
+Both repeat reviews PASS at 3f3784ed5a9f5b135751a3095ce04566d2f531ca against the fixed base. Standards has zero documented/heuristic findings. Spec has zero findings and independently ran the browser visibility/native speech/RagService integration checks (10/10). The review confirms that this fix does not claim cold-offline model configuration is working, and the audible-native alternative is unchanged. The blast-radius review remains not applicable: no bulk production-data operation or deployment is involved. Test profiles and their data are isolated. Stage 7 final checks and updated PR publication are next.
+
+
+Fix final checks passed after both reviews: npm test 198/198, npm run typecheck, npm run lint and production npm run build (three SharedWorkers/four JS assets). Tested application snapshot is 2d2df2a3d5d28daf2d001118ef0700d4f2f67038, reviewed with verification/docs at 3f3784ed5a9f5b135751a3095ce04566d2f531ca. Routine full-suite output stays ignored under artifacts/verification/idle-avatar-final/test.log. The updated PR body distinguishes cold entry errors from actual cached Local answers and uses the refreshed saved Mermaid block. Source-linked real-model report and separate Local screenshots remain the current runtime evidence; audible speech remains unverified under the existing approval.
