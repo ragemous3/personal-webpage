@@ -1,38 +1,52 @@
 # RagService
 
-[Source](../../assets/layers/services/rag.service.ts). ChatbotProvider renders AssistantConfiguration and one mode component directly in its tree after accepted work drains. Both modes reuse ChatContainer, RagService, the tab's retrieval DB and its persisted conversation. Only generation changes transport.
+[Source](../../assets/layers/services/rag.service.ts). RagService owns retrieval, generation initiation and persisted history. TalkingHeadService observes the same generation instance and receives separate lifecycle invalidation.
 
-Implementation: `16e22ccbf80af3fcf70e3807b401d00ea3c58925`. Focused checks, typecheck, lint, production builds and Online/settings/real Local cache journeys pass. Both independent reviews pass at `b78888b3be5b1f0a350f39fdddb9ee438cfcb73a`; the final full suite passes 175/175. Comparison base: `df7fd5597ec6613af55ddba4506ca61ce6109e7c`. Live credentialed OpenAI access remains unverified.
-
-Green borders mark added components; yellow borders mark modified source; default borders mark unchanged or pure-moved code. Solid arrows show runtime calls/data and dotted arrows show type relationships. Composition remains disconnected. See [maintenance and style](README.md).
+Implementation: `1eab978e234b83aed7f3c1810acab8f2646d6033` (signed settings-observation/capture checkpoint). Pending shared settings do not submit another configuration; local edits and explicit retry retain their behavior. Settings, real Local and Online journeys pass; the native-audio alternative remains approved. Both independent reviews and final checks pass; see the [ticket](../../tasks/20261108-123438/TASK.md) for evidence. Comparison base: `44e79ef4695dc7e24defb50981dd16ec21cf1179`. Green borders mark additions; yellow borders mark modified source; default borders mark unchanged components. Solid arrows show runtime calls/data; dotted arrows show type relationships. Composition remains disconnected. See [the architecture skill](../../.agents/skills/architecture-mermaid/SKILL.md).
 
 ```mermaid
 flowchart TB
   subgraph Views["Views layer — browser tab"]
     UI["ChatContainer"]
+    HeadUI["TalkingHeadComponent"]
   end
   subgraph Services["Services layer — browser tab"]
     Settings["ConfigurationService"]
     Rag["RagService"]
+    Speech["TalkingHeadService"]
   end
   subgraph Contracts["Shared layer — contracts"]
     ServiceContract["ChatbotServiceContract"]
     SettingsContract["ConfigurationServiceContract"]
     GenerationContract["ChatGenerationContract"]
     GenerationState["ChatGenerationState"]
-    Port["StandardCommunicationContract<br/>StandardCommunicationBaseContract"]
+    Port["StandardCommunicationContract"]
+    PortBase["StandardCommunicationBaseContract"]
     Session["ChatSessionContract"]
     HistoryContract["ChatHistoryRepositoryContract"]
     Lifecycle["RuntimeLifecycleContract"]
     RuntimeContract["RuntimeCoordinatorContract"]
     ContentContract["ContentRepositoryContract"]
-    PromptContract["ChatMessageModelContract"]
     DriverContract["SharedModelDriverContract"]
     ApiContract["ApiContract"]
-    StoreContract["StoreContract"]
     MessagingContract["MessagingBaseContract"]
+    SpeechContract["TalkingHeadServiceContract"]
+    TTSContract["SpeechSynthesisContract"]
+    HeadContract["TalkingHeadPresentationContract"]
+    SpeechOutput["SpeechOutput"]
+    SpeechState["TalkingHeadState"]
+    SpeechOptions["TalkingHeadOptions"]
+    ChatLifecycleEvent["ChatLifecycleEvent"]
+    GenerationEvent["ChatGenerationEvent"]
   end
   subgraph Data["Data layer — browser tab"]
+    subgraph DataContracts["Data contracts"]
+      PromptContract["ChatMessageModelContract"]
+      StoreContract["StoreContract"]
+    end
+    BrowserTTS["BrowserSpeechAdapter"]
+    LipSync["BrowserSpeechLipSync"]
+    Renderer["TalkingHeadAdapter"]
     Chat["Chat"]
     Online["OnlineChatClient"]
     ApiBase["ApiBase"]
@@ -62,6 +76,12 @@ flowchart TB
       Local["LocalLLMData"]
     end
   end
+  subgraph SpeechLibraries["Speech and rendering — browser tab"]
+    BrowserAPI["speechSynthesis / SpeechSynthesisUtterance"]
+    AudioContext["AudioContext — TalkingHead internal graph"]
+    Converter["LipsyncEn — TalkingHead"]
+    TalkingHead["TalkingHead / Three.js<br/>rendering and Oculus visemes"]
+  end
   subgraph Server["Server — Express API and provider integration"]
     API["generate — POST /api/generate"]
     DTO["GenerationRequest"]
@@ -78,6 +98,7 @@ flowchart TB
     LocalWeights["Xenova/Qwen1.5-0.5B-Chat"]
     Cache["CacheStorage — model files"]
     OpenAI["gpt-6-luna — low reasoning effort"]
+    Avatar["avatars/mpfb.glb — CC0"]
   end
   subgraph Composition["Composition — names only"]
     Root["ChatbotProvider / buildChatbotDeps"]
@@ -85,7 +106,8 @@ flowchart TB
     OnlineProvider["ChatbotOnlineProvider"]
     ModeBase["ChatbotModeProviderAbstract"]
     LocalFactory["buildChatbotOfflineDeps"]
-    Factories["buildChatbotOnlineDeps / buildRagService"]
+    OnlineFactory["buildChatbotOnlineDeps"]
+    ServiceFactory["buildRagService"]
     Context["chatbotCompositionContext"]
     ExistingContext["configurationContext / chatbotContext"]
     ServerComposition["server/main.composition.ts / createApp"]
@@ -125,7 +147,8 @@ flowchart TB
   Chat -.->|"extends"| Standard
   DB -.->|"extends"| Standard
   Standard -.->|"extends"| StandardBase
-  StandardBase -.->|"implements"| Port
+  Port -.->|"type alias"| PortBase
+  StandardBase -.->|"implements"| PortBase
   Online -.->|"implements"| GenerationContract
   Chat -.->|"implements"| GenerationContract
   Online -.->|"extends"| ApiBase
@@ -161,9 +184,38 @@ flowchart TB
   Provider -->|"trusted instructions"| Instructions
   Provider <-->|"stream; AbortSignal"| SDK
   SDK <-->|"request and streamed response"| OpenAI
+  Chat -->|"Local generation events; same instance"| Speech
+  Online -->|"Online generation events; same instance"| Speech
+  Speech -.->|"observes generation output"| GenerationContract
+  Rag -->|"chat availability / invalidation; no answer text"| Speech
+  Speech -.->|"observes lifecycle"| ServiceContract
+  HeadUI <-->|"mount, Stop; status and playback lifecycle"| Speech
+  HeadUI -.->|"uses"| SpeechContract
+  Speech -.->|"implements"| SpeechContract
+  Speech -.->|"synthesis dependency"| TTSContract
+  Speech -.->|"presentation dependency"| HeadContract
+  Speech <-->|"Local and Online: text"| BrowserTTS
+  BrowserTTS -.->|"implements"| TTSContract
+  BrowserTTS -->|"capability check"| BrowserAPI
+  Renderer <-->|"speak, start, boundary, end, error, cancel"| BrowserAPI
+  TalkingHead -->|"owns internal graph"| AudioContext
+  Renderer -->|"observe automatic resume; activate; close"| AudioContext
+  Renderer -->|"speech lifecycle and word position"| LipSync
+  LipSync -->|"text to visemes"| Converter
+  LipSync -->|"estimated timing; word-event alignment; mouth shapes"| TalkingHead
+  Speech <-->|"mount, play, stop, dispose; playback state"| Renderer
+  Renderer -.->|"implements"| HeadContract
+  Renderer <-->|"avatar rendering, including paused resize/Stop, and viseme animation"| TalkingHead
+  TalkingHead -->|"load avatar"| Avatar
+  GenerationContract -.->|"read-only events"| GenerationEvent
+  SpeechContract -.->|"state"| SpeechState
+  TTSContract -.->|"synthesis output"| SpeechOutput
+  HeadContract -.->|"playback input"| SpeechOutput
+  ServiceContract -.->|"availability and invalidation"| ChatLifecycleEvent
+  Speech -.->|"constructor options"| SpeechOptions
   classDef added stroke:#2da44e,stroke-width:3px;
-  class GenerationContract,GenerationState,Online,Session,HistoryContract,History,IndexedDB,API,DTO,Provider,ProviderBase,Instructions,SDK,OpenAI,Root,OnlineProvider,ModeBase,Factories,Context,Identity,StorageBase,TabStorage,ServerComposition added;
   classDef modified stroke:#bf8700,stroke-width:3px;
-  class Chat,UI,Settings,Rag,ServiceContract,ApiBase,IDB,CoordinatorBase,Connection,Hub,OfflineProvider,LocalFactory modified;
-  style GenerationWorker stroke:#bf8700,stroke-width:3px
+  class CoordinatorBase,Settings modified;
+  class AudioContext,LipSync,Converter,BrowserTTS,BrowserAPI,SpeechOutput,HeadUI,Speech,SpeechContract,TTSContract,HeadContract,Renderer,TalkingHead,Avatar,SpeechState,GenerationEvent,ChatLifecycleEvent,SpeechOptions added;
+  class Chat,Online,GenerationContract,Rag,ServiceContract,ModeBase,ServiceFactory modified;
 ```

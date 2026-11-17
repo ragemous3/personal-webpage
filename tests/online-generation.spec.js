@@ -162,3 +162,28 @@ test('cancellation also stops events already buffered in an HTTP response', asyn
   assert.deepEqual(chunks, ['First']);
   client.dispose();
 });
+
+test('Online observers receive the same request output without another HTTP call', async () => {
+  let requests = 0;
+  const generation = new OnlineChatClient(
+    '/api/',
+    { model: 'test', maxOutputTokens: 32 },
+    async () => {
+      requests++;
+      return new Response('{"type":"delta","text":"Hello"}\n{"type":"done"}\n');
+    },
+  );
+  const events = [];
+  generation.generationSubscription.connect(() => {
+    throw new Error('Broken speech');
+  });
+  generation.generationSubscription.connect((event) => events.push(event));
+  assert.equal(await generation.generate([], () => {}, 'online-spoken'), 'Hello');
+  assert.equal(requests, 1);
+  assert.deepEqual(events, [
+    { type: 'start', requestId: 'online-spoken' },
+    { type: 'delta', requestId: 'online-spoken', text: 'Hello' },
+    { type: 'complete', requestId: 'online-spoken', text: 'Hello' },
+  ]);
+  generation.dispose();
+});

@@ -33,7 +33,7 @@ Doctor returns PREREQUISITES_PRESENT or BLOCKED and always sets runtimeVerified 
 
 ### Untouched application entry
 
-`--mode entry` serves the production build unchanged and opens it in a fresh profile with external DNS blocked. It requires the actual question input and Send button to be visible through the production shadow roots, captures their state and a screenshot, and reports entry-open only. Disabled controls during initialization are expected. It does not type a question, claim model readiness or download model weights. This is an explicit offline initial condition, not a mocked service.
+`--mode entry` serves the production build unchanged and opens it in a fresh profile with external DNS blocked. It requires the actual question input and Send button to be visible through the production shadow roots, captures their state and a screenshot, and reports entry-open only. Disabled controls during initialization are expected. It does not type a question, claim model readiness or download model weights. This is an explicit offline initial condition, not a mocked service. A PASS here proves only that entry controls appeared. A fresh offline profile has no model cache and may display configuration/model-option fetch errors; record those errors and do not present its screenshot as a successful Local answer. Use the cache journey or the speech journey's Local/returning-Local screenshots for answer evidence.
 
 ### Native coordination baseline
 
@@ -57,6 +57,17 @@ npm run verify:browser -- --mode cache
 This mode first requires the actual retrieval files. It then attempts a question with the real models, records Cache API URLs and persistence state, closes the browser, and restarts a new browser process with the same profile and origin. All external DNS and the local model-download route are blocked on restart while application, WASM and retrieval assets remain served. The local model endpoint records worker downloads; a returning answer must make zero model requests. A second real question must complete; both model weight sets must appear in the warm cache evidence. Page request records remain labelled with their scope. The local endpoint count covers worker fetches as well.
 
 A missing index, unsupported backend, initialization error or deadline produces BLOCKED with the concrete reason. No fixture data or models are substituted. Set RUNTIME_MODEL_DIR to a local model mirror for isolated WASM/one-thread/32-token deterministic configuration; production defaults remain unchanged. The cache journey also checks real answers in two tabs, continued work after closing one, Cancel and Reset. A cache pass does not prove whole-site offline availability or protection from browser eviction. Conversation persistence is not tested by this journey.
+
+## Local UI and real answers
+
+```sh
+node .agents/skills/verify-offline-assistant/scripts/doctor.js --journey answer
+RUNTIME_MODEL_DIR=/path/to/model-mirror node --import tsx .agents/skills/verify-offline-assistant/scripts/local.js
+```
+
+This owned helper reuses the production-build, model-mirror, browser and cleanup infrastructure. It uses real generation/retrieval, CPU/WASM and a 32-token budget. A fresh isolated profile records cold progress, exact typed text, separate Send/Enter answers grounded in the résumé's Ericsson fact, reload history and fresh-tab isolation. A new browser process then answers from the same cache with external DNS and model download routes blocked. Application, WASM and retrieval files remain served locally. The helper does not enable speech, verify WebGPU, exercise cancellation/retry or prove whole-site offline availability.
+
+Evidence includes local-loading.png, typed-button.png, typed-enter.png, local-answer.png, local-enter-answer.png and local-returning-answer.png. The report records the application source digest and helper digest. Evidence remains in a unique ignored run directory after owned browser/server/profile teardown. Run the separate speech journey for native voice and mouth-animation observations.
 
 ## CPU cancellation and throughput
 
@@ -94,7 +105,7 @@ The manual Browser verification workflow publishes entry/controlled reports and 
 
 ## Helpers
 
-The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The older [observe.js](scripts/observe.js) helper captures an existing owned loopback instance for manual exploration; its exit code and brief capture window do not provide a feature verdict. Prefer the isolated runner for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.
+The reusable runner is [scripts/browser-verification](../../../scripts/browser-verification). Its public command is npm run verify:browser. The skill-owned [Local UI helper](scripts/local.js) adds the typing, Enter and history observations described above. The legacy observe.js helper has obsolete provider traversal and is not a supported recipe for the current application. Use the isolated runners for recorded verification. [Doctor](scripts/doctor.js) is read-only and starts no services.
 
 ## Persisted assistant settings
 
@@ -103,3 +114,9 @@ The reusable runner is [scripts/browser-verification](../../../scripts/browser-v
 With RUNTIME_MODEL_DIR set, the real cache journey seeds explicit Local/CPU preferences and a 32-token budget before the first production application load. It keeps saved settings on restart. This controlled verification setup preserves production defaults and still uses real generation, retrieval and cached model weights.
 
 The settings journey uses labelled model metadata fixtures and checks discovered variants against the revision submitted to the generation worker. It changes precision through the actual controls before the existing history, drain and recovery checks. The real-model mirror must contain files under the configured pinned revision; verify its Q4 LFS SHA-256 and the config/tokenizer Git blob hashes against that revision before linking existing local files into that directory. A successful controlled journey does not prove real weights or hardware support.
+
+## Talking head and browser speech
+
+Use `npm run verify:browser -- --mode speech` for the [talking-head prototype](../../../docs/talking-head.md). It uses real MPFB/TalkingHead rendering and native speechSynthesis in both modes, with controlled generation/retrieval by default. RUNTIME_MODEL_DIR adds real Local models. The journey checks text-to-utterance correspondence, Stop/Reset, Local mode changes, zero dedicated speech Workers and returning-browser behavior with external DNS blocked. With no available system voices, it continues through text/error paths but reports BLOCKED for native audible output. Voice availability and offline behavior depend on the browser/operating system.
+
+Text-driven mouth animation uses estimated timing and native word-boundary alignment where available. Verify visible motion with a real voice or clearly labelled controlled events; the latter cannot prove audible synchronization. The journey retains screenshots, video and native-event observations, not a synthesized PCM/WAV file or neural voice-cache evidence. Routine artifacts remain ignored and the manual speech workflow retains published artifacts for 90 days. Live OpenAI and visitor-device performance remain separate checks.

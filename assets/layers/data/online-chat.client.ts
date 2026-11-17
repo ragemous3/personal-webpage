@@ -3,12 +3,18 @@ import { type ChatMessage } from '@/layers/data/models/models';
 import { SeverityLevelCodes } from '@/layers/shared/constants';
 import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-generation.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
-import { type ChatGenerationState } from '@/layers/shared/models/chat-generation.model';
+import {
+  type ChatGenerationEvent,
+  type ChatGenerationState,
+} from '@/layers/shared/models/chat-generation.model';
+import { createIsolatedSubscribable } from '@/layers/shared/utils/isolated-subscribable.utility';
 import { readJsonLines } from '@/layers/shared/utils/ndjson.utility';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
 export class OnlineChatClient extends ApiBase implements ChatGenerationContract {
   readonly stateSubscription = createStatefulSubscribable<ChatGenerationState>({ ready: true });
+  readonly #events = createIsolatedSubscribable<ChatGenerationEvent>();
+  readonly generationSubscription = { connect: this.#events.connect };
   #disposed = false;
   readonly #requests = new Map<string, AbortController>();
 
@@ -37,8 +43,25 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
       throw new Error(`[${SeverityLevelCodes.ERROR}] - Chat generation is unavailable.`);
     const controller = new AbortController();
     this.#requests.set(requestId, controller);
+    this.#events.emit({ type: 'start', requestId });
     try {
-      return await this.#generate(messages, onText, controller.signal);
+      const text = await this.#generate(
+        messages,
+        (chunk) => {
+          onText(chunk);
+          this.#events.emit({ type: 'delta', requestId, text: chunk });
+        },
+        controller.signal,
+      );
+      this.#events.emit({ type: 'complete', requestId, text });
+      return text;
+    } catch (error) {
+      this.#events.emit(
+        controller.signal.aborted
+          ? { type: 'cancelled', requestId }
+          : { type: 'error', requestId, error: String(error) },
+      );
+      throw error;
     } finally {
       if (this.#requests.get(requestId) === controller) this.#requests.delete(requestId);
     }
@@ -101,5 +124,6 @@ export class OnlineChatClient extends ApiBase implements ChatGenerationContract 
     this.#disposed = true;
     this.stateSubscription.emit({ ready: false });
     this.stateSubscription.disconnect();
+    this.#events.disconnect();
   };
 }

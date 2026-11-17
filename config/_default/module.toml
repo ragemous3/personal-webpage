@@ -38,4 +38,3 @@ disableWatch = false
 lang = ''
 source = 'node_modules/@wllama/wllama/esm/'
 target = 'static/esm/'
-

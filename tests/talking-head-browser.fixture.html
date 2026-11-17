@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <body>
+    <div id="head" style="width: 320px; height: 320px"></div>
+    <script type="module">
+      import { TalkingHeadAdapter } from '/assets/layers/data/talking-head.adapter.ts';
+      const adapter = new TalkingHeadAdapter('/static/');
+      await adapter.mount(document.querySelector('#head'));
+      globalThis.fixture = { adapter };
+    </script>
+  </body>
+</html>

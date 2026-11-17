@@ -149,7 +149,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
   ): runtime is RuntimeAvailability & { selected: AssistantSettings } {
     return (
       !this.#running &&
-      (!state.pending || Boolean(state.error)) &&
+      (!state.pending || Boolean(state.error) || !this.#responding) &&
       this.#canReplaceFailure(runtime, state) &&
       isAssistantSettings(runtime.selected) &&
       this.metadata.models.some(({ id }) => id === runtime.selected?.model)
@@ -236,6 +236,7 @@ export class ConfigurationService implements ConfigurationServiceContract {
     const state = this.#current();
     if (this.#disposed || this.#running || this.#responding || !state.pending || state.error)
       return;
+    if (this.#sharedRuntime && areValuesEqual(this.#sharedRuntime.selected, state.selected)) return;
     this.#running = true;
     void this.#apply().finally(() => {
       this.#running = false;

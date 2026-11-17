@@ -11,9 +11,12 @@ import { ModelMetadataRepository } from '@/layers/data/model-metadata-repository
 import { ChatMessageModel } from '@/layers/data/models/chat.model';
 import { OnlineModelRepository } from '@/layers/data/online-model-repository.data';
 import { RuntimeConfigurationAdapter } from '@/layers/data/runtime-configuration.adapter';
+import { TalkingHeadAdapter } from '@/layers/data/talking-head.adapter';
 import { ConfigurationService } from '@/layers/services/configuration.service';
 import { RagService } from '@/layers/services/rag.service';
+import { TalkingHeadService } from '@/layers/services/talking-head.service';
 import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-generation.contract';
+import { type SpeechSynthesisContract } from '@/layers/shared/contracts/speech-synthesis.contract';
 import { type ModelDescriptor } from '@/layers/shared/models/model-metadata.model';
 
 import { getVectorDatabase } from './local-vector-database.factory';
@@ -92,6 +95,7 @@ export const buildChatbotDeps = (cfg: unknown, browser: typeof globalThis): Chat
 export const buildRagService = (
   chat: ChatGenerationContract,
   shared: ChatbotDependencies,
+  synthesis: SpeechSynthesisContract,
 ): RagDependencies => {
   const service = new RagService(
     chat,
@@ -114,10 +118,21 @@ export const buildRagService = (
   );
   const unbind = shared.bind(service);
   service.init();
+  const speech = new TalkingHeadService(
+    chat,
+    service.lifecycleSubscription,
+    synthesis,
+    new TalkingHeadAdapter(shared.configuration.baseURL),
+    {
+      available: shared.settings.stateSubscription.getValue()?.available ?? false,
+    },
+  );
   return {
     service,
+    speech,
     dispose(): void {
       unbind();
+      speech.dispose();
       service.dispose();
       chat.dispose();
     },

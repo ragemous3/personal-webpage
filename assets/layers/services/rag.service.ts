@@ -5,15 +5,19 @@ import { type ChatGenerationContract } from '@/layers/shared/contracts/chat-gene
 import { type ChatSessionContract } from '@/layers/shared/contracts/chat-session.contract';
 import {
   type ChatbotServiceContract,
+  type ChatLifecycleEvent,
   type ChatState,
 } from '@/layers/shared/contracts/chatbot-service.contract';
 import { type ContentRepositoryContract } from '@/layers/shared/contracts/content-repository.contract';
 import { type StandardCommunicationContract } from '@/layers/shared/contracts/port.contract';
 import { isRecord } from '@/layers/shared/guards/guards';
 import { type ChatGenerationState } from '@/layers/shared/models/chat-generation.model';
+import { createIsolatedSubscribable } from '@/layers/shared/utils/isolated-subscribable.utility';
 import { createStatefulSubscribable } from '@/layers/shared/utils/subscribable';
 
 export class RagService implements ChatbotServiceContract {
+  readonly #lifecycle = createIsolatedSubscribable<ChatLifecycleEvent>();
+  readonly lifecycleSubscription = { connect: this.#lifecycle.connect };
   readonly chatMessagesSubscription = createStatefulSubscribable<ChatMessage[]>([]);
   readonly stateSubscription = createStatefulSubscribable<ChatState>({ status: 'initializing' });
   #transportUnsubscribers: Array<() => void> = [];
@@ -99,6 +103,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   setAvailable = (available: boolean): void => {
+    this.#lifecycle.emit(available ? 'available' : 'unavailable');
     this.#available = available;
     if (available) {
       this.#runtimeFailed = false;
@@ -109,6 +114,7 @@ export class RagService implements ChatbotServiceContract {
 
   send = (question: string): void => {
     if (!question.trim() || this.stateSubscription.getValue()?.status !== 'ready') return;
+    this.#lifecycle.emit('invalidate');
     this.#question = question;
     this.#messages.push({ role: 'user', content: question }, { role: 'assistant', content: '' });
     this.#start();
@@ -145,6 +151,7 @@ export class RagService implements ChatbotServiceContract {
   }
 
   cancel = (): void => {
+    this.#lifecycle.emit('invalidate');
     if (!this.#active) return;
     const requestId = this.#active;
     this.#active = undefined;
@@ -153,6 +160,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   reset = (): void => {
+    this.#lifecycle.emit('invalidate');
     const requestId = this.#lease;
     const failure = this.stateSubscription.getValue();
     const active = this.#active;
@@ -319,6 +327,7 @@ export class RagService implements ChatbotServiceContract {
   };
 
   readonly #fail = (error: unknown): void => {
+    this.#lifecycle.emit('invalidate');
     const active = this.#active;
     this.#active = undefined;
     if (active) this.#cancelWork(active);
@@ -495,6 +504,7 @@ export class RagService implements ChatbotServiceContract {
   }
 
   #storageFailure(): void {
+    this.#lifecycle.emit('invalidate');
     this.#storageFailed = true;
     const active = this.#active;
     this.#active = undefined;

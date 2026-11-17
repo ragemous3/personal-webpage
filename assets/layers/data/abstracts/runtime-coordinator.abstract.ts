@@ -221,6 +221,7 @@ export abstract class RuntimeCoordinatorAbstract implements RuntimeCoordinatorCo
       console.error('Runtime resource failure:', message.name, message.payload.diagnostic);
   };
   readonly #channelFailure = (channel: RuntimeMessage): void => {
+    this.#hostingVersion = -1;
     this.#emit({ ...channel, error: { message: 'Something went wrong' }, runtimeFailure: true });
   };
   readonly #rejectPending = (): void => {

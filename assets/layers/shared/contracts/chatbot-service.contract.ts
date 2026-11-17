@@ -1,8 +1,12 @@
 import { type ChatMessage } from '@/layers/data/models/models';
 export type { ChatMessage } from '@/layers/data/models/models';
-import { type WritableStatefulConnections } from '@/layers/shared/utils/subscribable';
+import {
+  type ReadonlyConnections,
+  type WritableStatefulConnections,
+} from '@/layers/shared/utils/subscribable';
 
 export interface ChatbotServiceContract {
+  readonly lifecycleSubscription: ReadonlyConnections<ChatLifecycleEvent>;
   chatMessagesSubscription: WritableStatefulConnections<ChatMessage[]>;
   stateSubscription: WritableStatefulConnections<ChatState>;
   attach(): () => void;
@@ -21,3 +25,5 @@ export interface ChatState {
   runtimeFailure?: boolean;
   storageFailure?: boolean;
 }
+
+export type ChatLifecycleEvent = 'invalidate' | 'unavailable' | 'available';
